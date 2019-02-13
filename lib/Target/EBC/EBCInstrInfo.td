@@ -10,12 +10,6 @@ class ImmAsmOperand<int width> : AsmOperandClass {
   let DiagnosticType = !strconcat("Invalid", Name);
 }
 
-class SnAsmOperand<int width> : AsmOperandClass {
-  let Name = "Sn" # width;
-  let RenderMethod = "addSnOperands";
-  let DiagnosticType = !strconcat("Invalid", Name);
-}
-
 class IdxAsmOperand<int width> : AsmOperandClass {
   let Name = "Idx" # width;
   let RenderMethod = "addIdxOperands";
@@ -45,13 +39,13 @@ def imm64 : Operand<i64> {
 }
 
 def sn16 : Operand<i16> {
-  let ParserMatchClass = SnAsmOperand<16>;
-  let DecoderMethod = "decodeSnOperand<16>";
+  let ParserMatchClass = ImmAsmOperand<16>;
+  let DecoderMethod = "decodeImmOperand<16>";
 }
 
 def sn32 : Operand<i32> {
-  let ParserMatchClass = SnAsmOperand<32>;
-  let DecoderMethod = "decodeSnOperand<32>";
+  let ParserMatchClass = ImmAsmOperand<32>;
+  let DecoderMethod = "decodeImmOperand<32>";
 }
 
 def idx16 : Operand<EBCIdx16TV> {
