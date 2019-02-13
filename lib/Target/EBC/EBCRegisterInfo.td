@@ -26,4 +26,4 @@ def IP    : EBCDReg<1, "IP">;
 
 // Register classes
 def GPR : RegisterClass<"EBC", [i64], 64, (add (sequence "R%u", 0, 7))>;
-def DR : RegisterClass<"EBC", [i64], 64, (add FLAGS, IP)>;
+def DR : RegisterClass<"EBC", [i64], 64, (add "FLAGS", "IP")>;
