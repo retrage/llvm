@@ -1,16 +1,76 @@
 include "EBCInstrFormats.td"
 
-// Forward definition
-def breakcode;
-def imm16;
-def idx16;
-def imm32;
-def imm8;
-def idx32;
-def imm64;
-def idx64;
-def sn16;
-def sn32;
+def EBCIdx16TV : ValueType<16, 114>;
+def EBCIdx32TV : ValueType<32, 114>;
+def EBCIdx64TV : ValueType<64, 114>;
+
+class ImmAsmOperand<int width> : AsmOperandClass {
+  let Name = "Imm" # width;
+  let RenderMethod = "addImmOperands";
+  let DiagnosticType = !strconcat("Invalid", Name);
+}
+
+class SnAsmOperand<int width> : AsmOperandClass {
+  let Name = "Sn" # width;
+  let RenderMethod = "addSnOperands";
+  let DiagnosticType = !strconcat("Invalid", Name);
+}
+
+class IdxAsmOperand<int width> : AsmOperandClass {
+  let Name = "Idx" # width;
+  let RenderMethod = "addIdxOperands";
+  let DiagnosticType = !strconcat("Invalid", Name);
+}
+
+def breakcode : Operand<i8>;
+
+def imm8 : Operand<i8> {
+  let ParserMatchClass = ImmAsmOperand<8>;
+  let DecoderMethod = "decodeImmOperand<8>";
+}
+
+def imm16 : Operand<i16> {
+  let ParserMatchClass = ImmAsmOperand<16>;
+  let DecoderMethod = "decodeImmOperand<16>";
+}
+
+def imm32 : Operand<i32> {
+  let ParserMatchClass = ImmAsmOperand<32>;
+  let DecoderMethod = "decodeImmOperand<32>";
+}
+
+def imm64 : Operand<i64> {
+  let ParserMatchClass = ImmAsmOperand<64>;
+  let DecoderMethod = "decodeImmOperand<64>";
+}
+
+def sn16 : Operand<i16> {
+  let ParserMatchClass = SnAsmOperand<16>;
+  let DecoderMethod = "decodeSnOperand<16>";
+}
+
+def sn32 : Operand<i32> {
+  let ParserMatchClass = SnAsmOperand<32>;
+  let DecoderMethod = "decodeSnOperand<32>";
+}
+
+def idx16 : Operand<EBCIdx16TV> {
+  let ParserMatchClass = IdxAsmOperand<16>;
+  let EncoderMethod = "getIdxOperand<16>";
+  let DecoderMethod = "decodeIdxOperand<16>";
+}
+
+def idx32 : Operand<EBCIdx32TV> {
+  let ParserMatchClass = IdxAsmOperand<32>;
+  let EncoderMethod = "getIdxOperand<32>";
+  let DecoderMethod = "decodeIdxOperand<32>";
+}
+
+def idx64 : Operand<EBCIdx64TV> {
+  let ParserMatchClass = IdxAsmOperand<64>;
+  let EncoderMethod = "getIdxOperand<64>";
+  let DecoderMethod = "decodeIdxOperand<64>";
+}
 
 multiclass EBCInstPOP<bits<6> opcode, string opcodestr> {
   let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
