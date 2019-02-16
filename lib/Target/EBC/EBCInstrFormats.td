@@ -1,3 +1,12 @@
+//===-- EBCInstrFormats.td - EBC Instruction Formats ---*- tablegen -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 class EBCInst<dag outs, dag ins,
         string opcodestr, string argstr, list<dag> pattern>
     : Instruction {

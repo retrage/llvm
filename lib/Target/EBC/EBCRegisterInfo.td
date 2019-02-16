@@ -1,3 +1,16 @@
+//===-- EBCRegisterInfo.td - EBC Register defs --------*- tablegen -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//  Declarations that describe the EBC register files
+//===----------------------------------------------------------------------===//
+
 // General Purpose VM Register class
 class EBCGPReg<bits<3> Enc, string n> : Register<n> {
   let HWEncoding{2-0} = Enc;
@@ -26,4 +39,4 @@ def IP    : EBCDReg<1, "IP">;
 
 // Register classes
 def GPR : RegisterClass<"EBC", [i64], 64, (add (sequence "R%u", 0, 7))>;
-def DR : RegisterClass<"EBC", [i64], 64, (add "FLAGS", "IP")>;
+def DR : RegisterClass<"EBC", [i64], 64, (add FLAGS, IP)>;
