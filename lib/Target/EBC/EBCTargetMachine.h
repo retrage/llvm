@@ -14,6 +14,7 @@
 #ifndef LLVM_LIB_TARGET_EBC_EBCTARGETMACHINE_H
 #define LLVM_LIB_TARGET_EBC_EBCTARGETMACHINE_H
 
+#include "MCTargetDesc/EBCMCTargetDesc.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
@@ -34,7 +35,6 @@ public:
     return TLOF.get();
   }
 };
-Target &getTheEBCTarget();
 }
 
 #endif

@@ -15,7 +15,7 @@
 ;===------------------------------------------------------------------------===;
 
 [common]
-subdirectories = TargetInfo
+subdirectories = TargetInfo MCTargetDesc
 
 [component_0]
 type = TargetGroup
