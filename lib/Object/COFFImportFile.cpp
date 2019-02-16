@@ -54,7 +54,7 @@ static uint16_t getImgRelRelocation(MachineTypes Machine) {
   case IMAGE_FILE_MACHINE_ARM64:
     return IMAGE_REL_ARM64_ADDR32NB;
   case IMAGE_FILE_MACHINE_EBC:
-    return IMAGE_REL_EBC_ADD32NB;
+    return IMAGE_REL_EBC_ADDR32NB;
   case IMAGE_FILE_MACHINE_I386:
     return IMAGE_REL_I386_DIR32NB;
   }
