@@ -35,6 +35,7 @@ static bool is32bit(MachineTypes Machine) {
     llvm_unreachable("unsupported machine");
   case IMAGE_FILE_MACHINE_ARM64:
   case IMAGE_FILE_MACHINE_AMD64:
+  case IMAGE_FILE_MACHINE_EBC:
     return false;
   case IMAGE_FILE_MACHINE_ARMNT:
   case IMAGE_FILE_MACHINE_I386:
@@ -52,6 +53,8 @@ static uint16_t getImgRelRelocation(MachineTypes Machine) {
     return IMAGE_REL_ARM_ADDR32NB;
   case IMAGE_FILE_MACHINE_ARM64:
     return IMAGE_REL_ARM64_ADDR32NB;
+  case IMAGE_FILE_MACHINE_EBC:
+    return IMAGE_REL_EBC_ADD32NB;
   case IMAGE_FILE_MACHINE_I386:
     return IMAGE_REL_I386_DIR32NB;
   }

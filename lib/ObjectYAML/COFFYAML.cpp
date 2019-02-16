@@ -220,6 +220,27 @@ void ScalarEnumerationTraits<COFF::RelocationTypesARM64>::enumeration(
   ECase(IMAGE_REL_ARM64_REL32);
 }
 
+void ScalarEnumerationTraits<COFF::RelocationTypeEBC>::enumeration(
+    IO &IO, COFF::RelocationTypeEBC &Value) {
+  ECase(IMAGE_REL_EBC_ABSOLUTE);
+  ECase(IMAGE_REL_EBC_ADDR64);
+  ECase(IMAGE_REL_EBC_ADDR32);
+  ECase(IMAGE_REL_EBC_ADDR32NB);
+  ECase(IMAGE_REL_EBC_REL32);
+  ECase(IMAGE_REL_EBC_REL32_1);
+  ECase(IMAGE_REL_EBC_REL32_2);
+  ECase(IMAGE_REL_EBC_REL32_3);
+  ECase(IMAGE_REL_EBC_REL32_4);
+  ECase(IMAGE_REL_EBC_REL32_5);
+  ECase(IMAGE_REL_EBC_SECTION);
+  ECase(IMAGE_REL_EBC_SECREL);
+  ECase(IMAGE_REL_EBC_SECREL7);
+  ECase(IMAGE_REL_EBC_TOKEN);
+  ECase(IMAGE_REL_EBC_SREL32);
+  ECase(IMAGE_REL_EBC_PAIR);
+  ECase(IMAGE_REL_EBC_SSPAN32);
+}
+
 void ScalarEnumerationTraits<COFF::WindowsSubsystem>::enumeration(
     IO &IO, COFF::WindowsSubsystem &Value) {
   ECase(IMAGE_SUBSYSTEM_UNKNOWN);
@@ -427,6 +448,10 @@ void MappingTraits<COFFYAML::Relocation>::mapping(IO &IO,
     IO.mapRequired("Type", NT->Type);
   } else if (H.Machine == COFF::IMAGE_FILE_MACHINE_ARM64) {
     MappingNormalization<NType<COFF::RelocationTypesARM64>, uint16_t> NT(
+        IO, Rel.Type);
+    IO.mapRequired("Type", NT->Type);
+  } else if (H.Machine == COFF::IMAGE_FILE_MACHINE_EBC) {
+    MappingNormalization<NType<COFF::RelocationTypeEBC>, uint16_t> NT(
         IO, Rel.Type);
     IO.mapRequired("Type", NT->Type);
   } else {
