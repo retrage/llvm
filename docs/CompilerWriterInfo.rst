@@ -34,6 +34,11 @@ AArch64 & ARM
 
 * `Run-time ABI for the ARM Architecture <http://infocenter.arm.com/help/topic/com.arm.doc.ihi0043d/IHI0043D_rtabi.pdf>`_ This documents the __aeabi_* helper functions.
 
+EFI Byte Code
+-------------
+
+* `UEFI Specification <https://uefi.org/specifications>`_
+
 Itanium (ia64)
 --------------
 
