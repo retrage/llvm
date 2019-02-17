@@ -27,6 +27,7 @@ class MCInstrInfo;
 class MCObjectTargetWriter;
 class MCRegisterInfo;
 class MCSubtargetInfo;
+class MCTargetStreamer;
 class StringRef;
 class Target;
 class Triple;

@@ -4,6 +4,7 @@ tablegen(LLVM EBCGenRegisterInfo.inc -gen-register-info)
 tablegen(LLVM EBCGenInstrInfo.inc -gen-instr-info)
 tablegen(LLVM EBCGenMCCodeEmitter.inc -gen-emitter)
 tablegen(LLVM EBCGenAsmMatcher.inc -gen-asm-matcher)
+tablegen(LLVM EBCGenAsmWriter.inc -gen-asm-writer)
 
 add_public_tablegen_target(EBCCommonTableGen)
 
@@ -12,5 +13,6 @@ add_llvm_target(EBCCodeGen
   )
 
 add_subdirectory(AsmParser)
-add_subdirectory(TargetInfo)
+add_subdirectory(InstPrinter)
 add_subdirectory(MCTargetDesc)
+add_subdirectory(TargetInfo)

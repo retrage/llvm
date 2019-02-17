@@ -1,4 +1,4 @@
-;===- ./lib/Target/EBC/MCTargetDesc/LLVMBuild.txt ------------*- Conf -*--===;
+;===- ./lib/Target/EBC/InstPrinter/LLVMBuild.txt -------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -17,7 +17,7 @@
 
 [component_0]
 type = Library
-name = EBCDesc
+name = EBCAsmPrinter
 parent = EBC
-required_libraries = MC EBCAsmPrinter EBCInfo Support
+required_libraries = MC Support
 add_to_library_groups = EBC
