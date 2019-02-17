@@ -473,7 +473,8 @@ public:
     default:
       llvm_unreachable("Unknown object format");
     case Triple::COFF:
-      assert(T.isOSWindows() && "only Windows COFF is supported");
+      assert((T.isOSWindows() || T.getArch() == Triple::ebc)
+          && "only Windows or EBC COFF are supported");
       S = COFFStreamerCtorFn(Ctx, std::move(TAB), std::move(OW),
                              std::move(Emitter), RelaxAll,
                              IncrementalLinkerCompatible);

@@ -878,7 +878,9 @@ base_reloc_iterator COFFObjectFile::base_reloc_end() const {
 }
 
 uint8_t COFFObjectFile::getBytesInAddress() const {
-  return getArch() == Triple::x86_64 || getArch() == Triple::aarch64 ? 8 : 4;
+  return getArch() == Triple::x86_64
+      || getArch() == Triple::aarch64
+      || getArch() == Triple::ebc ? 8 : 4;
 }
 
 StringRef COFFObjectFile::getFileFormatName() const {
@@ -891,6 +893,8 @@ StringRef COFFObjectFile::getFileFormatName() const {
     return "COFF-ARM";
   case COFF::IMAGE_FILE_MACHINE_ARM64:
     return "COFF-ARM64";
+  case COFF::IMAGE_FILE_MACHINE_EBC:
+    return "COFF-EBC";
   default:
     return "COFF-<unknown arch>";
   }
@@ -906,6 +910,8 @@ Triple::ArchType COFFObjectFile::getArch() const {
     return Triple::thumb;
   case COFF::IMAGE_FILE_MACHINE_ARM64:
     return Triple::aarch64;
+  case COFF::IMAGE_FILE_MACHINE_EBC:
+    return Triple::ebc;
   default:
     return Triple::UnknownArch;
   }

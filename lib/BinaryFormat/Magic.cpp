@@ -198,6 +198,11 @@ file_magic llvm::identify_magic(StringRef Magic) {
       return file_magic::coff_object;
     break;
 
+  case 0xbc: // EBC
+    if (Magic[1] == char(0x0e))
+      return file_magic::coff_object;
+    break;
+
   default:
     break;
   }
