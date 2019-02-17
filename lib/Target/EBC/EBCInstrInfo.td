@@ -17,11 +17,15 @@ include "EBCInstrFormats.td"
 // Operand and SDNode transformation definitions.
 //===----------------------------------------------------------------------===//
 
-def imm16 : Operand<i16>;
+class ImmAsmOperand<int width> : AsmOperandClass {
+  let Name = "Imm" # width;
+  let RenderMethod = "addImmOperands";
+  let DiagnosticType = !strconcat("Invalid", Name);
+}
 
-def nat16 : Operand<i16>;
-
-def con16 : Operand<i16>;
+def imm16 : Operand<i16> {
+  let ParserMatchClass = ImmAsmOperand<16>;
+}
 
 //===----------------------------------------------------------------------===//
 // Instruction Class Templates
@@ -30,48 +34,47 @@ def con16 : Operand<i16>;
 multiclass ALUXX<bits<6> opcode, string opcodestr, bit is64> {
   let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
   def Op1DOp2D : EBCInst16Op1Op2<opcode, is64, 0, 0,
-            (outs GPR:$dst), (ins GPR:$src1, GPR:$src2),
-            opcodestr # !if(is64, "64", "32"), "$src1, $src2">;
+            (outs GPR:$dst),
+            (ins GPR:$op1, GPR:$op2),
+            opcodestr # !if(is64, "64", "32"), "$op1, $op2">;
   let hasSideEffects = 0, mayLoad = 1, mayStore = 1 in
   def Op1IOp2D : EBCInst16Op1Op2<opcode, is64, 1, 0,
-            (outs GPR:$dst), (ins GPR:$src1, GPR:$src2),
-            opcodestr # !if(is64, "64", "32"), "@$src1, $src2">;
+            (outs GPR:$dst),
+            (ins GPR:$op1, GPR:$op2),
+            opcodestr # !if(is64, "64", "32"), "@$op1, $op2">;
   let hasSideEffects = 0, mayLoad = 1, mayStore = 0 in
   def Op1DOp2I : EBCInst16Op1Op2<opcode, is64, 0, 1,
-            (outs GPR:$dst), (ins GPR:$src1, GPR:$src2),
-            opcodestr # !if(is64, "64", "32"), "$src1, @$src2">;
+            (outs GPR:$dst),
+            (ins GPR:$op1, GPR:$op2),
+            opcodestr # !if(is64, "64", "32"), "$op1, @$op2">;
   let hasSideEffects = 0, mayLoad = 1, mayStore = 1 in
   def Op1IOp2I : EBCInst16Op1Op2<opcode, is64, 1, 1,
-            (outs GPR:$dst), (ins GPR:$src1, GPR:$src2),
-            opcodestr # !if(is64, "64", "32"), "@$src1, @$src2">;
+            (outs GPR:$dst),
+            (ins GPR:$op1, GPR:$op2),
+            opcodestr # !if(is64, "64", "32"), "@$op1, @$op2">;
   let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-  def Op1DOp2DImm : EBCInst16Op1Op2<opcode, is64, 0, 0,
-            (outs GPR:$dst), (ins GPR:$src1, GPR:$src2, imm16:$imm),
-            opcodestr # !if(is64, "64", "32"), "$src1, $src2 $imm">;
+  def Op1DOp2DImm : EBCInst16Op1Op2Imm<opcode, is64, 0, 0,
+            (outs GPR:$dst),
+            (ins GPR:$op1, GPR:$op2, imm16:$imm),
+            opcodestr # !if(is64, "64", "32"), "$op1, $op2 $imm">;
   let hasSideEffects = 0, mayLoad = 1, mayStore = 1 in
-  def Op1IOp2DImm : EBCInst16Op1Op2<opcode, is64, 1, 0,
-            (outs GPR:$dst), (ins GPR:$src1, GPR:$src2, imm16:$imm),
-            opcodestr # !if(is64, "64", "32"), "@$src1, $src2 $imm">;
-  let hasSideEffects = 0, mayLoad = 1, mayStore = 0 in
-  def Op1DOp2IIdx : EBCInst16Op1Op2<opcode, is64, 0, 1,
-      (outs GPR:$dst), (ins GPR:$src1, GPR:$src2, nat16:$nat, con16:$con),
-      opcodestr # !if(is64, "64", "32"), "$src1, @$src2 ($nat, $con)">;
-  let hasSideEffects = 0, mayLoad = 1, mayStore = 1 in
-  def Op1IOp2IIdx : EBCInst16Op1Op2<opcode, is64, 1, 1,
-      (outs GPR:$dst), (ins GPR:$src1, GPR:$src2, nat16:$nat, con16:$con),
-      opcodestr # !if(is64, "64", "32"), "@$src1, @$src2 ($nat, $con)">;
+  def Op1IOp2DImm : EBCInst16Op1Op2Imm<opcode, is64, 1, 0,
+            (outs GPR:$dst),
+            (ins GPR:$op1, GPR:$op2, imm16:$imm),
+            opcodestr # !if(is64, "64", "32"), "@$op1, $op2 $imm">;
+  // TODO: Add Index16
 }
 
 multiclass ALU<bits<6> opcode, string opcodestr> {
-  defm ALU32 : ALUXX<opcode, opcodestr, 0>;
-  defm ALU64 : ALUXX<opcode, opcodestr, 1>;
+  defm _32 : ALUXX<opcode, opcodestr, 0>;
+  defm _64 : ALUXX<opcode, opcodestr, 1>;
 }
 
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
 
-let Constraints = "$src1 = $dst" in {
+let Constraints = "$dst = $op1" in {
   defm NOT  : ALU<0b001010, "NOT">;
   defm NEG  : ALU<0b001011, "NEG">;
   defm ADD  : ALU<0b001100, "ADD">;

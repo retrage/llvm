@@ -1,3 +1,26 @@
+//===-- EBCAsmParser.cpp - Parse EBC assembly to MCInst instructions --===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#include "MCTargetDesc/EBCMCTargetDesc.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSwitch.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCParser/MCAsmLexer.h"
+#include "llvm/MC/MCParser/MCParsedAsmOperand.h"
+#include "llvm/MC/MCParser/MCTargetAsmParser.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 
@@ -6,11 +29,6 @@ struct EBCOperand;
 
 class EBCAsmParser : public MCTargetAsmParser {
   SMLoc getLoc() const { return getParser().getTok().getLoc(); }
-
-  EBCTargetStreamer &getTargetStreamer() {
-    MCTargetStreamer &TS = *getParser().getStreamer().getTargetStreamer();
-    return static_cast<EBCTargetStreamer &>(TS);
-  }
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                               OperandVector &Operands, MCStreamer &Out,
@@ -22,6 +40,8 @@ class EBCAsmParser : public MCTargetAsmParser {
   bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
 
+  bool ParseDirective(AsmToken DirectiveID) override;
+
 // Auto-generated instruction matching functions
 #define GET_ASSEMBLER_HEADER
 #include "EBCGenAsmMatcher.inc"
@@ -30,7 +50,7 @@ class EBCAsmParser : public MCTargetAsmParser {
   OperandMatchResultTy parseImmediate(OperandVector &Operands);
   OperandMatchResultTy parseIndex(OperandVector &Operands);
 
-  bool parseOperand(OperandVector &Operands, StringRef Mnemonic);
+  bool parseOperand(OperandVector &Operands);
 
 public:
   enum EBCMatchResultTy {
@@ -42,7 +62,8 @@ public:
 
   EBCAsmParser(const MCSubtargetInfo &STI, MCAsmParser &Parser,
               const MCInstrInfo &MII, const MCTargetOptions &Options)
-      : MCTargetAsmParser(Options, STI, MII);
+      : MCTargetAsmParser(Options, STI, MII) {
+  }
 };
 
 /// EBCOperand
@@ -51,16 +72,10 @@ struct EBCOperand : public MCParsedAsmOperand {
   enum KindTy {
     Token,
     Register,
-    DedicatedRegister,
     Immediate,
-    Index
   } Kind;
 
   struct RegOp {
-    unsigned RegNum;
-  };
-
-  struct DediRegOp {
     unsigned RegNum;
   };
 
@@ -68,17 +83,11 @@ struct EBCOperand : public MCParsedAsmOperand {
     const MCExpr *Val;
   };
 
-  struct IdxOp {
-    const MCExpr *Val;
-  };
-
   SMLoc StartLoc, EndLoc;
   union {
     StringRef Tok;
     RegOp Reg;
-    DediRegOp DediReg;
     ImmOp Imm;
-    IdxOp Idx;
   };
 
   EBCOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}
@@ -95,70 +104,34 @@ public:
     case Register:
       Reg = o.Reg;
       break;
-    case DedicatedRegister:
-      DediReg = o.DediReg;
-      break;
     case Immediate:
       Imm = o.Imm;
-      break;
-    case Index:
-      Idx = o.Idx;
       break;
     }
   }
 
   bool isToken() const override { return Kind == Token; }
   bool isReg() const override { return Kind == Register; }
-  bool isDediReg() const override { return Kind == DedicatedRegister; }
   bool isImm() const override { return Kind == Immediate; }
   bool isMem() const override { return false; }
-  bool isIdx() const override { return Kind == Index; }
 
-  static bool evaluateConstantImm(const MCExpr *Expr, int64_t &Imm,
-                                  EBCMCExpr::VariantKind &VK) {
-    if (auto *EE = dyn_cast<EBCMCExpr>(Expr)) {
-      VK = EE->getKind();
-      return EE->evaluateAsConstant(Imm);
-    }
+  bool isConstantImm() const {
+    return isImm() && dyn_cast<MCConstantExpr>(getImm());
+  }
 
-    if (auto CE = dyn_cast<MCConstantExpr>(Expr)) {
-      VK = EBCMCExpr::VK_EBC_None;
-      Imm = CE->getValue();
-      return true;
-    }
-
-    return false;
+  int64_t getConstantImm() const {
+    const MCExpr *Val = getImm();
+    return static_cast<const MCConstantExpr *>(Val)->getValue();
   }
 
   template <int N> bool isImmN() const {
-    if (!isImm())
-      return false;
-    EBCMCExpr::VariantKind VK;
-    int64_t Imm;
-    bool IsConstantImm = evaluateConstantImm(getImm(), Imm, VK);
-    return IsConstantImm && isInt<N>(Imm) &&
-            VK == EBCMCExpr::VK_EBC_None;
-  }
-
-  // TODO: Natural Index validation
-  template <int N> bool isIdxN() const {
-    if (!isIdx())
-      return false;
-    EBCMCExpr::VariantKind VK;
-    int64_t Idx;
-    bool IsConstantIdx = evaluateConstantImm(getIdx(), Idx, VK);
-    return IsConstantIdx && isInt<N>(Idx) &&
-            VK == EBCMCExpr::VK_EBC_None;
+    return (isConstantImm() && isInt<N>(getConstantImm()));
   }
   
   bool isImm8() const { return isImmN<8>(); }
   bool isImm16() const { return isImmN<16>(); }
   bool isImm32() const { return isImmN<32>(); }
   bool isImm64() const { return isImmN<64>(); }
-
-  bool isIdx16() const { return isIdxN<16>(); }
-  bool isIdx32() const { return isIdxN<32>(); }
-  bool isIdx64() const { return isIdxN<64>(); }
 
   SMLoc getStartLoc() const override { return StartLoc; };
   SMLoc getEndLoc() const override { return EndLoc; };
@@ -173,24 +146,9 @@ public:
     return Reg.RegNum;
   }
 
-  StringRef getDediReg() const override {
-    assert(Kind == DedicatedRegister && "Invalid type access!");
-    switch (DediReg.RegNum) {
-    case 0:
-      return StringRef("FLAGS");
-    case 1:
-      return StringRef("IP");
-    }
-  }
-
   const MCExpr *getImm() const {
     assert(Kind == Immediate && "Invalid type access!");
     return Imm.Val;
-  }
-
-  const MCExpr *getIdx() const {
-    assert(Kind == Index && "Invalid type access!");
-    return Idx.Val;
   }
 
   void print(raw_ostream &OS) const override {
@@ -201,14 +159,8 @@ public:
     case Register:
       OS << "<register: R" << getReg() << ">";
       break;
-    case DedicatedRegister:
-      OS << "<dedicated: " << getDediReg() << ">";
-      break;
     case Immediate:
       OS << *getImm();
-      break;
-    case Index:
-      OS << *getIdx();
       break;
     }
   }
@@ -230,15 +182,6 @@ public:
     return Op;
   }
 
-  static std::unique_ptr<EBCOperand> createDediReg(unsigned RegNo, SMLoc S,
-                                              SMLoc E) {
-    auto Op = make_unique<EBCOperand>(DedicatedRegister);
-    Op->DediReg.RegNum = RegNo;
-    Op->StartLoc = S;
-    Op->EndLoc = E;
-    return Op;
-  }
-
   static std::unique_ptr<EBCOperand> createImm(const MCExpr *Val, SMLoc S,
                                               SMLoc E) {
     auto Op = make_unique<EBCOperand>(Immediate);
@@ -248,24 +191,10 @@ public:
     return Op;
   }
 
-  static std::unique_ptr<EBCOperand> createIdx(const MCExpr *Val, SMLoc S,
-                                              SMLoc E) {
-    auto Op = make_unique<EBCOperand>(Index);
-    Op->Index.Val = Val;
-    Op->StartLoc = S;
-    Op->EndLoc = E;
-    return Op;
-  }
-
-  // TODO: Index
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     assert(Expr && "Expr shouldn't be null!");
-    int64_t Imm = 0;
-    EBCMCExpr::VariantKind VK;
-    bool IsConstant = evaluateConstantImm(Expr, Imm, VK);
-
-    if (IsConstant)
-      Inst.addOperand(MCOperand::createImm(Imm));
+    if (auto *CE = dyn_cast<MCConstantExpr>(Expr))
+      Inst.addOperand(MCOperand::createImm(CE->getValue()));
     else
       Inst.addOperand(MCOperand::createExpr(Expr));
   }
@@ -280,13 +209,12 @@ public:
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
   }
-
-  void addIdxOperands(MCInst &Inst, unsigned N) const {
-    assert(N == 1 && "Invalid number of operands!");
-    addExpr(Inst, getIdx());
-  }
 };
 } // end anonymous namespace.
+
+#define GET_REGISTER_MATCHER
+#define GET_MATCHER_IMPLEMENTATION
+#include "EBCGenAsmMatcher.inc"
 
 bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                           OperandVector &Operands,
@@ -294,6 +222,7 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                           uint64_t &ErrorInfo,
                                           bool MatchingInlineAsm) {
   MCInst Inst;
+  SMLoc ErrorLoc;
 
   auto Result =
     MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm);
@@ -307,19 +236,22 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return Error(IDLoc, "instruction use requires an option to be enabled");
   case Match_MnemonicFail:
     return Error(IDLoc, "unrecongnized instruction mnemonic");
-  case Match_InvalidOperand: {
-    SMLoc ErrorLoc = IDLoc;
+  case Match_InvalidOperand:
     if (ErrorInfo != ~0U) {
       if (ErrorInfo >= Operands.size())
         return Error(ErrorLoc, "too few operands for instruction");
       
       ErrorLoc = ((EBCOperand &)*Operands[ErrorInfo]).getStartLoc();
-      if (ErrorInfo == SMLoc())
+      if (ErrorLoc == SMLoc())
         ErrorLoc = IDLoc;
     }
     return Error(ErrorLoc, "invalid operand for instruction");
+  case Match_InvalidImm16:
+    ErrorLoc = ((EBCOperand &)*Operands[ErrorInfo]).getStartLoc();
+    return Error(ErrorLoc, "immediate must be integer in range [-32768, 32767]");
   }
-  }
+
+  llvm_unreachable("Unknown match type detected!");
 }
 
 bool EBCAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
@@ -387,7 +319,7 @@ OperandMatchResultTy EBCAsmParser::parseIndex(OperandVector &Operands) {
   Operands.push_back(EBCOperand::createToken("(", getLoc()));
 
   SMLoc NS = getLoc();
-  SMLoc NE = StartLoc::getFromPointer(NS.getPointer() - 1);
+  SMLoc NE = SMLoc::getFromPointer(NS.getPointer() - 1);
   const MCExpr *NRes;
 
   switch (getLexer().getKind()) {
@@ -411,7 +343,7 @@ OperandMatchResultTy EBCAsmParser::parseIndex(OperandVector &Operands) {
   }
 
   SMLoc CS = getLoc();
-  SMLoc CE = StartLoc::getFromPointer(CS.getPointer() - 1);
+  SMLoc CE = SMLoc::getFromPointer(CS.getPointer() - 1);
   const MCExpr *CRes;
 
   switch (getLexer().getKind()) {
@@ -443,17 +375,7 @@ OperandMatchResultTy EBCAsmParser::parseIndex(OperandVector &Operands) {
 /// Looks at a token type and creates the relevant operand from this
 /// information, adding to Operands. If operand was parsed, return false,
 /// else true.
-bool EBCAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic){
-  // Check if the current operand has a custom associated parser,
-  // if so, try to custom parse the operand,
-  // or fallback to the general approach.
-  OperandMatchResultTy Result =
-    MatchOperandParserImpl(Operands, Mnemonic, true);
-  if (Result == MatchOperand_Success)
-    return false;
-  if (Result == MatchOperand_ParseFail)
-    return true;
-
+bool EBCAsmParser::parseOperand(OperandVector &Operands){
   // Attempt to parse token as a register
   if (parseRegister(Operands) == MatchOperand_Success)
     return false;
@@ -482,21 +404,18 @@ bool EBCAsmParser::ParseInstruction(ParseInstructionInfo &Info,
     return false;
 
   // Parse first operand
-  if (parseOperand(Operands, Name))
+  if (parseOperand(Operands))
     return true;
 
   // TODO: Allow natural index
   // parse until end of statement, consuming commas between operands
-  unsigned OperandIdx = 1;
   while (getLexer().is(AsmToken::Comma)) {
     // Consume comma token
     getLexer().Lex();
 
     // Parse next operand
-    if (parseOperand(Operands, Name))
+    if (parseOperand(Operands))
       return true;
-
-    ++OperandIdx;
   }
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
@@ -507,4 +426,10 @@ bool EBCAsmParser::ParseInstruction(ParseInstructionInfo &Info,
 
   getParser().Lex(); // Consume the EndOfStatement
   return false;
+}
+
+bool EBCAsmParser::ParseDirective(AsmToken DirectiveID) { return true; }
+
+extern "C" void LLVMInitializeEBCAsmParser() {
+  RegisterMCAsmParser<EBCAsmParser> X(getTheEBCTarget());
 }
