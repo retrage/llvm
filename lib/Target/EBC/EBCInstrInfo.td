@@ -31,20 +31,45 @@ def imm16 : Operand<i16> {
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
-multiclass EBCInst1OpDQ<bits<6> opcode, bit Op1Indirect,
+multiclass EBC1OpBase<bits<6> opcode, bit is64Bit,
                     dag outs, dag ins, string opcodestr, string argstr> {
-  def _32 : EBCInst1Op<opcode, 0, Op1Indirect,
-                    outs, ins, opcodestr # "32", argstr>;
-  def _64 : EBCInst1Op<opcode, 1, Op1Indirect,
-                    outs, ins, opcodestr # "64", argstr>;
+  def Op1D : EBCInst1Op<opcode, is64Bit, 0, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32"), argstr>;
+  def Op1I : EBCInst1Op<opcode, is64Bit, 1, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32"), "@" # argstr>;
+  def Op1DImm : EBCInst1OpImm<opcode, is64Bit, 0,
+                outs, !con(ins, !dag(ins, [imm16], ["imm"])),
+                opcodestr # !if(is64Bit, "64", "32"), argstr # " $imm">;
 }
 
-multiclass EBCInst1OpDI<bits<6> opcode,
-                    dag outs, dag ins, string opcodestr, string argstr> {
-  defm Op1D : EBCInst1OpDQ<opcode, 0,
-                    outs, ins, opcodestr, argstr>;
-  defm Op1I : EBCInst1OpDQ<opcode, 1,
-                    outs, ins, opcodestr, "@" # argstr>;
+multiclass EBCPOPBase<bits<6> opcode, bit is64Bit, string opcodestr> {
+  def Op1D : EBCInst1Op<opcode, is64Bit, 0, (outs GPR:$op1), (ins),
+                opcodestr # !if(is64Bit, "64", "32"), "$op1">;
+  def Op1I : EBCInst1Op<opcode, is64Bit, 1, (outs GPR:$op1), (ins),
+                opcodestr # !if(is64Bit, "64", "32"), "@$op1">;
+  def Op1DImm : EBCInst1OpImm<opcode, is64Bit, 0,
+                (outs GPR:$op1), (ins imm16:$imm),
+                opcodestr # !if(is64Bit, "64", "32"), "$op1 $imm">;
+}
+
+multiclass EBCPUSHBase<bits<6> opcode, bit is64Bit, string opcodestr> {
+  def Op1D : EBCInst1Op<opcode, is64Bit, 0, (outs), (ins GPR:$op1),
+                opcodestr # !if(is64Bit, "64", "32"), "$op1">;
+  def Op1I : EBCInst1Op<opcode, is64Bit, 1, (outs), (ins GPR:$op1),
+                opcodestr # !if(is64Bit, "64", "32"), "@$op1">;
+  def Op1DImm : EBCInst1OpImm<opcode, is64Bit, 0,
+                (outs), (ins GPR:$op1, imm16:$imm),
+                opcodestr # !if(is64Bit, "64", "32"), "$op1 $imm">;
+}
+
+multiclass EBCPOP<bits<6> opcode, string opcodestr> {
+  defm _32 : EBCPOPBase<opcode, 0, opcodestr>;
+  defm _64 : EBCPOPBase<opcode, 1, opcodestr>;
+}
+
+multiclass EBCPUSH<bits<6> opcode, string opcodestr> {
+  defm _32 : EBCPUSHBase<opcode, 0, opcodestr>;
+  defm _64 : EBCPUSHBase<opcode, 1, opcodestr>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -52,7 +77,7 @@ multiclass EBCInst1OpDI<bits<6> opcode,
 //===----------------------------------------------------------------------===//
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0, isCall = 1 in
-def ret : EBCInst16<0b000100, (outs), (ins), "ret", "">;
+def ret : EBCInst16<0b000100, (outs), (ins), "ret", "", []>;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
 def loadsp : EBCInst2Op<0b101001, 0, 0, 0,
@@ -62,7 +87,5 @@ let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
 def storesp : EBCInst2Op<0b101010, 0, 0, 0,
                 (outs GPR:$op1), (ins DR:$op2), "storesp", "$op1, $op2">;
 
-defm pop : EBCInst1OpDI<0b101100,
-                (outs GPR:$op1), (ins), "pop", "$op1">;
-defm push : EBCInst1OpDI<0b101011,
-                (outs), (ins GPR:$op1), "push", "$op1">;
+defm pop  : EBCPOP<0b101100, "pop">;
+defm push : EBCPUSH<0b101011, "push">;

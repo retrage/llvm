@@ -18,6 +18,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/EndianStream.h"
@@ -35,9 +36,11 @@ class EBCMCCodeEmitter : public MCCodeEmitter {
   EBCMCCodeEmitter(const EBCMCCodeEmitter &) = delete;
   void operator=(const EBCMCCodeEmitter &) = delete;
   MCContext &Ctx;
+  MCInstrInfo const &MCII;
 
 public:
-  EBCMCCodeEmitter(MCContext &ctx) : Ctx(ctx) {}
+  EBCMCCodeEmitter(MCContext &ctx, MCInstrInfo const &MCII)
+    : Ctx(ctx), MCII(MCII) {}
 
   ~EBCMCCodeEmitter() override {}
 
@@ -64,15 +67,31 @@ public:
 MCCodeEmitter *llvm::createEBCMCCodeEmitter(const MCInstrInfo &MCII,
                                               const MCRegisterInfo &MRI,
                                               MCContext &Ctx) {
-  return new EBCMCCodeEmitter(Ctx);
+  return new EBCMCCodeEmitter(Ctx, MCII);
 }
 
 void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
                                            SmallVectorImpl<MCFixup> &Fixups,
                                            const MCSubtargetInfo &STI) const {
-  // TODO: Add optional immediate/index support
-  uint16_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
-  support::endian::write(OS, Bits, support::little);
+  const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
+  // Get byte count of instruction
+  unsigned Size = Desc.getSize();
+
+  switch (Size) {
+  default:
+    llvm_unreachable("Unhandled encodeInstruction length!");
+  case 2: {
+    uint16_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
+    support::endian::write<uint16_t>(OS, Bits, support::little);
+    break;
+  }
+  case 4: {
+    uint32_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
+    support::endian::write(OS, Bits, support::little);
+    break;
+  }
+  }
+
   ++MCNumEmitted; // Keep track of the # of mi's emitted.
 }
 

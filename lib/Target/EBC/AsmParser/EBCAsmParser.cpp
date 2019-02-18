@@ -329,8 +329,20 @@ OperandMatchResultTy EBCAsmParser::parseIndirectReg(OperandVector &Operands) {
 /// else true.
 bool EBCAsmParser::parseOperand(OperandVector &Operands){
   // Attempt to parse token as a register
-  if (parseRegister(Operands) == MatchOperand_Success)
-    return false;
+  if (parseRegister(Operands) == MatchOperand_Success) {
+    // Parse immediate if present
+    switch (getLexer().getKind()) {
+    default:
+      return false;
+    case AsmToken::LParen:
+    case AsmToken::Minus:
+    case AsmToken::Plus:
+    case AsmToken::Integer:
+    case AsmToken::String:
+    case AsmToken::Identifier:
+      return parseImmediate(Operands) != MatchOperand_Success;
+    }
+  }
 
   // Attempt to parse token as a indirect register
   if (parseIndirectReg(Operands) == MatchOperand_Success)
