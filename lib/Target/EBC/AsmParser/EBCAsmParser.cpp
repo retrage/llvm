@@ -235,7 +235,7 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_MissingFeature:
     return Error(IDLoc, "instruction use requires an option to be enabled");
   case Match_MnemonicFail:
-    return Error(IDLoc, "unrecongnized instruction mnemonic");
+    return Error(IDLoc, "unrecognized instruction mnemonic");
   case Match_InvalidOperand:
     if (ErrorInfo != ~0U) {
       if (ErrorInfo >= Operands.size())
