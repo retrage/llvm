@@ -61,6 +61,24 @@ multiclass EBCPUSH<bits<6> opcode, string opcodestr> {
   defm _64 : EBCPUSHBase<opcode, 1, opcodestr>;
 }
 
+multiclass EBCPOPn<bits<6> opcode, string opcodestr> {
+  def Op1D : EBCInst1Op<opcode, 0, 0,
+                (outs GPR:$op1), (ins), opcodestr, "$op1">;
+  def Op1I : EBCInst1Op<opcode, 0, 1,
+                (outs GPR:$op1), (ins), opcodestr, "@$op1">;
+  def Op1DImm : EBCInst1OpImm<opcode, 0, 0,
+                (outs GPR:$op1), (ins imm16:$imm), opcodestr, "$op1 $imm">;
+}
+
+multiclass EBCPUSHn<bits<6> opcode, string opcodestr> {
+  def Op1D : EBCInst1Op<opcode, 0, 0,
+                (outs), (ins GPR:$op1), opcodestr, "$op1">;
+  def Op1I : EBCInst1Op<opcode, 0, 1,
+                (outs), (ins GPR:$op1), opcodestr, "@$op1">;
+  def Op1DImm : EBCInst1OpImm<opcode, 0, 0,
+                (outs), (ins GPR:$op1, imm16:$imm), opcodestr, "$op1 $imm">;
+}
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
@@ -76,5 +94,8 @@ let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
 def storesp : EBCInst2Op<0b101010, 0, 0, 0,
                 (outs GPR:$op1), (ins DR:$op2), "storesp", "$op1, $op2">;
 
-defm pop  : EBCPOP<0b101100, "pop">;
-defm push : EBCPUSH<0b101011, "push">;
+defm pop    : EBCPOP<0b101100, "pop">;
+defm push   : EBCPUSH<0b101011, "push">;
+
+defm popn   : EBCPOPn<0b110110, "popn">;
+defm pushn  : EBCPUSHn<0b110101, "pushn">;
