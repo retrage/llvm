@@ -31,17 +31,6 @@ def imm16 : Operand<i16> {
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
-multiclass EBC1OpBase<bits<6> opcode, bit is64Bit,
-                    dag outs, dag ins, string opcodestr, string argstr> {
-  def Op1D : EBCInst1Op<opcode, is64Bit, 0, outs, ins,
-                opcodestr # !if(is64Bit, "64", "32"), argstr>;
-  def Op1I : EBCInst1Op<opcode, is64Bit, 1, outs, ins,
-                opcodestr # !if(is64Bit, "64", "32"), "@" # argstr>;
-  def Op1DImm : EBCInst1OpImm<opcode, is64Bit, 0,
-                outs, !con(ins, !dag(ins, [imm16], ["imm"])),
-                opcodestr # !if(is64Bit, "64", "32"), argstr # " $imm">;
-}
-
 multiclass EBCPOPBase<bits<6> opcode, bit is64Bit, string opcodestr> {
   def Op1D : EBCInst1Op<opcode, is64Bit, 0, (outs GPR:$op1), (ins),
                 opcodestr # !if(is64Bit, "64", "32"), "$op1">;
