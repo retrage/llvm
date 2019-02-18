@@ -70,7 +70,8 @@ MCCodeEmitter *llvm::createEBCMCCodeEmitter(const MCInstrInfo &MCII,
 void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
                                            SmallVectorImpl<MCFixup> &Fixups,
                                            const MCSubtargetInfo &STI) const {
-  uint64_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
+  // TODO: Add optional immediate/index support
+  uint16_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
   support::endian::write(OS, Bits, support::little);
   ++MCNumEmitted; // Keep track of the # of mi's emitted.
 }

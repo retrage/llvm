@@ -48,7 +48,6 @@ class EBCAsmParser : public MCTargetAsmParser {
 
   OperandMatchResultTy parseRegister(OperandVector &Operands);
   OperandMatchResultTy parseImmediate(OperandVector &Operands);
-  OperandMatchResultTy parseIndex(OperandVector &Operands);
 
   bool parseOperand(OperandVector &Operands);
 
@@ -123,15 +122,10 @@ public:
     const MCExpr *Val = getImm();
     return static_cast<const MCConstantExpr *>(Val)->getValue();
   }
-
-  template <int N> bool isImmN() const {
-    return (isConstantImm() && isInt<N>(getConstantImm()));
-  }
   
-  bool isImm8() const { return isImmN<8>(); }
-  bool isImm16() const { return isImmN<16>(); }
-  bool isImm32() const { return isImmN<32>(); }
-  bool isImm64() const { return isImmN<64>(); }
+  bool isImm16() const {
+    return (isConstantImm() && isInt<16>(getConstantImm()));
+  }
 
   SMLoc getStartLoc() const override { return StartLoc; };
   SMLoc getEndLoc() const override { return EndLoc; };
@@ -237,6 +231,7 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_MnemonicFail:
     return Error(IDLoc, "unrecognized instruction mnemonic");
   case Match_InvalidOperand:
+    ErrorLoc = IDLoc;
     if (ErrorInfo != ~0U) {
       if (ErrorInfo >= Operands.size())
         return Error(ErrorLoc, "too few operands for instruction");
@@ -271,6 +266,9 @@ bool EBCAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
 }
 
 OperandMatchResultTy EBCAsmParser::parseRegister(OperandVector &Operands) {
+  SMLoc S = getLoc();
+  SMLoc E = SMLoc::getFromPointer(S.getPointer() - 1);
+
   switch (getLexer().getKind()) {
   default:
     return MatchOperand_NoMatch;
@@ -279,8 +277,6 @@ OperandMatchResultTy EBCAsmParser::parseRegister(OperandVector &Operands) {
     unsigned RegNo = MatchRegisterName(Name);
     if (RegNo == 0)
       return MatchOperand_NoMatch;
-    SMLoc S = getLoc();
-    SMLoc E = SMLoc::getFromPointer(S.getPointer() - 1);
     getLexer().Lex();
     Operands.push_back(EBCOperand::createReg(RegNo, S, E));
   }
@@ -311,67 +307,6 @@ OperandMatchResultTy EBCAsmParser::parseImmediate(OperandVector &Operands) {
   return MatchOperand_Success;
 }
 
-OperandMatchResultTy EBCAsmParser::parseIndex(OperandVector &Operands) {
-  if (getLexer().isNot(AsmToken::LParen))
-    return MatchOperand_NoMatch;
-
-  getParser().Lex(); // Eat '('
-  Operands.push_back(EBCOperand::createToken("(", getLoc()));
-
-  SMLoc NS = getLoc();
-  SMLoc NE = SMLoc::getFromPointer(NS.getPointer() - 1);
-  const MCExpr *NRes;
-
-  switch (getLexer().getKind()) {
-  default:
-    return MatchOperand_ParseFail;
-  case AsmToken::LParen:
-  case AsmToken::Minus:
-  case AsmToken::Plus:
-  case AsmToken::Integer:
-  case AsmToken::Identifier:
-    if (getParser().parseExpression(NRes))
-      return MatchOperand_ParseFail;
-    break;
-  }
-
-  Operands.push_back(EBCOperand::createImm(NRes, NS, NE));
-
-  if (getLexer().isNot(AsmToken::Comma)) {
-    Error(getLoc(), "expected ','");
-    return MatchOperand_ParseFail;
-  }
-
-  SMLoc CS = getLoc();
-  SMLoc CE = SMLoc::getFromPointer(CS.getPointer() - 1);
-  const MCExpr *CRes;
-
-  switch (getLexer().getKind()) {
-  default:
-    return MatchOperand_ParseFail;
-  case AsmToken::LParen:
-  case AsmToken::Minus:
-  case AsmToken::Plus:
-  case AsmToken::Integer:
-  case AsmToken::Identifier:
-    if (getParser().parseExpression(CRes))
-      return MatchOperand_ParseFail;
-    break;
-  }
-
-  Operands.push_back(EBCOperand::createImm(CRes, CS, CE));
-
-  if (getLexer().isNot(AsmToken::RParen)) {
-    Error(getLoc(), "expected ')'");
-    return MatchOperand_ParseFail;
-  }
-
-  getParser().Lex(); // Eat ')'
-  Operands.push_back(EBCOperand::createToken(")", getLoc()));
-
-  return MatchOperand_Success;
-}
-
 /// Looks at a token type and creates the relevant operand from this
 /// information, adding to Operands. If operand was parsed, return false,
 /// else true.
@@ -382,10 +317,6 @@ bool EBCAsmParser::parseOperand(OperandVector &Operands){
 
   // Attempt to parse token as an immediate
   if (parseImmediate(Operands) == MatchOperand_Success)
-    return false;
-
-  // Attempt to parse token as an index
-  if (parseIndex(Operands) == MatchOperand_Success)
     return false;
 
   // Finally we have exhausted all options and must declare defeat

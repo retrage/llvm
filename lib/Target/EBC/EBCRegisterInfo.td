@@ -24,19 +24,20 @@ class EBCDReg<bits<3> Enc, string n> : Register<n> {
 }
 
 // General Purpose VM Register
-def R0 : EBCGPReg<0, "R0">;
-def R1 : EBCGPReg<1, "R1">;
-def R2 : EBCGPReg<2, "R2">;
-def R3 : EBCGPReg<3, "R3">;
-def R4 : EBCGPReg<4, "R4">;
-def R5 : EBCGPReg<5, "R5">;
-def R6 : EBCGPReg<6, "R6">;
-def R7 : EBCGPReg<7, "R7">;
+def r0 : EBCGPReg<0, "r0">;
+def r1 : EBCGPReg<1, "r1">;
+def r2 : EBCGPReg<2, "r2">;
+def r3 : EBCGPReg<3, "r3">;
+def r4 : EBCGPReg<4, "r4">;
+def r5 : EBCGPReg<5, "r5">;
+def r6 : EBCGPReg<6, "r6">;
+def r7 : EBCGPReg<7, "r7">;
 
 // Dedicated VM Register
-def FLAGS : EBCDReg<0, "FLAGS">;
-def IP    : EBCDReg<1, "IP">;
+def flags : EBCDReg<0, "flags">;
+def ip    : EBCDReg<1, "ip">;
 
 // Register classes
-def GPR : RegisterClass<"EBC", [i64], 64, (add (sequence "R%u", 0, 7))>;
-def DR : RegisterClass<"EBC", [i64], 64, (add FLAGS, IP)>;
+def GPR : RegisterClass<"EBC", [i64], 64, (add (sequence "r%u", 0, 7))>;
+def DR  : RegisterClass<"EBC", [i64], 64, (add flags, ip)>;
+def FR  : RegisterClass<"EBC", [i64], 64, (add flags)>;

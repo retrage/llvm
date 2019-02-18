@@ -43,7 +43,7 @@ static MCInstrInfo *createEBCMCInstrInfo() {
 
 static MCRegisterInfo *createEBCMCRegisterInfo(const Triple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitEBCMCRegisterInfo(X, EBC::R1);
+  InitEBCMCRegisterInfo(X, EBC::r1);
   return X;
 }
 
