@@ -7,14 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-class EBCOpcode<bits<6> val> {
-  bits<6> Value = val;
-}
-
-def OPC_RET     : EBCOpcode<0b000100>;
-def OPC_LOADSP  : EBCOpcode<0b101001>;
-def OPC_STORESP : EBCOpcode<0b101010>;
-
 class EBCInst<dag outs, dag ins, string opcodestr, string argstr,
               list<dag> pattern>
     : Instruction {
@@ -34,24 +26,39 @@ class Pseudo<dag outs, dag ins, list<dag> pattern>
   let isCodeGenOnly = 1;
 }
 
-class EBCInst16<EBCOpcode opcode, dag outs, dag ins,
+class EBCInst16<bits<6> opcode, dag outs, dag ins,
                 string opcodestr, string argstr>
     : EBCInst<outs, ins, opcodestr, argstr, []> {
   field bits<16> Inst;
   field bits<16> SoftFail = 0;
   let Size = 2;
 
-  let Opcode = opcode.Value;
+  let Opcode = opcode;
 
   let Inst{5-0} = Opcode;
 }
 
-class EBCInst2Op<EBCOpcode opcode, dag outs, dag ins,
-                string opcodestr, string argstr>
+class EBCInst1Op<bits<6> opcode,
+                bit is64Bit, bit Op1Indirect,
+                dag outs, dag ins, string opcodestr, string argstr>
+    : EBCInst16<opcode, outs, ins, opcodestr, argstr> {
+  bits<3> Op1;
+
+  let Inst{7} = is64Bit;
+  let Inst{10-8} = Op1;
+  let Inst{11} = Op1Indirect;
+}
+
+class EBCInst2Op<bits<6> opcode,
+                bit is64Bit, bit Op1Indirect, bit Op2Indirect,
+                dag outs, dag ins, string opcodestr, string argstr>
     : EBCInst16<opcode, outs, ins, opcodestr, argstr> {
   bits<3> Op1;
   bits<3> Op2;
 
+  let Inst{7} = is64Bit;
   let Inst{10-8} = Op1;
   let Inst{14-12} = Op2;
+  let Inst{11} = Op1Indirect;
+  let Inst{15} = Op2Indirect;
 }

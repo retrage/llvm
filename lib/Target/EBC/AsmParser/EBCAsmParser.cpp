@@ -48,6 +48,7 @@ class EBCAsmParser : public MCTargetAsmParser {
 
   OperandMatchResultTy parseRegister(OperandVector &Operands);
   OperandMatchResultTy parseImmediate(OperandVector &Operands);
+  OperandMatchResultTy parseIndirectReg(OperandVector &Operands);
 
   bool parseOperand(OperandVector &Operands);
 
@@ -306,6 +307,22 @@ OperandMatchResultTy EBCAsmParser::parseImmediate(OperandVector &Operands) {
   Operands.push_back(EBCOperand::createImm(Res, S, E));
   return MatchOperand_Success;
 }
+OperandMatchResultTy EBCAsmParser::parseIndirectReg(OperandVector &Operands) {
+  if (getLexer().isNot(AsmToken::At)) {
+    Error(getLoc(), "expected '@'");
+    return MatchOperand_ParseFail;
+  }
+
+  getParser().Lex(); // Eat '@'
+  Operands.push_back(EBCOperand::createToken("@", getLoc()));
+
+  if (parseRegister(Operands) != MatchOperand_Success) {
+    Error(getLoc(), "expected register");
+    return MatchOperand_ParseFail;
+  }
+
+  return MatchOperand_Success;
+}
 
 /// Looks at a token type and creates the relevant operand from this
 /// information, adding to Operands. If operand was parsed, return false,
@@ -313,6 +330,10 @@ OperandMatchResultTy EBCAsmParser::parseImmediate(OperandVector &Operands) {
 bool EBCAsmParser::parseOperand(OperandVector &Operands){
   // Attempt to parse token as a register
   if (parseRegister(Operands) == MatchOperand_Success)
+    return false;
+
+  // Attempt to parse token as a indirect register
+  if (parseIndirectReg(Operands) == MatchOperand_Success)
     return false;
 
   // Attempt to parse token as an immediate
