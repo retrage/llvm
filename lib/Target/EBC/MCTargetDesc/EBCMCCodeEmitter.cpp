@@ -60,6 +60,8 @@ public:
                              SmallVectorImpl<MCFixup> &Fixups,
                              const MCSubtargetInfo &STI) const;
 
+  uint16_t getIdx16Value(const MCOperand &NMO, const MCOperand &CMO) const;
+
 };
 
 } // end anonymous namespace
@@ -97,6 +99,18 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
       case EBC::OPERAND_IMM16:
         support::endian::write<uint16_t>(OS, MO.getImm(), support::little);
         break;
+      case EBC::OPERAND_IDXN16: {
+          // Assume next operand is OPERAND_IDXC16
+          const MCOperand &CMO = MI.getOperand(I + 1);
+          uint16_t Index = getIdx16Value(MO, CMO);
+          support::endian::write<uint16_t>(OS, Index, support::little);
+          // Skip next operand
+          ++I;
+          break;
+        }
+      case EBC::OPERAND_IDXC16:
+        // It must not be occurred
+        break;
       default:
         llvm_unreachable("Unhandled OperandType!");
       }
@@ -119,6 +133,13 @@ EBCMCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
 
   llvm_unreachable("Unhandled expression!");
   return 0;
+}
+
+uint16_t
+EBCMCCodeEmitter::getIdx16Value(const MCOperand &NMO, const MCOperand &CMO) const {
+  // TODO: Add validations and encodings
+  uint16_t Index = NMO.getImm() & CMO.getImm();
+  return Index;
 }
 
 #include "EBCGenMCCodeEmitter.inc"

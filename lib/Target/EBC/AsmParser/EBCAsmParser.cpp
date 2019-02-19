@@ -22,6 +22,8 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/TargetRegistry.h"
 
+#include <limits>
+
 using namespace llvm;
 
 namespace {
@@ -29,6 +31,9 @@ struct EBCOperand;
 
 class EBCAsmParser : public MCTargetAsmParser {
   SMLoc getLoc() const { return getParser().getTok().getLoc(); }
+
+  bool generateImmOutOfRangeError(OperandVector &Operands, uint64_t ErrorInfo,
+                                  int64_t Lower, int64_t Upper, Twine Msg);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                               OperandVector &Operands, MCStreamer &Out,
@@ -49,6 +54,7 @@ class EBCAsmParser : public MCTargetAsmParser {
   OperandMatchResultTy parseRegister(OperandVector &Operands);
   OperandMatchResultTy parseImmediate(OperandVector &Operands);
   OperandMatchResultTy parseIndirectReg(OperandVector &Operands);
+  OperandMatchResultTy parseIndex(OperandVector &Operands);
 
   bool parseOperand(OperandVector &Operands);
 
@@ -123,10 +129,16 @@ public:
     const MCExpr *Val = getImm();
     return static_cast<const MCConstantExpr *>(Val)->getValue();
   }
-  
-  bool isImm16() const {
-    return (isConstantImm() && isInt<16>(getConstantImm()));
+
+  template <int N> bool isImmN() const {
+    return (isConstantImm() && isInt<N>(getConstantImm()));
   }
+
+  bool isImm16() const { return isImmN<16>(); }
+
+  bool isIdxN16() const { return isImmN<12>(); }
+
+  bool isIdxC16() const { return isImmN<12>(); }
 
   SMLoc getStartLoc() const override { return StartLoc; };
   SMLoc getEndLoc() const override { return EndLoc; };
@@ -152,7 +164,7 @@ public:
       OS << "'" << getToken() << "'";
       break;
     case Register:
-      OS << "<register: R" << getReg() << ">";
+      OS << "<register: r" << getReg() << ">";
       break;
     case Immediate:
       OS << *getImm();
@@ -210,6 +222,12 @@ public:
 #define GET_REGISTER_MATCHER
 #define GET_MATCHER_IMPLEMENTATION
 #include "EBCGenAsmMatcher.inc"
+bool EBCAsmParser::generateImmOutOfRangeError(
+    OperandVector &Operands, uint64_t ErrorInfo, int64_t Lower, int64_t Upper,
+    Twine Msg = "immediate must be an integer in the range") {
+  SMLoc ErrorLoc = ((EBCOperand &)*Operands[ErrorInfo]).getStartLoc();
+  return Error(ErrorLoc, Msg + " [" + Twine(Lower) + ", " + Twine(Upper) + "]");
+}
 
 bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                           OperandVector &Operands,
@@ -243,8 +261,14 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     }
     return Error(ErrorLoc, "invalid operand for instruction");
   case Match_InvalidImm16:
-    ErrorLoc = ((EBCOperand &)*Operands[ErrorInfo]).getStartLoc();
-    return Error(ErrorLoc, "immediate must be integer in range [-32768, 32767]");
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, -(1 << 16), (1 << 16));
+  case Match_InvalidIdxN16:
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, -(1 << 12), (1 << 12));
+  case Match_InvalidIdxC16:
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, -(1 << 12), (1 << 12));
   }
 
   llvm_unreachable("Unknown match type detected!");
@@ -309,7 +333,6 @@ OperandMatchResultTy EBCAsmParser::parseImmediate(OperandVector &Operands) {
 }
 OperandMatchResultTy EBCAsmParser::parseIndirectReg(OperandVector &Operands) {
   if (getLexer().isNot(AsmToken::At)) {
-    Error(getLoc(), "expected '@'");
     return MatchOperand_ParseFail;
   }
 
@@ -320,6 +343,43 @@ OperandMatchResultTy EBCAsmParser::parseIndirectReg(OperandVector &Operands) {
     Error(getLoc(), "expected register");
     return MatchOperand_ParseFail;
   }
+
+  return MatchOperand_Success;
+}
+
+OperandMatchResultTy EBCAsmParser::parseIndex(OperandVector &Operands) {
+  if (getLexer().isNot(AsmToken::LParen)) {
+    Error(getLoc(), "expected '('");
+    return MatchOperand_ParseFail;
+  }
+
+  getParser().Lex(); // Eat '('
+  Operands.push_back(EBCOperand::createToken("(", getLoc()));
+
+  if (parseImmediate(Operands) != MatchOperand_Success) {
+    Error(getLoc(), "expected natural unit");
+    return MatchOperand_ParseFail;
+  }
+
+  if (getLexer().isNot(AsmToken::Comma)) {
+    Error(getLoc(), "expected ','");
+    return MatchOperand_ParseFail;
+  }
+
+  getParser().Lex(); // Eat ','
+
+  if (parseImmediate(Operands) != MatchOperand_Success) {
+    Error(getLoc(), "expected constant unit");
+    return MatchOperand_ParseFail;
+  }
+
+  if (getLexer().isNot(AsmToken::RParen)) {
+    Error(getLoc(), "expected ')'");
+    return MatchOperand_ParseFail;
+  }
+
+  getParser().Lex(); // Eat ')'
+  Operands.push_back(EBCOperand::createToken(")", getLoc()));
 
   return MatchOperand_Success;
 }
@@ -345,8 +405,12 @@ bool EBCAsmParser::parseOperand(OperandVector &Operands){
   }
 
   // Attempt to parse token as a indirect register
-  if (parseIndirectReg(Operands) == MatchOperand_Success)
+  if (parseIndirectReg(Operands) == MatchOperand_Success) {
+    // Parse index if present
+    if (getLexer().is(AsmToken::LParen))
+      return parseIndex(Operands) != MatchOperand_Success;
     return false;
+  }
 
   // Attempt to parse token as an immediate
   if (parseImmediate(Operands) == MatchOperand_Success)
@@ -371,7 +435,6 @@ bool EBCAsmParser::ParseInstruction(ParseInstructionInfo &Info,
   if (parseOperand(Operands))
     return true;
 
-  // TODO: Allow natural index
   // parse until end of statement, consuming commas between operands
   while (getLexer().is(AsmToken::Comma)) {
     // Consume comma token

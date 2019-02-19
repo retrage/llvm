@@ -50,6 +50,10 @@ namespace EBC {
 enum OperandType {
   /// 16-bit immediates
   OPERAND_IMM16,
+  /// 16-bit index natural units
+  OPERAND_IDXN16,
+  /// 16-bit index constant units
+  OPERAND_IDXC16,
 };
 }
 
