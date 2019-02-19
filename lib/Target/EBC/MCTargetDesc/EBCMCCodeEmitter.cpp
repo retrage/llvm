@@ -85,11 +85,22 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
     support::endian::write<uint16_t>(OS, Bits, support::little);
     break;
   }
-  case 4: {
-    uint32_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
-    support::endian::write(OS, Bits, support::little);
-    break;
   }
+
+  for (unsigned I = 0, E = MI.getNumOperands(); I < E; ++I) {
+    const MCOperand &MO = MI.getOperand(I);
+    if (MO.isReg()) {
+      /* nothing to encode */
+    } else if (MO.isImm()) {
+      const MCOperandInfo &Info = Desc.OpInfo[I];
+      switch (Info.OperandType) {
+      case EBC::OPERAND_IMM16:
+        support::endian::write<uint16_t>(OS, MO.getImm(), support::little);
+        break;
+      default:
+        llvm_unreachable("Unhandled OperandType!");
+      }
+    }
   }
 
   ++MCNumEmitted; // Keep track of the # of mi's emitted.

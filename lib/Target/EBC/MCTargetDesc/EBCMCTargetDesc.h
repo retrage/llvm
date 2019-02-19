@@ -45,6 +45,14 @@ MCAsmBackend *createEBCAsmBackend(const Target &T, const MCSubtargetInfo &STI,
                                     const MCTargetOptions &Options);
 
 std::unique_ptr<MCObjectTargetWriter> createEBCCOFFObjectWriter();
+
+namespace EBC {
+enum OperandType {
+  /// 16-bit immediates
+  OPERAND_IMM16,
+};
+}
+
 }
 
 // Defines symbolic names for EBC registers.

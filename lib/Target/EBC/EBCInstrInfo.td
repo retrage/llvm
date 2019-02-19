@@ -23,30 +23,35 @@ class ImmAsmOperand<int width> : AsmOperandClass {
   let DiagnosticType = !strconcat("Invalid", Name);
 }
 
+let OperandNamespace = "EBC" in {
+
+let OperandType = "OPERAND_IMM16" in
 def imm16 : Operand<i16> {
   let ParserMatchClass = ImmAsmOperand<16>;
 }
+
+} // OperandNamespace = "EBC"
 
 //===----------------------------------------------------------------------===//
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
 multiclass EBCPOPBase<bits<6> opcode, bit is64Bit, string opcodestr> {
-  def Op1D : EBCInst1Op<opcode, is64Bit, 0, (outs GPR:$op1), (ins),
+  def Op1D : EBCInst1Op<opcode, 0, is64Bit, 0, (outs GPR:$op1), (ins),
                 opcodestr # !if(is64Bit, "64", "32"), "$op1">;
-  def Op1I : EBCInst1Op<opcode, is64Bit, 1, (outs GPR:$op1), (ins),
+  def Op1I : EBCInst1Op<opcode, 0, is64Bit, 1, (outs GPR:$op1), (ins),
                 opcodestr # !if(is64Bit, "64", "32"), "@$op1">;
-  def Op1DImm : EBCInst1OpImm<opcode, is64Bit, 0,
+  def Op1DImm : EBCInst1Op<opcode, 1, is64Bit, 0,
                 (outs GPR:$op1), (ins imm16:$imm),
                 opcodestr # !if(is64Bit, "64", "32"), "$op1 $imm">;
 }
 
 multiclass EBCPUSHBase<bits<6> opcode, bit is64Bit, string opcodestr> {
-  def Op1D : EBCInst1Op<opcode, is64Bit, 0, (outs), (ins GPR:$op1),
+  def Op1D : EBCInst1Op<opcode, 0, is64Bit, 0, (outs), (ins GPR:$op1),
                 opcodestr # !if(is64Bit, "64", "32"), "$op1">;
-  def Op1I : EBCInst1Op<opcode, is64Bit, 1, (outs), (ins GPR:$op1),
+  def Op1I : EBCInst1Op<opcode, 0, is64Bit, 1, (outs), (ins GPR:$op1),
                 opcodestr # !if(is64Bit, "64", "32"), "@$op1">;
-  def Op1DImm : EBCInst1OpImm<opcode, is64Bit, 0,
+  def Op1DImm : EBCInst1Op<opcode, 1, is64Bit, 0,
                 (outs), (ins GPR:$op1, imm16:$imm),
                 opcodestr # !if(is64Bit, "64", "32"), "$op1 $imm">;
 }
@@ -62,20 +67,20 @@ multiclass EBCPUSH<bits<6> opcode, string opcodestr> {
 }
 
 multiclass EBCPOPn<bits<6> opcode, string opcodestr> {
-  def Op1D : EBCInst1Op<opcode, 0, 0,
+  def Op1D : EBCInst1Op<opcode, 0, 0, 0,
                 (outs GPR:$op1), (ins), opcodestr, "$op1">;
-  def Op1I : EBCInst1Op<opcode, 0, 1,
+  def Op1I : EBCInst1Op<opcode, 0, 0, 1,
                 (outs GPR:$op1), (ins), opcodestr, "@$op1">;
-  def Op1DImm : EBCInst1OpImm<opcode, 0, 0,
+  def Op1DImm : EBCInst1Op<opcode, 1, 0, 0,
                 (outs GPR:$op1), (ins imm16:$imm), opcodestr, "$op1 $imm">;
 }
 
 multiclass EBCPUSHn<bits<6> opcode, string opcodestr> {
-  def Op1D : EBCInst1Op<opcode, 0, 0,
+  def Op1D : EBCInst1Op<opcode, 0, 0, 0,
                 (outs), (ins GPR:$op1), opcodestr, "$op1">;
-  def Op1I : EBCInst1Op<opcode, 0, 1,
+  def Op1I : EBCInst1Op<opcode, 0, 0, 1,
                 (outs), (ins GPR:$op1), opcodestr, "@$op1">;
-  def Op1DImm : EBCInst1OpImm<opcode, 0, 0,
+  def Op1DImm : EBCInst1Op<opcode, 1, 0, 0,
                 (outs), (ins GPR:$op1, imm16:$imm), opcodestr, "$op1 $imm">;
 }
 
