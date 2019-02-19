@@ -48,6 +48,8 @@ std::unique_ptr<MCObjectTargetWriter> createEBCCOFFObjectWriter();
 
 namespace EBC {
 enum OperandType {
+  /// break code
+  OPERAND_BREAKCODE,
   /// 16-bit immediates
   OPERAND_IMM16,
   /// 16-bit index natural units

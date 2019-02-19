@@ -134,6 +134,13 @@ public:
     return (isConstantImm() && isInt<N>(getConstantImm()));
   }
 
+  bool isBreakCode8() const {
+    if (!isConstantImm())
+      return false;
+    int64_t Imm = getConstantImm();
+    return (Imm >= 0 && Imm <= 6);
+  }
+
   bool isImm16() const { return isImmN<16>(); }
 
   bool isIdxN16() const { return isImmN<12>(); }
@@ -260,6 +267,10 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
         ErrorLoc = IDLoc;
     }
     return Error(ErrorLoc, "invalid operand for instruction");
+  case Match_InvalidBreakCode8:
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, 0, 6,
+        "break code must be an integer in the range");
   case Match_InvalidImm16:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 16), (1 << 16));

@@ -82,6 +82,11 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
   switch (Size) {
   default:
     llvm_unreachable("Unhandled encodeInstruction length!");
+  case 1: {
+    uint8_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
+    support::endian::write<uint8_t>(OS, Bits, support::little);
+    break;
+  }
   case 2: {
     uint16_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
     support::endian::write<uint16_t>(OS, Bits, support::little);
@@ -96,6 +101,9 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
     } else if (MO.isImm()) {
       const MCOperandInfo &Info = Desc.OpInfo[I];
       switch (Info.OperandType) {
+      case EBC::OPERAND_BREAKCODE:
+        support::endian::write<uint8_t>(OS, MO.getImm(), support::little);
+        break;
       case EBC::OPERAND_IMM16:
         support::endian::write<uint16_t>(OS, MO.getImm(), support::little);
         break;

@@ -17,6 +17,12 @@ include "EBCInstrFormats.td"
 // Operand and SDNode transformation definitions.
 //===----------------------------------------------------------------------===//
 
+class BreakCodeAsmOperand<int width> : AsmOperandClass {
+  let Name = "BreakCode" # width;
+  let RenderMethod = "addImmOperands";
+  let DiagnosticType = !strconcat("Invalid", Name);
+}
+
 class ImmAsmOperand<int width> : AsmOperandClass {
   let Name = "Imm" # width;
   let RenderMethod = "addImmOperands";
@@ -36,6 +42,11 @@ class IdxCAsmOperand<int width> : AsmOperandClass {
 }
 
 let OperandNamespace = "EBC" in {
+
+let OperandType = "OPERAND_BREAKCODE" in
+def breakcode : Operand<i8> {
+  let ParserMatchClass = BreakCodeAsmOperand<8>;
+}
 
 let OperandType = "OPERAND_IMM16" in
 def imm16 : Operand<i16> {
@@ -146,6 +157,16 @@ multiclass EBC1OpnBase<bits<6> opcode,
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
+
+let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in
+def ebcbreak : EBCInst<0b000000,
+                (outs), (ins breakcode:$code), "break", "$code", []> {
+  field bits<8> Inst;
+  field bits<8> SoftFail = 0;
+  let Size = 1;
+
+  let Inst{5-0} = Opcode;
+}
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0, isCall = 1 in
 def ret : EBCInst16<0b000100, (outs), (ins), "ret", "", []>;
