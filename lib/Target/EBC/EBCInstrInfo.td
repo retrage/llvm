@@ -36,52 +36,34 @@ def imm16 : Operand<i16> {
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
-multiclass EBCPOPBase<bits<6> opcode, bit is64Bit, string opcodestr> {
-  def Op1D : EBCInst1Op<opcode, 0, is64Bit, 0, (outs GPR:$op1), (ins),
-                opcodestr # !if(is64Bit, "64", "32"), "$op1">;
-  def Op1I : EBCInst1Op<opcode, 0, is64Bit, 1, (outs GPR:$op1), (ins),
-                opcodestr # !if(is64Bit, "64", "32"), "@$op1">;
-  def Op1DImm : EBCInst1Op<opcode, 1, is64Bit, 0,
-                (outs GPR:$op1), (ins imm16:$imm),
-                opcodestr # !if(is64Bit, "64", "32"), "$op1 $imm">;
+multiclass EBCOp1BaseCommon<bits<6> opcode, bit is64Bit,
+                dag outs, dag ins, dag immins,
+                string opcodestr, string op1str, string immstr> {
+  def Op1D : EBCInst1Op<opcode, 0, is64Bit, 0, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32"), op1str>;
+  def Op1I : EBCInst1Op<opcode, 0, is64Bit, 1, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32"), "@" # op1str>;
+  def Op1DImm : EBCInst1Op<opcode, 1, is64Bit, 0, outs, !con(ins, immins),
+                opcodestr # !if(is64Bit, "64", "32"), op1str # " " # immstr>;
 }
 
-multiclass EBCPUSHBase<bits<6> opcode, bit is64Bit, string opcodestr> {
-  def Op1D : EBCInst1Op<opcode, 0, is64Bit, 0, (outs), (ins GPR:$op1),
-                opcodestr # !if(is64Bit, "64", "32"), "$op1">;
-  def Op1I : EBCInst1Op<opcode, 0, is64Bit, 1, (outs), (ins GPR:$op1),
-                opcodestr # !if(is64Bit, "64", "32"), "@$op1">;
-  def Op1DImm : EBCInst1Op<opcode, 1, is64Bit, 0,
-                (outs), (ins GPR:$op1, imm16:$imm),
-                opcodestr # !if(is64Bit, "64", "32"), "$op1 $imm">;
+multiclass EBCOp1Base<bits<6> opcode,
+                dag outs, dag ins, dag immins,
+                string opcodestr, string op1str, string immstr> {
+  defm _32 : EBCOp1BaseCommon<opcode, 0, outs, ins, immins,
+                opcodestr, op1str, immstr>;
+  defm _64 : EBCOp1BaseCommon<opcode, 1, outs, ins, immins,
+                opcodestr, op1str, immstr>;
 }
 
-multiclass EBCPOP<bits<6> opcode, string opcodestr> {
-  defm _32 : EBCPOPBase<opcode, 0, opcodestr>;
-  defm _64 : EBCPOPBase<opcode, 1, opcodestr>;
-}
-
-multiclass EBCPUSH<bits<6> opcode, string opcodestr> {
-  defm _32 : EBCPUSHBase<opcode, 0, opcodestr>;
-  defm _64 : EBCPUSHBase<opcode, 1, opcodestr>;
-}
-
-multiclass EBCPOPn<bits<6> opcode, string opcodestr> {
+multiclass EBCOp1nBase<bits<6> opcode, dag outs, dag ins, dag immins,
+                string opcodestr, string op1str, string immstr> {
   def Op1D : EBCInst1Op<opcode, 0, 0, 0,
-                (outs GPR:$op1), (ins), opcodestr, "$op1">;
+                outs, ins, opcodestr, op1str>;
   def Op1I : EBCInst1Op<opcode, 0, 0, 1,
-                (outs GPR:$op1), (ins), opcodestr, "@$op1">;
+                outs, ins, opcodestr, "@" # op1str>;
   def Op1DImm : EBCInst1Op<opcode, 1, 0, 0,
-                (outs GPR:$op1), (ins imm16:$imm), opcodestr, "$op1 $imm">;
-}
-
-multiclass EBCPUSHn<bits<6> opcode, string opcodestr> {
-  def Op1D : EBCInst1Op<opcode, 0, 0, 0,
-                (outs), (ins GPR:$op1), opcodestr, "$op1">;
-  def Op1I : EBCInst1Op<opcode, 0, 0, 1,
-                (outs), (ins GPR:$op1), opcodestr, "@$op1">;
-  def Op1DImm : EBCInst1Op<opcode, 1, 0, 0,
-                (outs), (ins GPR:$op1, imm16:$imm), opcodestr, "$op1 $imm">;
+                outs, !con(ins, immins), opcodestr, op1str # " " # immstr>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -99,8 +81,16 @@ let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
 def storesp : EBCInst2Op<0b101010, 0, 0, 0,
                 (outs GPR:$op1), (ins DR:$op2), "storesp", "$op1, $op2">;
 
-defm pop    : EBCPOP<0b101100, "pop">;
-defm push   : EBCPUSH<0b101011, "push">;
+defm pop    : EBCOp1Base<0b101100,
+            (outs GPR:$op1), (ins), (ins imm16:$imm),
+            "pop", "$op1", "$imm">;
+defm push   : EBCOp1Base<0b101011,
+            (outs), (ins GPR:$op1), (ins imm16:$imm),
+            "push", "$op1", "$imm">;
 
-defm popn   : EBCPOPn<0b110110, "popn">;
-defm pushn  : EBCPUSHn<0b110101, "pushn">;
+defm popn   : EBCOp1nBase<0b110110,
+            (outs GPR:$op1), (ins), (ins imm16:$imm),
+            "popn", "$op1", "$imm">;
+defm pushn  : EBCOp1nBase<0b110101,
+            (outs), (ins GPR:$op1), (ins imm16:$imm),
+            "pushn", "$op1", "$imm">;
