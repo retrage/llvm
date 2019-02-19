@@ -58,7 +58,7 @@ def idxc16 : Operand<i16> {
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
-multiclass EBCOp1BaseCommon<bits<6> opcode, bit is64Bit,
+multiclass EBC1OpBaseCommon<bits<6> opcode, bit is64Bit,
                 dag outs, dag ins, dag immins, dag idxins,
                 string opcodestr, string op1str,
                 string immstr, string idxstr> {
@@ -74,17 +74,62 @@ multiclass EBCOp1BaseCommon<bits<6> opcode, bit is64Bit,
                 "@" # op1str # " " # idxstr>;
 }
 
-multiclass EBCOp1Base<bits<6> opcode,
+multiclass EBC2OpBaseCommon<bits<6> opcode, bit is64Bit,
+                dag outs, dag ins, dag immins, dag idxins,
+                string opcodestr, string op1str, string op2str,
+                string immstr, string idxstr> {
+  def Op1DOp2D : EBCInst2Op<opcode, 0, is64Bit, 0, 0, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32"),
+                op1str # " " # op2str>;
+  def Op1IOp2D : EBCInst2Op<opcode, 0, is64Bit, 1, 0, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32"),
+                "@" # op1str # " " # op2str>;
+  def Op1DOp2I : EBCInst2Op<opcode, 0, is64Bit, 0, 1, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32"),
+                op1str # " " # "@" # op2str>;
+  def Op1IOp2I : EBCInst2Op<opcode, 0, is64Bit, 1, 1, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32"),
+                "@" # op1str # " " # "@" # op2str>;
+  def Op1DOp2DImm : EBCInst2Op<opcode, 0, is64Bit, 0, 0,
+                outs, !con(ins, immins),
+                opcodestr # !if(is64Bit, "64", "32"),
+                op1str # " " # op2str # " " # immstr>;
+  def Op1IOp2DImm : EBCInst2Op<opcode, 0, is64Bit, 1, 0,
+                outs, !con(ins, immins),
+                opcodestr # !if(is64Bit, "64", "32"),
+                "@" # op1str # " " # op2str # " " # immstr>;
+  def Op1DOp2IIdx : EBCInst2Op<opcode, 0, is64Bit, 0, 1,
+                outs, !con(ins, idxins),
+                opcodestr # !if(is64Bit, "64", "32"),
+                op1str # " " # "@" # op2str # " " # idxstr>;
+  def Op1IOp2IIdx : EBCInst2Op<opcode, 0, is64Bit, 1, 1,
+                outs, !con(ins, idxins),
+                opcodestr # !if(is64Bit, "64", "32"),
+                "@" # op1str # " " # "@" # op2str # " " # idxstr>;
+}
+
+multiclass EBC2OpBase<bits<6> opcode, string opcodestr> {
+  defm _32 : EBC2OpBaseCommon<opcode, 0,
+                (outs GPR:$dst), (ins GPR:$op1, GPR:$op2),
+                (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
+                opcodestr, "$op1", "$op2", "$imm", "(${idxn},${idxc})">;
+  defm _64 : EBC2OpBaseCommon<opcode, 1,
+                (outs GPR:$dst), (ins GPR:$op1, GPR:$op2),
+                (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
+                opcodestr, "$op1", "$op2", "$imm", "(${idxn},${idxc})">;
+}
+
+multiclass EBC1OpBase<bits<6> opcode,
                 dag outs, dag ins, dag immins, dag idxins,
                 string opcodestr, string op1str,
                 string immstr, string idxstr> {
-  defm _32 : EBCOp1BaseCommon<opcode, 0, outs, ins, immins, idxins,
+  defm _32 : EBC1OpBaseCommon<opcode, 0, outs, ins, immins, idxins,
                 opcodestr, op1str, immstr, idxstr>;
-  defm _64 : EBCOp1BaseCommon<opcode, 1, outs, ins, immins, idxins,
+  defm _64 : EBC1OpBaseCommon<opcode, 1, outs, ins, immins, idxins,
                 opcodestr, op1str, immstr, idxstr>;
 }
 
-multiclass EBCOp1nBase<bits<6> opcode,
+multiclass EBC1OpnBase<bits<6> opcode,
                 dag outs, dag ins, dag immins, dag idxins,
                 string opcodestr, string op1str,
                 string immstr, string idxstr> {
@@ -106,27 +151,48 @@ let hasSideEffects = 0, mayLoad = 0, mayStore = 0, isCall = 1 in
 def ret : EBCInst16<0b000100, (outs), (ins), "ret", "", []>;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def loadsp : EBCInst2Op<0b101001, 0, 0, 0,
+def loadsp : EBCInst2Op<0b101001, 0, 0, 0, 0,
                 (outs FR:$op1), (ins GPR:$op2), "loadsp", "$op1, $op2">;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def storesp : EBCInst2Op<0b101010, 0, 0, 0,
+def storesp : EBCInst2Op<0b101010, 0, 0, 0, 0,
                 (outs GPR:$op1), (ins DR:$op2), "storesp", "$op1, $op2">;
 
-defm pop    : EBCOp1Base<0b101100,
+defm pop    : EBC1OpBase<0b101100,
             (outs GPR:$op1), (ins),
             (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
             "pop", "$op1", "$imm", "(${idxn},${idxc})">;
-defm push   : EBCOp1Base<0b101011,
+defm push   : EBC1OpBase<0b101011,
             (outs), (ins GPR:$op1),
             (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
             "push", "$op1", "$imm", "(${idxn},${idxc})">;
 
-defm popn   : EBCOp1nBase<0b110110,
+defm popn   : EBC1OpnBase<0b110110,
             (outs GPR:$op1), (ins),
             (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
             "popn", "$op1", "$imm", "(${idxn},${idxc})">;
-defm pushn  : EBCOp1nBase<0b110101,
+defm pushn  : EBC1OpnBase<0b110101,
             (outs), (ins GPR:$op1),
             (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
             "pushn", "$op1", "$imm", "(${idxn},${idxc})">;
+
+defm not    : EBC2OpBase<0b001010, "not">;
+defm neg    : EBC2OpBase<0b001011, "neg">;
+defm add    : EBC2OpBase<0b001100, "add">;
+defm sub    : EBC2OpBase<0b001101, "sub">;
+defm mul    : EBC2OpBase<0b001110, "mul">;
+defm mulu   : EBC2OpBase<0b001111, "mulu">;
+defm div    : EBC2OpBase<0b010000, "div">;
+defm divu   : EBC2OpBase<0b010001, "divu">;
+defm mod    : EBC2OpBase<0b010010, "mod">;
+defm modu   : EBC2OpBase<0b010011, "modu">;
+defm and    : EBC2OpBase<0b010100, "and">;
+defm or     : EBC2OpBase<0b010101, "or">;
+defm xor    : EBC2OpBase<0b010110, "xor">;
+defm shl    : EBC2OpBase<0b010111, "shl">;
+defm shr    : EBC2OpBase<0b011000, "shr">;
+defm ashr   : EBC2OpBase<0b011001, "ashr">;
+
+defm extndb : EBC2OpBase<0b011010, "extndb">;
+defm extndw : EBC2OpBase<0b011011, "extndw">;
+defm extndd : EBC2OpBase<0b011100, "extndd">;
