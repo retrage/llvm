@@ -91,32 +91,32 @@ multiclass EBC2OpBaseCommon<bits<6> opcode, bit is64Bit,
                 string immstr, string idxstr> {
   def Op1DOp2D : EBCInst2Op<opcode, 0, is64Bit, 0, 0, outs, ins,
                 opcodestr # !if(is64Bit, "64", "32"),
-                op1str # " " # op2str>;
+                op1str # ", " # op2str>;
   def Op1IOp2D : EBCInst2Op<opcode, 0, is64Bit, 1, 0, outs, ins,
                 opcodestr # !if(is64Bit, "64", "32"),
-                "@" # op1str # " " # op2str>;
+                "@" # op1str # ", " # op2str>;
   def Op1DOp2I : EBCInst2Op<opcode, 0, is64Bit, 0, 1, outs, ins,
                 opcodestr # !if(is64Bit, "64", "32"),
-                op1str # " " # "@" # op2str>;
+                op1str # ", " # "@" # op2str>;
   def Op1IOp2I : EBCInst2Op<opcode, 0, is64Bit, 1, 1, outs, ins,
                 opcodestr # !if(is64Bit, "64", "32"),
-                "@" # op1str # " " # "@" # op2str>;
+                "@" # op1str # ", " # "@" # op2str>;
   def Op1DOp2DImm : EBCInst2Op<opcode, 0, is64Bit, 0, 0,
                 outs, !con(ins, immins),
                 opcodestr # !if(is64Bit, "64", "32"),
-                op1str # " " # op2str # " " # immstr>;
+                op1str # ", " # op2str # " " # immstr>;
   def Op1IOp2DImm : EBCInst2Op<opcode, 0, is64Bit, 1, 0,
                 outs, !con(ins, immins),
                 opcodestr # !if(is64Bit, "64", "32"),
-                "@" # op1str # " " # op2str # " " # immstr>;
+                "@" # op1str # ", " # op2str # " " # immstr>;
   def Op1DOp2IIdx : EBCInst2Op<opcode, 0, is64Bit, 0, 1,
                 outs, !con(ins, idxins),
                 opcodestr # !if(is64Bit, "64", "32"),
-                op1str # " " # "@" # op2str # " " # idxstr>;
+                op1str # ", " # "@" # op2str # " " # idxstr>;
   def Op1IOp2IIdx : EBCInst2Op<opcode, 0, is64Bit, 1, 1,
                 outs, !con(ins, idxins),
                 opcodestr # !if(is64Bit, "64", "32"),
-                "@" # op1str # " " # "@" # op2str # " " # idxstr>;
+                "@" # op1str # ", " # "@" # op2str # " " # idxstr>;
 }
 
 multiclass EBC2OpBase<bits<6> opcode, string opcodestr> {
@@ -197,6 +197,7 @@ defm pushn  : EBC1OpnBase<0b110101,
             (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
             "pushn", "$op1", "$imm", "(${idxn},${idxc})">;
 
+let Constraints = "$dst = $op1" in {
 defm not    : EBC2OpBase<0b001010, "not">;
 defm neg    : EBC2OpBase<0b001011, "neg">;
 defm add    : EBC2OpBase<0b001100, "add">;
@@ -217,3 +218,4 @@ defm ashr   : EBC2OpBase<0b011001, "ashr">;
 defm extndb : EBC2OpBase<0b011010, "extndb">;
 defm extndw : EBC2OpBase<0b011011, "extndw">;
 defm extndd : EBC2OpBase<0b011100, "extndd">;
+}
