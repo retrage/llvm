@@ -54,10 +54,18 @@ enum OperandType {
   OPERAND_IMM8,
   /// 16-bit immediates
   OPERAND_IMM16,
+  /// 32-bit immediates
+  OPERAND_IMM32,
+  /// 64-bit immediates
+  OPERAND_IMM64,
   /// 16-bit index natural units
   OPERAND_IDXN16,
   /// 16-bit index constant units
   OPERAND_IDXC16,
+  /// 32-bit index natural units
+  OPERAND_IDXN32,
+  /// 32-bit index constant units
+  OPERAND_IDXC32,
 };
 }
 

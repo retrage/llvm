@@ -58,6 +58,16 @@ def imm16 : Operand<i16> {
   let ParserMatchClass = ImmAsmOperand<16>;
 }
 
+let OperandType = "OPERAND_IMM32" in
+def imm32 : Operand<i32> {
+  let ParserMatchClass = ImmAsmOperand<32>;
+}
+
+let OperandType = "OPERAND_IMM64" in
+def imm64 : Operand<i64> {
+  let ParserMatchClass = ImmAsmOperand<64>;
+}
+
 let OperandType = "OPERAND_IDXN16" in
 def idxn16 : Operand<i16> {
   let ParserMatchClass = IdxNAsmOperand<16>;
@@ -66,6 +76,16 @@ def idxn16 : Operand<i16> {
 let OperandType = "OPERAND_IDXC16" in
 def idxc16 : Operand<i16> {
   let ParserMatchClass = IdxCAsmOperand<16>;
+}
+
+let OperandType = "OPERAND_IDXN32" in
+def idxn32 : Operand<i32> {
+  let ParserMatchClass = IdxNAsmOperand<32>;
+}
+
+let OperandType = "OPERAND_IDXC32" in
+def idxc32 : Operand<i32> {
+  let ParserMatchClass = IdxCAsmOperand<32>;
 }
 
 } // OperandNamespace = "EBC"
@@ -166,6 +186,68 @@ multiclass EBCCMPBase<bits<6> opcode, string opsuffix> {
                 opsuffix, "$op1", "$op2", "$imm", "(${idxn},${idxc})">;
 }
 
+multiclass EBCJMPBaseCommon<bits<6> opcode,
+                bit hasImmIdx, bit is64Bit, bit Op1Indirect,
+                dag outs, dag ins, string opcodestr, string argstr> {
+  def UncondAbs : EBCInst1Op<opcode,
+                hasImmIdx, is64Bit, Op1Indirect, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32") # "a", argstr> {
+    let Inst{15} = 0;
+    let Inst{14} = 0;
+    let Inst{12} = 0;
+  }
+  def CondCCAbs: EBCInst1Op<opcode,
+                hasImmIdx, is64Bit, Op1Indirect, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32") # "cca", argstr> {
+    let Inst{15} = 1;
+    let Inst{14} = 0;
+    let Inst{12} = 0;
+  }
+  def CondCSAbs: EBCInst1Op<opcode,
+                hasImmIdx, is64Bit, Op1Indirect, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32") # "csa", argstr> {
+    let Inst{15} = 1;
+    let Inst{14} = 1;
+    let Inst{12} = 0;
+  }
+  def UncondRel : EBCInst1Op<opcode,
+                hasImmIdx, is64Bit, Op1Indirect, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32"), argstr> {
+    let Inst{15} = 0;
+    let Inst{14} = 0;
+    let Inst{12} = 1;
+  }
+  def CondCCRel: EBCInst1Op<opcode,
+                hasImmIdx, is64Bit, Op1Indirect, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32") # "cc", argstr> {
+    let Inst{15} = 1;
+    let Inst{14} = 0;
+    let Inst{12} = 1;
+  }
+  def CondCSRel: EBCInst1Op<opcode,
+                hasImmIdx, is64Bit, Op1Indirect, outs, ins,
+                opcodestr # !if(is64Bit, "64", "32") # "cs", argstr> {
+    let Inst{15} = 1;
+    let Inst{14} = 1;
+    let Inst{12} = 1;
+  }
+}
+
+multiclass EBCJMPBase<bits<6> opcode, string opcodestr> {
+  defm _32Op1D : EBCJMPBaseCommon<opcode, 0, 0, 0,
+                (outs), (ins GPR:$op1), opcodestr, "$op1">;
+  defm _32Op1I : EBCJMPBaseCommon<opcode, 0, 0, 1,
+                (outs), (ins GPR:$op1), opcodestr, "@" # "$op1">;
+  defm _32Op1DImm : EBCJMPBaseCommon<opcode, 1, 0, 0,
+                (outs), (ins GPR:$op1, imm32:$imm),
+                opcodestr, "$op1" # " " # "$imm">;
+  defm _32Op1IIdx : EBCJMPBaseCommon<opcode, 1, 0, 1,
+                (outs), (ins GPR:$op1, idxn32:$idxn, idxc32:$idxc),
+                opcodestr, "@" # "$op1" # " " # "(${idxn},${idxc})">;
+  defm _64 : EBCJMPBaseCommon<opcode, 1, 1, 1,
+                (outs), (ins imm64:$imm), opcodestr, "$imm">;
+}
+
 multiclass EBCJMP8Base<bits<6> opcode, string opcodestr> {
   def Uncond : EBCInst8<opcode,
                   (outs), (ins imm8:$imm), opcodestr, "$imm", []> {
@@ -233,6 +315,7 @@ let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
 def storesp : EBCInst2Op<0b101010, 0, 0, 0, 0,
                 (outs GPR:$op1), (ins DR:$op2), "storesp", "$op1, $op2">;
 
+defm jmp    : EBCJMPBase<0x000001, "jmp">;
 defm jmp8   : EBCJMP8Base<0x000010, "jmp8">;
 
 defm pop    : EBC1OpBase<0b101100,

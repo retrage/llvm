@@ -61,6 +61,7 @@ public:
                              const MCSubtargetInfo &STI) const;
 
   uint16_t getIdx16Value(const MCOperand &NMO, const MCOperand &CMO) const;
+  uint32_t getIdx32Value(const MCOperand &NMO, const MCOperand &CMO) const;
 
 };
 
@@ -110,6 +111,12 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
       case EBC::OPERAND_IMM16:
         support::endian::write<uint16_t>(OS, MO.getImm(), support::little);
         break;
+      case EBC::OPERAND_IMM32:
+        support::endian::write<uint32_t>(OS, MO.getImm(), support::little);
+        break;
+      case EBC::OPERAND_IMM64:
+        support::endian::write<uint64_t>(OS, MO.getImm(), support::little);
+        break;
       case EBC::OPERAND_IDXN16: {
           // Assume next operand is OPERAND_IDXC16
           const MCOperand &CMO = MI.getOperand(I + 1);
@@ -120,6 +127,18 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
           break;
         }
       case EBC::OPERAND_IDXC16:
+        // It must not be occurred
+        break;
+      case EBC::OPERAND_IDXN32: {
+          // Assume next operand is OPERAND_IDXC32
+          const MCOperand &CMO = MI.getOperand(I + 1);
+          uint32_t Index = getIdx32Value(MO, CMO);
+          support::endian::write<uint32_t>(OS, Index, support::little);
+          // Skip next operand
+          ++I;
+          break;
+        }
+      case EBC::OPERAND_IDXC32:
         // It must not be occurred
         break;
       default:
@@ -181,6 +200,46 @@ EBCMCCodeEmitter::getIdx16Value(const MCOperand &NMO, const MCOperand &CMO) cons
   uint8_t Assgined = NaturalLen / 2;
 
   uint16_t Index = ((Sign ? 1 : 0) << 15) + (Assgined << 12)
+                  + (abs(Constant) << NaturalLen) + abs(Natual);
+
+  return Index;
+}
+
+uint32_t
+EBCMCCodeEmitter::getIdx32Value(const MCOperand &NMO, const MCOperand &CMO) const {
+  int32_t Natual = NMO.getImm();
+  int32_t Constant = CMO.getImm();
+
+  if(!((Natual >= 0 && Constant >= 0) || (Natual <= 0 && Constant <= 0)))
+    llvm_unreachable("Both natural and constant must have same signs");
+
+  bool Sign = (Natual <= 0 && Constant <= 0);
+
+  uint32_t AbsNatural = abs(Natual);
+  uint32_t AbsConstant = abs(Constant);
+
+  unsigned NaturalLen = 0;
+  while (AbsNatural) {
+    ++NaturalLen;
+    AbsNatural >>= 1;
+  }
+  NaturalLen += NaturalLen % 2 ? 1 : 0;
+
+  unsigned ConstantLen = 0;
+  while (AbsConstant) {
+    ++ConstantLen;
+    AbsConstant >>= 1;
+  }
+  ConstantLen += ConstantLen % 2 ? 1 : 0;
+
+  unsigned UsedBits = 4; // Sign bit + 3-bit assgined to natural unit
+
+  if (!(UsedBits + NaturalLen + ConstantLen <= 32))
+    llvm_unreachable("Unit length is too long");
+
+  uint8_t Assgined = NaturalLen / 4;
+
+  uint32_t Index = ((Sign ? 1 : 0) << 31) + (Assgined << 28)
                   + (abs(Constant) << NaturalLen) + abs(Natual);
 
   return Index;

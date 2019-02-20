@@ -145,9 +145,17 @@ public:
 
   bool isImm16() const { return isImmN<16>(); }
 
+  bool isImm32() const { return isImmN<32>(); }
+
+  bool isImm64() const { return isImmN<64>(); }
+
   bool isIdxN16() const { return isImmN<12>(); }
 
   bool isIdxC16() const { return isImmN<12>(); }
+
+  bool isIdxN32() const { return isImmN<28>(); }
+
+  bool isIdxC32() const { return isImmN<28>(); }
 
   SMLoc getStartLoc() const override { return StartLoc; };
   SMLoc getEndLoc() const override { return EndLoc; };
@@ -279,12 +287,20 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidImm16:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 15), (1 << 15));
-  case Match_InvalidIdxN16:
+  case Match_InvalidImm32:
     return generateImmOutOfRangeError(
-        Operands, ErrorInfo, -(1 << 11), (1 << 11));
+        Operands, ErrorInfo, -(1 << 31), (1 << 31));
+  case Match_InvalidImm64:
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, -(1 << 63), (1 << 63));
+  case Match_InvalidIdxN16:
   case Match_InvalidIdxC16:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 11), (1 << 11));
+  case Match_InvalidIdxN32:
+  case Match_InvalidIdxC32:
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, -(1 << 27), (1 << 27));
   }
 
   llvm_unreachable("Unknown match type detected!");
