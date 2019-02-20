@@ -96,6 +96,47 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
   }
   }
 
+  // Emit Indexes
+  for (unsigned I = 0, E = MI.getNumOperands(); I < E; ++I) {
+    const MCOperand &MO = MI.getOperand(I);
+    if (MO.isReg()) {
+      /* nothing to encode */
+    } else if (MO.isImm()) {
+      const MCOperandInfo &Info = Desc.OpInfo[I];
+      switch (Info.OperandType) {
+      case EBC::OPERAND_BREAKCODE:
+      case EBC::OPERAND_IMM8:
+      case EBC::OPERAND_IMM16:
+      case EBC::OPERAND_IMM32:
+      case EBC::OPERAND_IMM64:
+        break;
+      case EBC::OPERAND_IDXN16: {
+          // Assume next operand is OPERAND_IDXC16
+          const MCOperand &CMO = MI.getOperand(I + 1);
+          uint16_t Index = getIdx16Value(MO, CMO);
+          support::endian::write<uint16_t>(OS, Index, support::little);
+          // Skip next operand
+          ++I;
+          break;
+        }
+      case EBC::OPERAND_IDXN32: {
+          // Assume next operand is OPERAND_IDXC32
+          const MCOperand &CMO = MI.getOperand(I + 1);
+          uint32_t Index = getIdx32Value(MO, CMO);
+          support::endian::write<uint32_t>(OS, Index, support::little);
+          // Skip next operand
+          ++I;
+          break;
+        }
+      case EBC::OPERAND_IDXC16:
+      case EBC::OPERAND_IDXC32:
+      default:
+        llvm_unreachable("Unhandled OperandType!");
+      }
+    }
+  }
+
+  // Emit Immediates
   for (unsigned I = 0, E = MI.getNumOperands(); I < E; ++I) {
     const MCOperand &MO = MI.getOperand(I);
     if (MO.isReg()) {
@@ -118,29 +159,10 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
       case EBC::OPERAND_IMM64:
         support::endian::write<uint64_t>(OS, MO.getImm(), support::little);
         break;
-      case EBC::OPERAND_IDXN16: {
-          // Assume next operand is OPERAND_IDXC16
-          const MCOperand &CMO = MI.getOperand(I + 1);
-          uint16_t Index = getIdx16Value(MO, CMO);
-          support::endian::write<uint16_t>(OS, Index, support::little);
-          // Skip next operand
-          ++I;
-          break;
-        }
+      case EBC::OPERAND_IDXN16:
       case EBC::OPERAND_IDXC16:
-        // It must not be occurred
-        break;
-      case EBC::OPERAND_IDXN32: {
-          // Assume next operand is OPERAND_IDXC32
-          const MCOperand &CMO = MI.getOperand(I + 1);
-          uint32_t Index = getIdx32Value(MO, CMO);
-          support::endian::write<uint32_t>(OS, Index, support::little);
-          // Skip next operand
-          ++I;
-          break;
-        }
+      case EBC::OPERAND_IDXN32:
       case EBC::OPERAND_IDXC32:
-        // It must not be occurred
         break;
       default:
         llvm_unreachable("Unhandled OperandType!");
