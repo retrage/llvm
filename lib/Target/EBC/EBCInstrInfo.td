@@ -119,6 +119,26 @@ multiclass EBC2OpBaseCommon<bits<6> opcode, bit is64Bit,
                 "@" # op1str # ", " # "@" # op2str # " " # idxstr>;
 }
 
+multiclass EBCCMPBaseCommon<bits<6> opcode, bit is64Bit,
+                dag outs, dag ins, dag immins, dag idxins,
+                string opsuffix, string op1str, string op2str,
+                string immstr, string idxstr> {
+  def Op1DOp2D : EBCInst2Op<opcode, 0, is64Bit, 0, 0, outs, ins,
+                "cmp" # !if(is64Bit, "64", "32") # opsuffix,
+                op1str # ", " # op2str>;
+  def Op1DOp2I : EBCInst2Op<opcode, 0, is64Bit, 0, 1, outs, ins,
+                "cmp" # !if(is64Bit, "64", "32") # opsuffix,
+                op1str # ", " # "@" # op2str>;
+  def Op1DOp2DImm : EBCInst2Op<opcode, 0, is64Bit, 0, 0,
+                outs, !con(ins, immins),
+                "cmp" # !if(is64Bit, "64", "32") # opsuffix,
+                op1str # ", " # op2str # " " # immstr>;
+  def Op1DOp2IIdx : EBCInst2Op<opcode, 0, is64Bit, 0, 1,
+                outs, !con(ins, idxins),
+                "cmp" # !if(is64Bit, "64", "32") # opsuffix,
+                op1str # ", " # "@" # op2str # " " # idxstr>;
+}
+
 multiclass EBC2OpBase<bits<6> opcode, string opcodestr> {
   defm _32 : EBC2OpBaseCommon<opcode, 0,
                 (outs GPR:$dst), (ins GPR:$op1, GPR:$op2),
@@ -128,6 +148,17 @@ multiclass EBC2OpBase<bits<6> opcode, string opcodestr> {
                 (outs GPR:$dst), (ins GPR:$op1, GPR:$op2),
                 (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
                 opcodestr, "$op1", "$op2", "$imm", "(${idxn},${idxc})">;
+}
+
+multiclass EBCCMPBase<bits<6> opcode, string opsuffix> {
+  defm _32 : EBCCMPBaseCommon<opcode, 0,
+                (outs), (ins GPR:$op1, GPR:$op2),
+                (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
+                opsuffix, "$op1", "$op2", "$imm", "(${idxn},${idxc})">;
+  defm _64 : EBCCMPBaseCommon<opcode, 1,
+                (outs), (ins GPR:$op1, GPR:$op2),
+                (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
+                opsuffix, "$op1", "$op2", "$imm", "(${idxn},${idxc})">;
 }
 
 multiclass EBC1OpBase<bits<6> opcode,
@@ -219,3 +250,9 @@ defm extndb : EBC2OpBase<0b011010, "extndb">;
 defm extndw : EBC2OpBase<0b011011, "extndw">;
 defm extndd : EBC2OpBase<0b011100, "extndd">;
 }
+
+defm cmpeq  : EBCCMPBase<0b000101, "eq">;
+defm cmplte : EBCCMPBase<0b000110, "lte">;
+defm cmpgte : EBCCMPBase<0b000111, "gte">;
+defm cmpulte: EBCCMPBase<0b001000, "ulte">;
+defm cmpugte: EBCCMPBase<0b001001, "ugte">;
