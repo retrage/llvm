@@ -21,6 +21,7 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -170,8 +171,9 @@ EBCMCCodeEmitter::getIdx16Value(const MCOperand &NMO, const MCOperand &CMO) cons
   int16_t Natual = NMO.getImm();
   int16_t Constant = CMO.getImm();
 
-  if(!((Natual >= 0 && Constant >= 0) || (Natual <= 0 && Constant <= 0)))
-    llvm_unreachable("Both natural and constant must have same signs");
+  assert(((Natual >= 0 && Constant >= 0)
+        || (Natual <= 0 && Constant <= 0))
+        && "Both natural and constant must have same signs");
 
   bool Sign = (Natual <= 0 && Constant <= 0);
 
@@ -194,8 +196,8 @@ EBCMCCodeEmitter::getIdx16Value(const MCOperand &NMO, const MCOperand &CMO) cons
 
   unsigned UsedBits = 4; // Sign bit + 3-bit assgined to natural unit
 
-  if (!(UsedBits + NaturalLen + ConstantLen <= 16))
-    llvm_unreachable("Unit length is too long");
+  assert((UsedBits + NaturalLen + ConstantLen <= 16)
+        && "Unit length is too long");
 
   uint8_t Assgined = NaturalLen / 2;
 
@@ -210,8 +212,9 @@ EBCMCCodeEmitter::getIdx32Value(const MCOperand &NMO, const MCOperand &CMO) cons
   int32_t Natual = NMO.getImm();
   int32_t Constant = CMO.getImm();
 
-  if(!((Natual >= 0 && Constant >= 0) || (Natual <= 0 && Constant <= 0)))
-    llvm_unreachable("Both natural and constant must have same signs");
+  assert(((Natual >= 0 && Constant >= 0)
+        || (Natual <= 0 && Constant <= 0))
+        && "Both natural and constant must have same signs");
 
   bool Sign = (Natual <= 0 && Constant <= 0);
 
@@ -234,8 +237,8 @@ EBCMCCodeEmitter::getIdx32Value(const MCOperand &NMO, const MCOperand &CMO) cons
 
   unsigned UsedBits = 4; // Sign bit + 3-bit assgined to natural unit
 
-  if (!(UsedBits + NaturalLen + ConstantLen <= 32))
-    llvm_unreachable("Unit length is too long");
+  assert((UsedBits + NaturalLen + ConstantLen <= 32)
+        && "Unit length is too long");
 
   uint8_t Assgined = NaturalLen / 4;
 
