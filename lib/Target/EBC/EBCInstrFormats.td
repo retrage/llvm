@@ -29,9 +29,9 @@ class Pseudo<dag outs, dag ins, list<dag> pattern>
 class EBCInst8<bits<6> opcode, dag outs, dag ins,
               string opcodestr, string argstr, list<dag> pattern>
     : EBCInst<opcode, outs, ins, opcodestr, argstr, pattern> {
-  field bits<16> Inst;
-  field bits<16> SoftFail = 0;
-  let Size = 2;
+  field bits<8> Inst;
+  field bits<8> SoftFail = 0;
+  let Size = 1;
 
   let Opcode = opcode;
 

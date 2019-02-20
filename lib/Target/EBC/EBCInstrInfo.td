@@ -48,6 +48,11 @@ def breakcode : Operand<i8> {
   let ParserMatchClass = BreakCodeAsmOperand<8>;
 }
 
+let OperandType = "OPERAND_IMM8" in
+def imm8 : Operand<i8> {
+  let ParserMatchClass = ImmAsmOperand<8>;
+}
+
 let OperandType = "OPERAND_IMM16" in
 def imm16 : Operand<i16> {
   let ParserMatchClass = ImmAsmOperand<16>;
@@ -161,6 +166,24 @@ multiclass EBCCMPBase<bits<6> opcode, string opsuffix> {
                 opsuffix, "$op1", "$op2", "$imm", "(${idxn},${idxc})">;
 }
 
+multiclass EBCJMP8Base<bits<6> opcode, string opcodestr> {
+  def Uncond : EBCInst8<opcode,
+                  (outs), (ins imm8:$imm), opcodestr, "$imm", []> {
+    let Inst{7} = 0;
+    let Inst{6} = 0;
+  }
+  def CondCC : EBCInst8<opcode,
+                  (outs), (ins imm8:$imm), opcodestr # "cc", "$imm", []> {
+    let Inst{7} = 1;
+    let Inst{6} = 0;
+  }
+  def CondCS : EBCInst8<opcode,
+                  (outs), (ins imm8:$imm), opcodestr # "cs", "$imm", []> {
+    let Inst{7} = 1;
+    let Inst{6} = 1;
+  }
+}
+
 multiclass EBC1OpBase<bits<6> opcode,
                 dag outs, dag ins, dag immins, dag idxins,
                 string opcodestr, string op1str,
@@ -209,6 +232,8 @@ def loadsp : EBCInst2Op<0b101001, 0, 0, 0, 0,
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
 def storesp : EBCInst2Op<0b101010, 0, 0, 0, 0,
                 (outs GPR:$op1), (ins DR:$op2), "storesp", "$op1, $op2">;
+
+defm jmp8   : EBCJMP8Base<0x000010, "jmp8">;
 
 defm pop    : EBC1OpBase<0b101100,
             (outs GPR:$op1), (ins),

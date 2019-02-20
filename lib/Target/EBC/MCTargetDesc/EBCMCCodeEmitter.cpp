@@ -104,6 +104,9 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
       case EBC::OPERAND_BREAKCODE:
         support::endian::write<uint8_t>(OS, MO.getImm(), support::little);
         break;
+      case EBC::OPERAND_IMM8:
+        support::endian::write<uint8_t>(OS, MO.getImm(), support::little);
+        break;
       case EBC::OPERAND_IMM16:
         support::endian::write<uint16_t>(OS, MO.getImm(), support::little);
         break;

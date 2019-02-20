@@ -141,6 +141,8 @@ public:
     return (Imm >= 0 && Imm <= 6);
   }
 
+  bool isImm8() const { return isImmN<8>(); }
+
   bool isImm16() const { return isImmN<16>(); }
 
   bool isIdxN16() const { return isImmN<12>(); }
@@ -271,6 +273,9 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, 0, 6,
         "break code must be an integer in the range");
+  case Match_InvalidImm8:
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, -(1 << 7), (1 << 7));
   case Match_InvalidImm16:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 15), (1 << 15));

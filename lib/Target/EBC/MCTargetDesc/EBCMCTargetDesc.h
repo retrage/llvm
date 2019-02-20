@@ -50,6 +50,8 @@ namespace EBC {
 enum OperandType {
   /// break code
   OPERAND_BREAKCODE,
+  /// 8-bit immediates
+  OPERAND_IMM8,
   /// 16-bit immediates
   OPERAND_IMM16,
   /// 16-bit index natural units
