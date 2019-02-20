@@ -273,13 +273,13 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
         "break code must be an integer in the range");
   case Match_InvalidImm16:
     return generateImmOutOfRangeError(
-        Operands, ErrorInfo, -(1 << 16), (1 << 16));
+        Operands, ErrorInfo, -(1 << 15), (1 << 15));
   case Match_InvalidIdxN16:
     return generateImmOutOfRangeError(
-        Operands, ErrorInfo, -(1 << 12), (1 << 12));
+        Operands, ErrorInfo, -(1 << 11), (1 << 11));
   case Match_InvalidIdxC16:
     return generateImmOutOfRangeError(
-        Operands, ErrorInfo, -(1 << 12), (1 << 12));
+        Operands, ErrorInfo, -(1 << 11), (1 << 11));
   }
 
   llvm_unreachable("Unknown match type detected!");
