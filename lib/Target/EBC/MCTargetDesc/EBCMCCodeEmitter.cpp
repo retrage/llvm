@@ -145,8 +145,41 @@ EBCMCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
 
 uint16_t
 EBCMCCodeEmitter::getIdx16Value(const MCOperand &NMO, const MCOperand &CMO) const {
-  // TODO: Add validations and encodings
-  uint16_t Index = NMO.getImm() & CMO.getImm();
+  int16_t Natual = NMO.getImm();
+  int16_t Constant = CMO.getImm();
+
+  if(!((Natual >= 0 && Constant >= 0) || (Natual <= 0 && Constant <= 0)))
+    llvm_unreachable("Both natural and constant must have same signs");
+
+  bool Sign = (Natual <= 0 && Constant <= 0);
+
+  uint16_t AbsNatural = abs(Natual);
+  uint16_t AbsConstant = abs(Constant);
+
+  unsigned NaturalLen = 0;
+  while (AbsNatural) {
+    ++NaturalLen;
+    AbsNatural >>= 1;
+  }
+  NaturalLen += NaturalLen % 2 ? 1 : 0;
+
+  unsigned ConstantLen = 0;
+  while (AbsConstant) {
+    ++ConstantLen;
+    AbsConstant >>= 1;
+  }
+  ConstantLen += ConstantLen % 2 ? 1 : 0;
+
+  unsigned UsedBits = 4; // Sign bit + 3-bit assgined to natural unit
+
+  if (!(UsedBits + NaturalLen + ConstantLen <= 16))
+    llvm_unreachable("Unit length is too long");
+
+  uint8_t Assgined = NaturalLen / 2;
+
+  uint16_t Index = ((Sign ? 1 : 0) << 15) + (Assgined << 12)
+                  + (abs(Constant) << NaturalLen) + abs(Natual);
+
   return Index;
 }
 
