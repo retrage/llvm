@@ -22,7 +22,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/TargetRegistry.h"
 
-#include <limits>
+#include <cstdint>
 
 using namespace llvm;
 
@@ -283,16 +283,16 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
         "break code must be an integer in the range");
   case Match_InvalidImm8:
     return generateImmOutOfRangeError(
-        Operands, ErrorInfo, -(1 << 7), (1 << 7));
+        Operands, ErrorInfo, INT8_MIN, INT8_MAX);
   case Match_InvalidImm16:
     return generateImmOutOfRangeError(
-        Operands, ErrorInfo, -(1 << 15), (1 << 15));
+        Operands, ErrorInfo, INT16_MIN, INT16_MAX);
   case Match_InvalidImm32:
     return generateImmOutOfRangeError(
-        Operands, ErrorInfo, -(1 << 31), (1 << 31));
+        Operands, ErrorInfo, INT32_MIN, INT32_MAX);
   case Match_InvalidImm64:
     return generateImmOutOfRangeError(
-        Operands, ErrorInfo, -(1 << 63), (1 << 63));
+        Operands, ErrorInfo, INT64_MIN, INT64_MAX);
   case Match_InvalidIdxN16:
   case Match_InvalidIdxC16:
     return generateImmOutOfRangeError(
