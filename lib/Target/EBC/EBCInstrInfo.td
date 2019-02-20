@@ -212,6 +212,50 @@ multiclass EBCCMPIBaseCommon<bits<6> opcode, bit is64Bit,
   }
 }
 
+multiclass EBCMOVnBase<bits<6> opcode,
+                dag outs, dag ins, dag op1idxins, dag op2idxins,
+                string opcodestr, string op1str, string op2str,
+                string op1idxstr, string op2idxstr> {
+  def Op1DOp2D : EBCInst2Op<opcode, 0, 0, 0, 0, outs, ins,
+                opcodestr, op1str # ", " # op2str> {
+    let Inst{7} = 0;
+    let Inst{6} = 0;
+  }
+  def Op1IOp2D : EBCInst2Op<opcode, 0, 0, 1, 0, outs, ins,
+                opcodestr, "@" # op1str # ", " # op2str> {
+    let Inst{7} = 0;
+    let Inst{6} = 0;
+  }
+  def Op1DOp2I : EBCInst2Op<opcode, 0, 0, 0, 1, outs, ins,
+                opcodestr, op1str # ", @" # op2str> {
+    let Inst{7} = 0;
+    let Inst{6} = 0;
+  }
+  def Op1IOp2I : EBCInst2Op<opcode, 0, 0, 1, 1, outs, ins,
+                opcodestr, "@" # op1str # ", @" # op2str> {
+    let Inst{7} = 0;
+    let Inst{6} = 0;
+  }
+  def Op1IIdxOp2D : EBCInst2Op<opcode, 0, 0, 1, 0,
+                outs, !con(ins, op1idxins), opcodestr,
+                "@" # op1str # " " # op1idxstr # ", " # op2str> {
+    let Inst{7} = 1;
+    let Inst{6} = 0;
+  }
+  def Op1DOp2IIdx : EBCInst2Op<opcode, 0, 0, 0, 1,
+                outs, !con(ins, op2idxins), opcodestr,
+                op1str # ", @" # op2str # " " # op2idxstr> {
+    let Inst{7} = 1;
+    let Inst{6} = 0;
+  }
+  def Op1IIdxOp2IIdx : EBCInst2Op<opcode, 0, 0, 1, 1,
+                outs, !con(ins, op1idxins, op2idxins), opcodestr,
+                "@" # op1str # " " # op1idxstr # ", @" # op2str # " " # op2idxstr> {
+    let Inst{7} = 1;
+    let Inst{6} = 1;
+  }
+}
+
 multiclass EBC2OpBase<bits<6> opcode, string opcodestr> {
   defm _32 : EBC2OpBaseCommon<opcode, 0,
                 (outs GPR:$dst), (ins GPR:$op1, GPR:$op2),
@@ -477,3 +521,16 @@ defm cmpilte  : EBCCMPIBase<0b101110, "lte">;
 defm cmpigte  : EBCCMPIBase<0b101111, "gte">;
 defm cmpiulte : EBCCMPIBase<0b110000, "ulte">;
 defm cmpiugte : EBCCMPIBase<0b110001, "ugte">;
+
+defm movnw  : EBCMOVnBase<0b110010,
+                (outs GPR:$op1), (ins GPR:$op2),
+                (ins idxn16:$op1idxn, idxc16:$op1idxc),
+                (ins idxn16:$op2idxn, idxc16:$op2idxc),
+                "movnw", "$op1", "$op2",
+                "(${op1idxn},${op1idxc})", "(${op2idxn},${op2idxc})">;
+defm movnd  : EBCMOVnBase<0b110011,
+                (outs GPR:$op1), (ins GPR:$op2),
+                (ins idxn32:$op1idxn, idxc32:$op1idxc),
+                (ins idxn32:$op2idxn, idxc32:$op2idxc),
+                "movnd", "$op1", "$op2",
+                "(${op1idxn},${op1idxc})", "(${op2idxn},${op2idxc})">;
