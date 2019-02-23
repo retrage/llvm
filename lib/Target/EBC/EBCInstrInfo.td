@@ -212,6 +212,75 @@ multiclass EBCCMPIBaseCommon<bits<6> opcode, bit is64Bit,
   }
 }
 
+multiclass EBCMOVIBaseCommon<bits<6> opcode, bits<2> immlen, bits<2> movlen,
+                dag outs, dag ins, dag idxins, dag immins,
+                string opcodestr, string op1str,
+                string immstr, string idxstr> {
+  def Op1D
+      # !cond(!eq(movlen, 0b00) : "b",
+              !eq(movlen, 0b01) : "w",
+              !eq(movlen, 0b10) : "d",
+              !eq(movlen, 0b11) : "q")
+      # !cond(!eq(immlen, 0b01) : "w",
+              !eq(immlen, 0b10) : "d",
+              !eq(immlen, 0b11) : "q") : EBCInst1Op<opcode, 0, 0, 0,
+                outs, !con(ins, immins),
+                opcodestr
+                  # !cond(!eq(movlen, 0b00) : "b",
+                          !eq(movlen, 0b01) : "w",
+                          !eq(movlen, 0b10) : "d",
+                          !eq(movlen, 0b11) : "q")
+                  # !cond(!eq(immlen, 0b01) : "w",
+                          !eq(immlen, 0b10) : "d",
+                          !eq(immlen, 0b11) : "q"),
+                op1str # ", " # immstr> {
+    let Inst{7-6} = immlen;
+    let Inst{13-12} = movlen;
+  }
+  def Op1I
+      # !cond(!eq(movlen, 0b00) : "b",
+              !eq(movlen, 0b01) : "w",
+              !eq(movlen, 0b10) : "d",
+              !eq(movlen, 0b11) : "q")
+      # !cond(!eq(immlen, 0b01) : "w",
+              !eq(immlen, 0b10) : "d",
+              !eq(immlen, 0b11) : "q") : EBCInst1Op<opcode, 0, 0, 1,
+                outs, !con(ins, immins),
+                opcodestr
+                  # !cond(!eq(movlen, 0b00) : "b",
+                          !eq(movlen, 0b01) : "w",
+                          !eq(movlen, 0b10) : "d",
+                          !eq(movlen, 0b11) : "q")
+                  # !cond(!eq(immlen, 0b01) : "w",
+                          !eq(immlen, 0b10) : "d",
+                          !eq(immlen, 0b11) : "q"),
+                "@" # op1str # ", " # immstr> {
+    let Inst{7-6} = immlen;
+    let Inst{13-12} = movlen;
+  }
+  def Op1IIdx
+      # !cond(!eq(movlen, 0b00) : "b",
+              !eq(movlen, 0b01) : "w",
+              !eq(movlen, 0b10) : "d",
+              !eq(movlen, 0b11) : "q")
+      # !cond(!eq(immlen, 0b01) : "w",
+              !eq(immlen, 0b10) : "d",
+              !eq(immlen, 0b11) : "q") : EBCInst1Op<opcode, 0, 0, 1,
+                outs, !con(ins, immins, idxins),
+                opcodestr
+                  # !cond(!eq(movlen, 0b00) : "b",
+                          !eq(movlen, 0b01) : "w",
+                          !eq(movlen, 0b10) : "d",
+                          !eq(movlen, 0b11) : "q")
+                  # !cond(!eq(immlen, 0b01) : "w",
+                          !eq(immlen, 0b10) : "d",
+                          !eq(immlen, 0b11) : "q"),
+                "@" # op1str # " " #  idxstr # ", " # immstr> {
+    let Inst{7-6} = immlen;
+    let Inst{13-12} = movlen;
+  }
+}
+
 multiclass EBCMOVnBase<bits<6> opcode,
                 dag outs, dag ins, dag op1idxins, dag op2idxins,
                 string opcodestr, string op1str, string op2str,
@@ -692,3 +761,14 @@ defm movsnd : EBCMOVsnBase<0b100110,
                 "movsnd", "$op1", "$op2",
                 "(${op1idxn},${op1idxc})", "(${op2idxn},${op2idxc})",
                 "$imm">;
+
+foreach immlen = [0b01, 0b10, 0b11] in {
+  foreach movlen = [0b00, 0b01, 0b10, 0b11] in 
+  defm movi : EBCMOVIBaseCommon<0b110111, immlen, movlen,
+                (outs GPR:$op1), (ins),
+                (ins idxn16:$idxn, idxc16:$idxc),
+                !cond(!eq(immlen, 0b01) : (ins imm16:$imm),
+                      !eq(immlen, 0b10) : (ins imm32:$imm),
+                      !eq(immlen, 0b11) : (ins imm64:$imm)),
+                "movi", "$op1", "$imm", "(${idxn},${idxc})">;
+}
