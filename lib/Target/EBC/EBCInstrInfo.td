@@ -222,6 +222,210 @@ multiclass EBCCMPIBaseCommon<bits<6> opcode, bit is64Bit,
   }
 }
 
+multiclass EBCMOVBase<bits<6> opcode, bits<2> idxlen, bits<2> movlen,
+                dag outs, dag ins, dag op1idxins, dag op2idxins,
+                string opcodestr, string op1str, string op2str,
+                string op1idxstr, string op2idxstr> {
+  def Op1DOp2D
+        # !cond(!eq(movlen, 0b00) : "b",
+                !eq(movlen, 0b01) : "w",
+                !eq(movlen, 0b10) : "d",
+                !eq(movlen, 0b11) : "q")
+        # !cond(!eq(idxlen, 0b01) : "w",
+                !eq(idxlen, 0b10) : "d",
+                !eq(idxlen, 0b11) : "q")
+      : EBCInst2Op<!add(opcode, !shl(idxlen, 2), movlen), 0, 0, 0, 0,
+                  outs, ins,
+                  opcodestr
+                    # !cond(!eq(movlen, 0b00) : "b",
+                            !eq(movlen, 0b01) : "w",
+                            !eq(movlen, 0b10) : "d",
+                            !eq(movlen, 0b11) : "q")
+                    # !cond(!eq(idxlen, 0b01) : "w",
+                            !eq(idxlen, 0b10) : "d",
+                            !eq(idxlen, 0b11) : "q"),
+                  op1str # ", " # op2str> {
+    let Inst{7} = 0;
+    let Inst{6} = 0;
+  }
+  def Op1IOp2D
+        # !cond(!eq(movlen, 0b00) : "b",
+                !eq(movlen, 0b01) : "w",
+                !eq(movlen, 0b10) : "d",
+                !eq(movlen, 0b11) : "q")
+        # !cond(!eq(idxlen, 0b01) : "w",
+                !eq(idxlen, 0b10) : "d",
+                !eq(idxlen, 0b11) : "q")
+      : EBCInst2Op<!add(opcode, !shl(idxlen, 2), movlen), 0, 0, 1, 0,
+                  outs, ins,
+                  opcodestr
+                    # !cond(!eq(movlen, 0b00) : "b",
+                            !eq(movlen, 0b01) : "w",
+                            !eq(movlen, 0b10) : "d",
+                            !eq(movlen, 0b11) : "q")
+                    # !cond(!eq(idxlen, 0b01) : "w",
+                            !eq(idxlen, 0b10) : "d",
+                            !eq(idxlen, 0b11) : "q"),
+                  "@" # op1str # ", " # op2str> {
+    let Inst{7} = 0;
+    let Inst{6} = 0;
+  }
+  def Op1DOp2I
+        # !cond(!eq(movlen, 0b00) : "b",
+                !eq(movlen, 0b01) : "w",
+                !eq(movlen, 0b10) : "d",
+                !eq(movlen, 0b11) : "q")
+        # !cond(!eq(idxlen, 0b01) : "w",
+                !eq(idxlen, 0b10) : "d",
+                !eq(idxlen, 0b11) : "q")
+      : EBCInst2Op<!add(opcode, !shl(idxlen, 2), movlen), 0, 0, 0, 1,
+                  outs, ins,
+                  opcodestr
+                    # !cond(!eq(movlen, 0b00) : "b",
+                            !eq(movlen, 0b01) : "w",
+                            !eq(movlen, 0b10) : "d",
+                            !eq(movlen, 0b11) : "q")
+                    # !cond(!eq(idxlen, 0b01) : "w",
+                            !eq(idxlen, 0b10) : "d",
+                            !eq(idxlen, 0b11) : "q"),
+                  op1str # ", " # "@" # op2str> {
+    let Inst{7} = 0;
+    let Inst{6} = 0;
+  }
+  def Op1IOp2I
+        # !cond(!eq(movlen, 0b00) : "b",
+                !eq(movlen, 0b01) : "w",
+                !eq(movlen, 0b10) : "d",
+                !eq(movlen, 0b11) : "q")
+        # !cond(!eq(idxlen, 0b01) : "w",
+                !eq(idxlen, 0b10) : "d",
+                !eq(idxlen, 0b11) : "q")
+      : EBCInst2Op<!add(opcode, !shl(idxlen, 2), movlen), 0, 0, 1, 1,
+                  outs, ins,
+                  opcodestr
+                    # !cond(!eq(movlen, 0b00) : "b",
+                            !eq(movlen, 0b01) : "w",
+                            !eq(movlen, 0b10) : "d",
+                            !eq(movlen, 0b11) : "q")
+                    # !cond(!eq(idxlen, 0b01) : "w",
+                            !eq(idxlen, 0b10) : "d",
+                            !eq(idxlen, 0b11) : "q"),
+                  "@" # op1str # ", " # "@" # op2str> {
+    let Inst{7} = 0;
+    let Inst{6} = 0;
+  }
+  def Op1IIdxOp2D
+        # !cond(!eq(movlen, 0b00) : "b",
+                !eq(movlen, 0b01) : "w",
+                !eq(movlen, 0b10) : "d",
+                !eq(movlen, 0b11) : "q")
+        # !cond(!eq(idxlen, 0b01) : "w",
+                !eq(idxlen, 0b10) : "d",
+                !eq(idxlen, 0b11) : "q")
+      : EBCInst2Op<!add(opcode, !shl(idxlen, 2), movlen), 0, 0, 1, 0,
+                  outs, !con(ins, op1idxins),
+                  opcodestr
+                    # !cond(!eq(movlen, 0b00) : "b",
+                            !eq(movlen, 0b01) : "w",
+                            !eq(movlen, 0b10) : "d",
+                            !eq(movlen, 0b11) : "q")
+                    # !cond(!eq(idxlen, 0b01) : "w",
+                            !eq(idxlen, 0b10) : "d",
+                            !eq(idxlen, 0b11) : "q"),
+                  "@" # op1str # " " # op1idxstr # ", " # op2str> {
+    let Inst{7} = 1;
+    let Inst{6} = 0;
+  }
+  def Op1IIdxOp2I
+        # !cond(!eq(movlen, 0b00) : "b",
+                !eq(movlen, 0b01) : "w",
+                !eq(movlen, 0b10) : "d",
+                !eq(movlen, 0b11) : "q")
+        # !cond(!eq(idxlen, 0b01) : "w",
+                !eq(idxlen, 0b10) : "d",
+                !eq(idxlen, 0b11) : "q")
+      : EBCInst2Op<!add(opcode, !shl(idxlen, 2), movlen), 0, 0, 1, 1,
+                  outs, !con(ins, op1idxins),
+                  opcodestr
+                    # !cond(!eq(movlen, 0b00) : "b",
+                            !eq(movlen, 0b01) : "w",
+                            !eq(movlen, 0b10) : "d",
+                            !eq(movlen, 0b11) : "q")
+                    # !cond(!eq(idxlen, 0b01) : "w",
+                            !eq(idxlen, 0b10) : "d",
+                            !eq(idxlen, 0b11) : "q"),
+                  "@" # op1str # " " # op1idxstr # ", " # "@" # op2str> {
+    let Inst{7} = 1;
+    let Inst{6} = 0;
+  }
+  def Op1DOp2IIdx
+        # !cond(!eq(movlen, 0b00) : "b",
+                !eq(movlen, 0b01) : "w",
+                !eq(movlen, 0b10) : "d",
+                !eq(movlen, 0b11) : "q")
+        # !cond(!eq(idxlen, 0b01) : "w",
+                !eq(idxlen, 0b10) : "d",
+                !eq(idxlen, 0b11) : "q")
+      : EBCInst2Op<!add(opcode, !shl(idxlen, 2), movlen), 0, 0, 0, 1,
+                  outs, !con(ins, op2idxins),
+                  opcodestr
+                    # !cond(!eq(movlen, 0b00) : "b",
+                            !eq(movlen, 0b01) : "w",
+                            !eq(movlen, 0b10) : "d",
+                            !eq(movlen, 0b11) : "q")
+                    # !cond(!eq(idxlen, 0b01) : "w",
+                            !eq(idxlen, 0b10) : "d",
+                            !eq(idxlen, 0b11) : "q"),
+                  op1str # ", " # "@" # op2str # " " # op2idxstr> {
+    let Inst{7} = 0;
+    let Inst{6} = 1;
+  }
+  def Op1IOp2IIdx
+        # !cond(!eq(movlen, 0b00) : "b",
+                !eq(movlen, 0b01) : "w",
+                !eq(movlen, 0b10) : "d",
+                !eq(movlen, 0b11) : "q")
+        # !cond(!eq(idxlen, 0b01) : "w",
+                !eq(idxlen, 0b10) : "d",
+                !eq(idxlen, 0b11) : "q")
+      : EBCInst2Op<!add(opcode, !shl(idxlen, 2), movlen), 0, 0, 1, 1,
+                  outs, !con(ins, op2idxins),
+                  opcodestr
+                    # !cond(!eq(movlen, 0b00) : "b",
+                            !eq(movlen, 0b01) : "w",
+                            !eq(movlen, 0b10) : "d",
+                            !eq(movlen, 0b11) : "q")
+                    # !cond(!eq(idxlen, 0b01) : "w",
+                            !eq(idxlen, 0b10) : "d",
+                            !eq(idxlen, 0b11) : "q"),
+                  "@" # op1str # ", " # "@" # op2str # " " # op2idxstr> {
+    let Inst{7} = 0;
+    let Inst{6} = 1;
+  }
+  def Op1IIdxOp2IIdx
+        # !cond(!eq(movlen, 0b00) : "b",
+                !eq(movlen, 0b01) : "w",
+                !eq(movlen, 0b10) : "d",
+                !eq(movlen, 0b11) : "q")
+        # !cond(!eq(idxlen, 0b01) : "w",
+                !eq(idxlen, 0b10) : "d",
+                !eq(idxlen, 0b11) : "q")
+      : EBCInst2Op<!add(opcode, !shl(idxlen, 2), movlen), 0, 0, 1, 1,
+                  outs, !con(ins, op1idxins, op2idxins),
+                  opcodestr
+                    # !cond(!eq(movlen, 0b00) : "b",
+                            !eq(movlen, 0b01) : "w",
+                            !eq(movlen, 0b10) : "d",
+                            !eq(movlen, 0b11) : "q")
+                    # !cond(!eq(idxlen, 0b01) : "w",
+                            !eq(idxlen, 0b10) : "d",
+                            !eq(idxlen, 0b11) : "q"),
+                  "@" # op1str # " " # op1idxstr # ", " # "@" # op2str # " " # op2idxstr> {
+    let Inst{7} = 1;
+    let Inst{6} = 1;
+  }
+}
+
 multiclass EBCMOVIBaseCommon<bits<6> opcode, bits<2> immlen, bits<2> movlen,
                 dag outs, dag ins, dag idxins, dag immins,
                 string opcodestr, string op1str,
@@ -838,3 +1042,24 @@ defm movin : EBCMOVInBase<0b111000, op2idxlen,
   !eq(op2idxlen, 0b11) : (ins idxn64:$op2idxn, idxc64:$op2idxc)),
                 "movin", "$op1",
                 "(${op1idxn},${op1idxc})", "(${op2idxn},${op2idxc})">;
+
+foreach idxlen = [0b01, 0b10] in {
+  foreach movlen = [0b00, 0b01, 0b10, 0b11] in
+  defm mov : EBCMOVBase<0b011000, idxlen, movlen,
+                (outs GPR:$op1), (ins GPR:$op2),
+                !cond(
+    !eq(idxlen, 0b01) : (ins idxn16:$op1idxn, idxc16:$op1idxc),
+    !eq(idxlen, 0b10) : (ins idxn32:$op1idxn, idxc32:$op1idxc)),
+                !cond(
+    !eq(idxlen, 0b01) : (ins idxn16:$op2idxn, idxc16:$op2idxc),
+    !eq(idxlen, 0b10) : (ins idxn32:$op2idxn, idxc32:$op2idxc)),
+                "mov", "$op1", "$op2",
+                "(${op1idxn},${op1idxc})", "(${op2idxn},${op2idxc})">;
+}
+
+defm mov : EBCMOVBase<0b011000, 0b11, 0b11,
+              (outs GPR:$op1), (ins GPR:$op2),
+              (ins idxn64:$op1idxn, idxc64:$op1idxc),
+              (ins idxn64:$op2idxn, idxc64:$op2idxc),
+              "mov", "$op1", "$op2",
+              "(${op1idxn},${op1idxc})", "(${op2idxn},${op2idxc})">;
