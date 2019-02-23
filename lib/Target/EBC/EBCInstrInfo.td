@@ -338,6 +338,63 @@ multiclass EBCMOVRELBase<bits<6> opcode, string opcodestr> {
                 opcodestr, "q", "$op1", "$imm", "(${idxn},${idxc})">;
 }
 
+multiclass EBCMOVsnBase<bits<6> opcode,
+                dag outs, dag ins,
+                dag op1idxins, dag op2idxins, dag op2immins,
+                string opcodestr, string op1str, string op2str,
+                string op1idxstr, string op2idxstr, string op2immstr> {
+  def Op1DOp2D : EBCInst2Op<opcode, 0, 0, 0, 0, outs, ins,
+                opcodestr, op1str # ", " # op2str>;
+  def Op1IOp2D : EBCInst2Op<opcode, 0, 0, 1, 0, outs, ins,
+                opcodestr, "@" # op1str # ", " # op2str>;
+  def Op1DOp2I : EBCInst2Op<opcode, 0, 0, 0, 1, outs, ins,
+                opcodestr, op1str # ", " # "@" # op2str>;
+  def Op1IOp2I : EBCInst2Op<opcode, 0, 0, 1, 1, outs, ins,
+                opcodestr, "@" # op1str # ", " # "@" # op2str>;
+  def Op1IIdxOp2D : EBCInst2Op<opcode, 0, 0, 1, 0,
+                outs, !con(ins, op1idxins), opcodestr,
+                "@" # op1str # " " # op1idxstr # ", " # op2str> {
+    let Inst{7} = 1;
+  }
+  def Op1IIdxOp2I : EBCInst2Op<opcode, 0, 0, 1, 1,
+                outs, !con(ins, op1idxins), opcodestr,
+                "@" # op1str # " " # op1idxstr # ", " # "@" # op2str> {
+    let Inst{7} = 1;
+  }
+  def Op1DOp2IIdx : EBCInst2Op<opcode, 0, 0, 0, 1,
+                outs, !con(ins, op2idxins), opcodestr,
+                op1str # ", " # "@" # op2str # " " # op2idxstr> {
+    let Inst{6} = 1;
+  }
+  def Op1IOp2IIdx : EBCInst2Op<opcode, 0, 0, 1, 1,
+                outs, !con(ins, op2idxins), opcodestr,
+                "@" # op1str # ", " # "@" # op2str # " " # op2idxstr> {
+    let Inst{6} = 1;
+  }
+  def Op1IIdxOp2IIdx : EBCInst2Op<opcode, 0, 0, 1, 1,
+                outs, !con(ins, op1idxins, op2idxins), opcodestr,
+                "@" # op1str # " " # op1idxstr # ", " # "@" # op2str # " " # op2idxstr> {
+    let Inst{7} = 1;
+    let Inst{6} = 1;
+  }
+  def Op1DOp2DImm : EBCInst2Op<opcode, 0, 0, 0, 0,
+                outs, !con(ins, op2immins), opcodestr,
+                op1str # ", " # op2str # " " # op2immstr> {
+    let Inst{6} = 1;
+  }
+  def Op1IOp2DImm : EBCInst2Op<opcode, 0, 0, 1, 0,
+                outs, !con(ins, op2immins), opcodestr,
+                "@" # op1str # ", " # op2str # " " # op2immstr> {
+    let Inst{6} = 1;
+  }
+  def Op1IIdxOp2DImm : EBCInst2Op<opcode, 0, 0, 1, 0,
+                outs, !con(ins, op1idxins, op2immins), opcodestr,
+                "@" # op1str # " " # op1idxstr # ", " # op2str # " " # op2immstr> {
+    let Inst{7} = 1;
+    let Inst{6} = 1;
+  }
+}
+
 multiclass EBC2OpBase<bits<6> opcode, string opcodestr> {
   defm _32 : EBC2OpBaseCommon<opcode, 0,
                 (outs GPR:$dst), (ins GPR:$op1, GPR:$op2),
@@ -618,3 +675,20 @@ defm movnd  : EBCMOVnBase<0b110011,
                 "(${op1idxn},${op1idxc})", "(${op2idxn},${op2idxc})">;
 
 defm movrel : EBCMOVRELBase<0b111001, "movrel">;
+
+defm movsnw : EBCMOVsnBase<0b100101,
+                (outs GPR:$op1), (ins GPR:$op2),
+                (ins idxn16:$op1idxn, idxc16:$op1idxc),
+                (ins idxn16:$op2idxn, idxc16:$op2idxc),
+                (ins imm16:$imm),
+                "movsnw", "$op1", "$op2",
+                "(${op1idxn},${op1idxc})", "(${op2idxn},${op2idxc})",
+                "$imm">;
+defm movsnd : EBCMOVsnBase<0b100110,
+                (outs GPR:$op1), (ins GPR:$op2),
+                (ins idxn16:$op1idxn, idxc16:$op1idxc),
+                (ins idxn32:$op2idxn, idxc32:$op2idxc),
+                (ins imm32:$imm),
+                "movsnd", "$op1", "$op2",
+                "(${op1idxn},${op1idxc})", "(${op2idxn},${op2idxc})",
+                "$imm">;
