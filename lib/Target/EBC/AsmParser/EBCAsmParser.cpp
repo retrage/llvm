@@ -157,6 +157,10 @@ public:
 
   bool isIdxC32() const { return isImmN<28>(); }
 
+  bool isIdxN64() const { return isImmN<60>(); }
+
+  bool isIdxC64() const { return isImmN<60>(); }
+
   SMLoc getStartLoc() const override { return StartLoc; };
   SMLoc getEndLoc() const override { return EndLoc; };
 
@@ -301,6 +305,10 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidIdxC32:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 27), (1 << 27));
+  case Match_InvalidIdxN64:
+  case Match_InvalidIdxC64:
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, -((int64_t)1 << 59), ((int64_t)1 << 59));
   }
 
   llvm_unreachable("Unknown match type detected!");
@@ -442,6 +450,12 @@ bool EBCAsmParser::parseOperand(OperandVector &Operands){
     if (getLexer().is(AsmToken::LParen))
       return parseIndex(Operands) != MatchOperand_Success;
     return false;
+  }
+
+  // Attempt to parse token as an index
+  if (getLexer().is(AsmToken::LParen)) {
+    if (parseIndex(Operands) == MatchOperand_Success)
+      return false;
   }
 
   // Attempt to parse token as an immediate

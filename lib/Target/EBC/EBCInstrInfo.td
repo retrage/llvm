@@ -88,6 +88,16 @@ def idxc32 : Operand<i32> {
   let ParserMatchClass = IdxCAsmOperand<32>;
 }
 
+let OperandType = "OPERAND_IDXN64" in
+def idxn64 : Operand<i64> {
+  let ParserMatchClass = IdxNAsmOperand<64>;
+}
+
+let OperandType = "OPERAND_IDXC64" in
+def idxc64 : Operand<i64> {
+  let ParserMatchClass = IdxCAsmOperand<64>;
+}
+
 } // OperandNamespace = "EBC"
 
 //===----------------------------------------------------------------------===//
@@ -278,6 +288,51 @@ multiclass EBCMOVIBaseCommon<bits<6> opcode, bits<2> immlen, bits<2> movlen,
                 "@" # op1str # " " #  idxstr # ", " # immstr> {
     let Inst{7-6} = immlen;
     let Inst{13-12} = movlen;
+  }
+}
+
+multiclass EBCMOVInBase<bits<6> opcode, bits<2> op2idxlen,
+                dag outs, dag ins, dag op1idxins, dag op2idxins,
+                string opcodestr, string op1str,
+                string op1idxstr, string op2idxstr> {
+  def OP1D
+      # !cond(!eq(op2idxlen, 0b01) : "w",
+              !eq(op2idxlen, 0b10) : "d",
+              !eq(op2idxlen, 0b11) : "q") : EBCInst1Op<opcode, 0, 0, 0,
+                outs, !con(ins, op2idxins),
+                opcodestr
+                  # !cond(!eq(op2idxlen, 0b01) : "w",
+                          !eq(op2idxlen, 0b10) : "d",
+                          !eq(op2idxlen, 0b11) : "q"),
+                  op1str # ", " # op2idxstr> {
+    let Inst{7-6} = op2idxlen;
+    let Inst{14} = 0;
+  }
+  def OP1I
+      # !cond(!eq(op2idxlen, 0b01) : "w",
+              !eq(op2idxlen, 0b10) : "d",
+              !eq(op2idxlen, 0b11) : "q") : EBCInst1Op<opcode, 0, 0, 1,
+                outs, !con(ins, op2idxins),
+                opcodestr
+                  # !cond(!eq(op2idxlen, 0b01) : "w",
+                          !eq(op2idxlen, 0b10) : "d",
+                          !eq(op2idxlen, 0b11) : "q"),
+                  "@" # op1str # ", " # op2idxstr> {
+    let Inst{7-6} = op2idxlen;
+    let Inst{14} = 0;
+  }
+  def OP1IIdx
+      # !cond(!eq(op2idxlen, 0b01) : "w",
+              !eq(op2idxlen, 0b10) : "d",
+              !eq(op2idxlen, 0b11) : "q") : EBCInst1Op<opcode, 0, 0, 1,
+                outs, !con(ins, op1idxins, op2idxins),
+                opcodestr
+                  # !cond(!eq(op2idxlen, 0b01) : "w",
+                          !eq(op2idxlen, 0b10) : "d",
+                          !eq(op2idxlen, 0b11) : "q"),
+                  "@" # op1str # " " # op1idxstr  # ", " # op2idxstr> {
+    let Inst{7-6} = op2idxlen;
+    let Inst{14} = 1;
   }
 }
 
@@ -772,3 +827,14 @@ foreach immlen = [0b01, 0b10, 0b11] in {
                       !eq(immlen, 0b11) : (ins imm64:$imm)),
                 "movi", "$op1", "$imm", "(${idxn},${idxc})">;
 }
+
+foreach op2idxlen = [0b01, 0b10, 0b11] in
+defm movin : EBCMOVInBase<0b111000, op2idxlen,
+                (outs GPR:$op1), (ins),
+                (ins idxn16:$op1idxn, idxc16:$op1idxc),
+                !cond(
+  !eq(op2idxlen, 0b01) : (ins idxn16:$op2idxn, idxc16:$op2idxc),
+  !eq(op2idxlen, 0b10) : (ins idxn32:$op2idxn, idxc32:$op2idxc),
+  !eq(op2idxlen, 0b11) : (ins idxn64:$op2idxn, idxc64:$op2idxc)),
+                "movin", "$op1",
+                "(${op1idxn},${op1idxc})", "(${op2idxn},${op2idxc})">;

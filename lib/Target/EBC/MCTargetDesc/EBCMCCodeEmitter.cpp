@@ -63,6 +63,7 @@ public:
 
   uint16_t getIdx16Value(const MCOperand &NMO, const MCOperand &CMO) const;
   uint32_t getIdx32Value(const MCOperand &NMO, const MCOperand &CMO) const;
+  uint64_t getIdx64Value(const MCOperand &NMO, const MCOperand &CMO) const;
 
 };
 
@@ -128,8 +129,18 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
           ++I;
           break;
         }
+      case EBC::OPERAND_IDXN64: {
+          // Assume next operand is OPERAND_IDXC64
+          const MCOperand &CMO = MI.getOperand(I + 1);
+          uint64_t Index = getIdx64Value(MO, CMO);
+          support::endian::write<uint64_t>(OS, Index, support::little);
+          // Skip next operand
+          ++I;
+          break;
+        }
       case EBC::OPERAND_IDXC16:
       case EBC::OPERAND_IDXC32:
+      case EBC::OPERAND_IDXC64:
       default:
         llvm_unreachable("Unhandled OperandType!");
       }
@@ -163,6 +174,8 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
       case EBC::OPERAND_IDXC16:
       case EBC::OPERAND_IDXN32:
       case EBC::OPERAND_IDXC32:
+      case EBC::OPERAND_IDXN64:
+      case EBC::OPERAND_IDXC64:
         break;
       default:
         llvm_unreachable("Unhandled OperandType!");
@@ -265,6 +278,47 @@ EBCMCCodeEmitter::getIdx32Value(const MCOperand &NMO, const MCOperand &CMO) cons
   uint8_t Assgined = NaturalLen / 4;
 
   uint32_t Index = ((Sign ? 1 : 0) << 31) + (Assgined << 28)
+                  + (abs(Constant) << NaturalLen) + abs(Natual);
+
+  return Index;
+}
+
+uint64_t
+EBCMCCodeEmitter::getIdx64Value(const MCOperand &NMO, const MCOperand &CMO) const {
+  int64_t Natual = NMO.getImm();
+  int64_t Constant = CMO.getImm();
+
+  assert(((Natual >= 0 && Constant >= 0)
+        || (Natual <= 0 && Constant <= 0))
+        && "Both natural and constant must have same signs");
+
+  bool Sign = (Natual <= 0 && Constant <= 0);
+
+  uint64_t AbsNatural = abs(Natual);
+  uint64_t AbsConstant = abs(Constant);
+
+  unsigned NaturalLen = 0;
+  while (AbsNatural) {
+    ++NaturalLen;
+    AbsNatural >>= 1;
+  }
+  NaturalLen += NaturalLen % 2 ? 1 : 0;
+
+  unsigned ConstantLen = 0;
+  while (AbsConstant) {
+    ++ConstantLen;
+    AbsConstant >>= 1;
+  }
+  ConstantLen += ConstantLen % 2 ? 1 : 0;
+
+  unsigned UsedBits = 4; // Sign bit + 3-bit assgined to natural unit
+
+  assert((UsedBits + NaturalLen + ConstantLen <= 64)
+        && "Unit length is too long");
+
+  uint8_t Assgined = NaturalLen / 8;
+
+  uint32_t Index = ((Sign ? 1 : 0) << 63) + (Assgined << 60)
                   + (abs(Constant) << NaturalLen) + abs(Natual);
 
   return Index;

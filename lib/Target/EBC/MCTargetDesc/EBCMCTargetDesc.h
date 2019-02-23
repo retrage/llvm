@@ -66,6 +66,10 @@ enum OperandType {
   OPERAND_IDXN32,
   /// 32-bit index constant units
   OPERAND_IDXC32,
+  /// 64-bit index natural units
+  OPERAND_IDXN64,
+  /// 64-bit index constant units
+  OPERAND_IDXC64,
 };
 }
 
