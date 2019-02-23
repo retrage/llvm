@@ -410,7 +410,7 @@ multiclass EBCMOVBase<bits<6> opcode, bits<2> idxlen, bits<2> movlen,
   }
 }
 
-multiclass EBCMOVIBaseCommon<bits<6> opcode, bits<2> immlen, bits<2> movlen,
+multiclass EBCMOVIBase<bits<6> opcode, bits<2> immlen, bits<2> movlen,
                 dag outs, dag ins, dag idxins, dag immins,
                 string opcodestr, string op1str,
                 string immstr, string idxstr> {
@@ -967,7 +967,7 @@ defm movsnd : EBCMOVsnBase<0b100110,
 
 foreach immlen = [0b01, 0b10, 0b11] in {
   foreach movlen = [0b00, 0b01, 0b10, 0b11] in 
-  defm movi : EBCMOVIBaseCommon<0b110111, immlen, movlen,
+  defm movi : EBCMOVIBase<0b110111, immlen, movlen,
                 (outs GPR:$op1), (ins),
                 (ins idxn16:$idxn, idxc16:$idxc),
                 !cond(!eq(immlen, 0b01) : (ins imm16:$imm),
