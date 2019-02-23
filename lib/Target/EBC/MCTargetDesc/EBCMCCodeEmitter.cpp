@@ -318,7 +318,7 @@ EBCMCCodeEmitter::getIdx64Value(const MCOperand &NMO, const MCOperand &CMO) cons
 
   uint8_t Assgined = NaturalLen / 8;
 
-  uint32_t Index = ((Sign ? 1 : 0) << 63) + (Assgined << 60)
+  uint64_t Index = ((uint64_t)(Sign ? 1 : 0) << 63) + ((uint64_t)Assgined << 60)
                   + (abs(Constant) << NaturalLen) + abs(Natual);
 
   return Index;
