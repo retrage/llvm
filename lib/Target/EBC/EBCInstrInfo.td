@@ -861,7 +861,7 @@ multiclass EBC1OpnBase<bits<6> opcode,
 //===----------------------------------------------------------------------===//
 
 let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in
-def ebcbreak : EBCInst<0b000000,
+def ebreak : EBCInst<0b000000,
                 (outs), (ins breakcode:$code), "break", "$code", []> {
   field bits<8> Inst;
   field bits<8> SoftFail = 0;
