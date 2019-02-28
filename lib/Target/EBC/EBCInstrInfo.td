@@ -889,7 +889,7 @@ defm movin : EBCMOVInBase<0b111000, op2idxlen,
 
 foreach idxlen = [0b01, 0b10] in {
   foreach movlen = [0b00, 0b01, 0b10, 0b11] in
-  defm mov : EBCMOVBase<0b011000, idxlen, movlen,
+  defm mov : EBCMOVBase<0b011001, idxlen, movlen,
                 (outs GPR:$op1), (ins GPR:$op2),
                 !cond(
     !eq(idxlen, 0b01) : (ins idxn16:$op1idxn, idxc16:$op1idxc),
@@ -901,7 +901,7 @@ foreach idxlen = [0b01, 0b10] in {
                 "(${op1idxn},${op1idxc})", "(${op2idxn},${op2idxc})">;
 }
 
-defm mov : EBCMOVBase<0b011000, 0b11, 0b11,
+defm mov : EBCMOVBase<0b011001, 0b11, 0b11,
               (outs GPR:$op1), (ins GPR:$op2),
               (ins idxn64:$op1idxn, idxc64:$op1idxc),
               (ins idxn64:$op2idxn, idxc64:$op2idxc),
