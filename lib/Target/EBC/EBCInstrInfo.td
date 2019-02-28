@@ -178,28 +178,36 @@ multiclass EBC1OpBaseCommon<bits<6> opcode, bit is64Bit,
                 "@" # op1str # " " # idxstr>;
 }
 
-multiclass EBCCMPBaseCommon<bits<6> opcode, bit is64Bit,
+multiclass EBCCMPBaseCommon<bits<6> opcode,
+                bit hasImmIdx, bit is64Bit, bit Op2Indirect,
                 dag outs, dag ins, dag immins, dag idxins,
                 string opsuffix, string op1str, string op2str,
                 string immstr, string idxstr> {
-  def !if(is64Bit, "64", "32") # Op1DOp2D
-      : EBCInst2Op<opcode, 0, is64Bit, 0, 0, outs, ins,
-                "cmp" # !if(is64Bit, "64", "32") # opsuffix,
-                op1str # ", " # op2str>;
-  def !if(is64Bit, "64", "32") # Op1DOp2I
-      : EBCInst2Op<opcode, 0, is64Bit, 0, 1, outs, ins,
-                "cmp" # !if(is64Bit, "64", "32") # opsuffix,
-                op1str # ", " # "@" # op2str>;
-  def !if(is64Bit, "64", "32") # Op1DOp2DImm
-      : EBCInst2Op<opcode, 0, is64Bit, 0, 0,
-                outs, !con(ins, immins),
-                "cmp" # !if(is64Bit, "64", "32") # opsuffix,
-                op1str # ", " # op2str # " " # immstr>;
-  def !if(is64Bit, "64", "32") # Op1DOp2IIdx
-      : EBCInst2Op<opcode, 0, is64Bit, 0, 1,
-                outs, !con(ins, idxins),
-                "cmp" # !if(is64Bit, "64", "32") # opsuffix,
-                op1str # ", " # "@" # op2str # " " # idxstr>;
+  def !if(is64Bit, "64", "32")
+    # "Op1"
+    # !if(Op2Indirect, "Op2I", "Op2D")
+    # !if(hasImmIdx, !if(Op2Indirect, "Idx", "Imm"), "")
+    : EBCInst2Op<opcode, hasImmIdx, is64Bit, 0, Op2Indirect,
+      outs, !cond(!eq(hasImmIdx, 0) : ins,
+                  !eq(!and(hasImmIdx, Op2Indirect), 0) : !con(ins, immins),
+                  !eq(!and(hasImmIdx, Op2Indirect), 1) : !con(ins, idxins)),
+      "cmp" # !if(is64Bit, "64", "32") # opsuffix,
+      op1str # ", " # op2str # !if(hasImmIdx, " ", "")
+      # !cond(!eq(hasImmIdx, 0) : "",
+              !eq(!and(hasImmIdx, Op2Indirect), 0) : immstr,
+              !eq(!and(hasImmIdx, Op2Indirect), 1) : idxstr)>;
+}
+
+multiclass EBCCMPBase<bits<6> opcode, string opsuffix> {
+  foreach is64Bit = [0b0, 0b1] in {
+    foreach Op2Indirect = [0b0, 0b1] in {
+      foreach hasImmIdx = [0b0, 0b1] in
+      defm "" : EBCCMPBaseCommon<opcode, hasImmIdx, is64Bit, Op2Indirect,
+                    (outs), (ins GPR:$op1, GPR:$op2),
+                    (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
+                    opsuffix, "$op1", "$op2", "$imm", "(${idxn},${idxc})">;
+    }
+  }
 }
 
 multiclass EBCCMPIBaseCommon<bits<6> opcode, bit is64Bit, bit immlen,
@@ -730,14 +738,6 @@ multiclass EBC2OpBase<bits<6> opcode, string opcodestr> {
       }
     }
   }
-}
-
-multiclass EBCCMPBase<bits<6> opcode, string opsuffix> {
-  foreach is64Bit = [0b0, 0b1] in
-  defm EBCCMP : EBCCMPBaseCommon<opcode, is64Bit,
-                (outs), (ins GPR:$op1, GPR:$op2),
-                (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
-                opsuffix, "$op1", "$op2", "$imm", "(${idxn},${idxc})">;
 }
 
 multiclass EBCCMPIBase<bits<6> opcode, string opsuffix> {
