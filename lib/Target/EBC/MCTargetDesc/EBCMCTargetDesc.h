@@ -83,4 +83,7 @@ enum OperandType {
 #define GET_INSTRINFO_ENUM
 #include "EBCGenInstrInfo.inc"
 
+#define GET_SUBTARGETINFO_ENUM
+#include "EBCGenSubtargetInfo.inc"
+
 #endif

@@ -33,12 +33,23 @@
 #define GET_REGINFO_MC_DESC
 #include "EBCGenRegisterInfo.inc"
 
+#define GET_SUBTARGETINFO_MC_DESC
+#include "EBCGenSubtargetInfo.inc"
+
 using namespace llvm;
 
 static MCInstrInfo *createEBCMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitEBCMCInstrInfo(X);
   return X;
+}
+
+static MCSubtargetInfo *createEBCMCSubtargetInfo(const Triple &TT,
+                                                StringRef CPU, StringRef FS) {
+  std::string CPUName = CPU;
+  if (CPUName.empty())
+    CPUName = "generic-ebc";
+  return createEBCMCSubtargetInfoImpl(TT, CPUName, FS);
 }
 
 static MCRegisterInfo *createEBCMCRegisterInfo(const Triple &TT) {
@@ -79,4 +90,5 @@ extern "C" void LLVMInitializeEBCTargetMC() {
   TargetRegistry::RegisterMCCodeEmitter(*T, createEBCMCCodeEmitter);
   TargetRegistry::RegisterMCInstPrinter(*T, createEBCMCInstPrinter);
   TargetRegistry::RegisterCOFFStreamer(*T, createCOFFStreamer);
+  TargetRegistry::RegisterMCSubtargetInfo(*T, createEBCMCSubtargetInfo);
 }
