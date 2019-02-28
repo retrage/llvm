@@ -104,6 +104,64 @@ def idxc64 : Operand<i64> {
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
+class EBCCALLBaseCommon<bits<6> opcode,
+                bit hasImmIdx, bit is64Bit, bit isNative,
+                bit isRel, bit Op1Indirect,
+                dag outs, dag ins, dag immins, dag idxins,
+                string opcodestr, string op1str,
+                string immstr, string idxstr>
+      : EBCInst1Op<opcode, hasImmIdx, is64Bit, Op1Indirect, outs,
+          !cond(!eq(hasImmIdx, 0) : ins,
+                !eq(!and(hasImmIdx, Op1Indirect), 0) : !con(ins, immins),
+                !eq(!and(hasImmIdx, Op1Indirect), 1) : !con(ins, idxins)),
+                opcodestr
+              # !if(is64Bit, "64", "32")
+              # !if(isNative, "ex", "")
+              # !if(isRel, "", "a"),
+                !if(Op1Indirect, "@", "")
+              # op1str
+              # !if(hasImmIdx, " ", "")
+              # !cond(!eq(hasImmIdx, 0) : "",
+                      !eq(!and(hasImmIdx, Op1Indirect), 0) : immstr,
+                      !eq(!and(hasImmIdx, Op1Indirect), 1) : idxstr)> {
+  let Inst{13} = isNative;
+  let Inst{12} = isRel;
+}
+
+multiclass EBCCALLBase<bits<6> opcode, string opcodestr> {
+  foreach hasImmIdx = [0b0, 0b1] in {
+    foreach isNative = [0b0, 0b1] in {
+      foreach isRel = [0b0, 0b1] in {
+        foreach Op1Indirect = [0b0, 0b1] in
+          def "32"
+            # !if(Op1Indirect, "Op1I", "Op1D")
+            # !if(isNative, "Native", "EBC")
+            # !if(isRel, "Rel", "Abs")
+            # !cond(!eq(hasImmIdx, 0) : "",
+                    !eq(!and(hasImmIdx, Op1Indirect), 0) : "Imm",
+                    !eq(!and(hasImmIdx, Op1Indirect), 1) : "Idx")
+              : EBCCALLBaseCommon<opcode,
+                    hasImmIdx, 0, isNative, isRel, Op1Indirect,
+                    (outs), (ins GPR:$op1),
+                    (ins imm32:$imm), (ins idxn32:$idxn, idxc32:$idxc),
+                    opcodestr, "$op1", "$imm", "(${idxn},${idxc})">;
+      }
+    }
+  }
+
+  foreach isNative = [0b0, 0b1] in {
+    foreach isRel = [0b0, 0b1] in
+    def "64"
+      # !if(isNative, "Native", "EBC")
+      # !if(isRel, "Rel", "Abs")
+      # "Imm"
+        : EBCCALLBaseCommon<opcode,
+              1, 1, isNative, isRel, 0,
+              (outs), (ins), (ins imm64:$imm), (ins),
+              opcodestr, "", "$imm", "">;
+  }
+}
+
 multiclass EBC1OpBaseCommon<bits<6> opcode, bit is64Bit,
                 dag outs, dag ins, dag immins, dag idxins,
                 string opcodestr, string op1str,
@@ -741,23 +799,6 @@ multiclass EBCJMPBaseCommon<bits<6> opcode,
   }
 }
 
-multiclass EBCCALLBaseCommon<bits<6> opcode,
-                bit hasImmIdx, bit is64Bit, bit isNative, bit Op1Indirect,
-                dag outs, dag ins, string opcodestr, string argstr> {
-  def Abs : EBCInst1Op<opcode,
-                hasImmIdx, is64Bit, Op1Indirect, outs, ins,
-                opcodestr # !if(is64Bit, "64", "32") # !if(isNative, "ex", "")# "a", argstr> {
-    let Inst{13} = isNative;
-    let Inst{12} = 0;
-  }
-  def Rel : EBCInst1Op<opcode,
-                hasImmIdx, is64Bit, Op1Indirect, outs, ins,
-                opcodestr # !if(is64Bit, "64", "32") # !if(isNative, "ex", ""), argstr> {
-    let Inst{13} = isNative;
-    let Inst{12} = 1;
-  }
-}
-
 multiclass EBCJMPBase<bits<6> opcode, string opcodestr> {
   defm _32Op1D : EBCJMPBaseCommon<opcode, 0, 0, 0,
                 (outs), (ins GPR:$op1), opcodestr, "$op1">;
@@ -789,33 +830,6 @@ multiclass EBCJMP8Base<bits<6> opcode, string opcodestr> {
     let Inst{7} = 1;
     let Inst{6} = 1;
   }
-}
-
-multiclass EBCCALLBase<bits<6> opcode, string opcodestr> {
-  defm _32EBCOp1D : EBCCALLBaseCommon<opcode, 0, 0, 0, 0,
-                (outs), (ins GPR:$op1), opcodestr, "$op1">;
-  defm _32NativeOp1D : EBCCALLBaseCommon<opcode, 0, 0, 1, 0,
-                (outs), (ins GPR:$op1), opcodestr, "$op1">;
-  defm _32EBCOp1I : EBCCALLBaseCommon<opcode, 0, 0, 0, 1,
-                (outs), (ins GPR:$op1), opcodestr, "@$op1">;
-  defm _32NativeOp1I : EBCCALLBaseCommon<opcode, 0, 0, 1, 1,
-                (outs), (ins GPR:$op1), opcodestr, "@$op1">;
-  defm _32EBCOp1DImm : EBCCALLBaseCommon<opcode, 1, 0, 0, 0,
-                (outs), (ins GPR:$op1, imm32:$imm),
-                opcodestr, "$op1 $imm">;
-  defm _32NativeOp1DImm : EBCCALLBaseCommon<opcode, 1, 0, 1, 0,
-                (outs), (ins GPR:$op1, imm32:$imm),
-                opcodestr, "$op1 $imm">;
-  defm _32EBCOp1IIdx : EBCCALLBaseCommon<opcode, 1, 0, 0, 1,
-                (outs), (ins GPR:$op1, idxn32:$idxn, idxc32:$idxc),
-                opcodestr, "@$op1 (${idxn},${idxc})">;
-  defm _32NativeOp1IIdx : EBCCALLBaseCommon<opcode, 1, 0, 1, 1,
-                (outs), (ins GPR:$op1, idxn32:$idxn, idxc32:$idxc),
-                opcodestr, "@$op1 (${idxn},${idxc})">;
-  defm _64EBCImm : EBCCALLBaseCommon<opcode, 1, 1, 0, 0,
-                (outs), (ins imm64:$imm), opcodestr, "$imm">;
-  defm _64NativeImm : EBCCALLBaseCommon<opcode, 1, 1, 1, 0,
-                (outs), (ins imm64:$imm), opcodestr, "$imm">;
 }
 
 multiclass EBC1OpBase<bits<6> opcode,
