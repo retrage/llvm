@@ -465,8 +465,7 @@ multiclass EBCALU<bits<6> opcode, string opcodestr> {
     foreach is64Bit = [0b0, 0b1] in {
       foreach Op1Indirect = [0b0, 0b1] in {
         foreach Op2Indirect = [0b0, 0b1] in
-        def opcodestr
-          # !if(is64Bit, "64", "32")
+        def !if(is64Bit, "64", "32")
           # !if(Op1Indirect, "Op1I", "Op1D")
           # !if(Op2Indirect, "Op2I", "Op2D")
           # !cond(!eq(hasImmIdx, 0) : "",
@@ -485,9 +484,7 @@ multiclass EBCCMP<bits<6> opcode, string opsuffix> {
   foreach hasImmIdx = [0b0, 0b1] in {
     foreach is64Bit = [0b0, 0b1] in {
       foreach Op2Indirect = [0b0, 0b1] in
-      def "CMP"
-        # !if(is64Bit, "64", "32")
-        # opsuffix
+      def !if(is64Bit, "64", "32")
         # !if(Op2Indirect, "Op2I", "Op2D")
         # !if(hasImmIdx, !if(Op2Indirect, "Idx", "Imm"), "")
         : EBCCMPBase<opcode, hasImmIdx, is64Bit, Op2Indirect,
@@ -503,10 +500,8 @@ multiclass EBCCMPI<bits<6> opcode, string opsuffix> {
     foreach immlen = [0b0, 0b1] in {
       foreach Op1Indirect = [0b0, 0b1] in {
         foreach hasOp1Idx = !if(Op1Indirect, [0b0, 0b1], [0b0]) in
-        def "CMPI"
-          # !if(is64Bit, "64", "32")
+        def !if(is64Bit, "64", "32")
           # !if(immlen, "d", "w")
-          # opsuffix
           # !if(Op1Indirect, "Op1I", "Op1D")
           # !if(hasOp1Idx, "Idx", "")
           : EBCCMPIBase<opcode, hasOp1Idx, is64Bit, immlen, Op1Indirect,
@@ -525,8 +520,7 @@ multiclass EBCMOV<bits<6> opcode, bits<2> idxlen, bits<2> movlen> {
     foreach Op2Indirect = [0b0, 0b1] in {
       foreach hasOp1Idx = !if(Op1Indirect, [0b0, 0b1], [0b0]) in {
         foreach hasOp2Idx = !if(Op2Indirect, [0b0, 0b1], [0b0]) in
-        def "MOV"
-          # !cond(!eq(movlen, 0b00) : "b", !eq(movlen, 0b01) : "w",
+        def !cond(!eq(movlen, 0b00) : "b", !eq(movlen, 0b01) : "w",
                   !eq(movlen, 0b10) : "d", !eq(movlen, 0b11) : "q")
           # !cond(!eq(idxlen, 0b01) : "w", !eq(idxlen, 0b10) : "d",
                   !eq(idxlen, 0b11) : "q")
