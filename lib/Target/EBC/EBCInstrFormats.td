@@ -31,8 +31,8 @@ class EBCInst8<bits<6> opcode, dag outs, dag ins,
     : EBCInst<opcode, outs, ins, opcodestr, argstr, pattern> {
   field bits<8> Inst;
   field bits<8> SoftFail = 0;
-  let Size = 1;
 
+  let Size = 1;
   let Opcode = opcode;
 
   let Inst{5-0} = Opcode;
@@ -43,8 +43,8 @@ class EBCInst16<bits<6> opcode, dag outs, dag ins,
     : EBCInst<opcode, outs, ins, opcodestr, argstr, pattern> {
   field bits<16> Inst;
   field bits<16> SoftFail = 0;
-  let Size = 2;
 
+  let Size = 2;
   let Opcode = opcode;
 
   let Inst{5-0} = Opcode;
