@@ -435,6 +435,8 @@ bool EBCAsmParser::parseOperand(OperandVector &Operands){
     default:
       return false;
     case AsmToken::LParen:
+      if (parseIndex(Operands) == MatchOperand_Success)
+        return false;
     case AsmToken::Minus:
     case AsmToken::Plus:
     case AsmToken::Integer:

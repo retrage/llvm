@@ -519,7 +519,7 @@ multiclass EBCMOV<bits<6> opcode, bits<2> idxlen, bits<2> movlen> {
   foreach Op1Indirect = [0b0, 0b1] in {
     foreach Op2Indirect = [0b0, 0b1] in {
       foreach hasOp1Idx = !if(Op1Indirect, [0b0, 0b1], [0b0]) in {
-        foreach hasOp2Idx = !if(Op2Indirect, [0b0, 0b1], [0b0]) in
+        foreach hasOp2Idx = [0b0, 0b1] in
         def !cond(!eq(movlen, 0b00) : "b", !eq(movlen, 0b01) : "w",
                   !eq(movlen, 0b10) : "d", !eq(movlen, 0b11) : "q")
           # !cond(!eq(idxlen, 0b01) : "w", !eq(idxlen, 0b10) : "d",
