@@ -13,6 +13,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
@@ -34,6 +35,11 @@ class EBCAsmParser : public MCTargetAsmParser {
 
   bool generateImmOutOfRangeError(OperandVector &Operands, uint64_t ErrorInfo,
                                   int64_t Lower, int64_t Upper, Twine Msg);
+
+  bool CheckIndex16(const MCOperand &NMO, const MCOperand &CMO) const;
+  bool CheckIndex32(const MCOperand &NMO, const MCOperand &CMO) const;
+  bool CheckIndex64(const MCOperand &NMO, const MCOperand &CMO) const;
+  bool CheckIndex(const MCInst &MI, uint64_t &ErrorInfo);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                               OperandVector &Operands, MCStreamer &Out,
@@ -250,6 +256,155 @@ bool EBCAsmParser::generateImmOutOfRangeError(
   return Error(ErrorLoc, Msg + " [" + Twine(Lower) + ", " + Twine(Upper) + "]");
 }
 
+bool EBCAsmParser::CheckIndex16(const MCOperand &NMO, const MCOperand &CMO) const {
+  int16_t Natural = NMO.getImm();
+  int16_t Constant = CMO.getImm();
+
+  if (!((Natural >= 0 && Constant >= 0) || (Natural <= 0 && Constant <= 0)))
+    return false;
+
+  uint16_t AbsNatural = abs(Natural);
+  uint16_t AbsConstant = abs(Constant);
+
+  unsigned NaturalLen = 0;
+  while (AbsNatural) {
+    ++NaturalLen;
+    AbsNatural >>= 1;
+  }
+  NaturalLen += NaturalLen % 2 ? 1 : 0;
+
+  unsigned ConstantLen = 0;
+  while (AbsConstant) {
+    ++ConstantLen;
+    AbsConstant >>= 1;
+  }
+  ConstantLen += ConstantLen % 2 ? 1 : 0;
+
+  unsigned UsedBits = 4;
+
+  if (!(UsedBits + NaturalLen + ConstantLen <= 16))
+    return false;
+
+  return true;
+}
+
+bool EBCAsmParser::CheckIndex32(const MCOperand &NMO, const MCOperand &CMO) const {
+  int32_t Natural = NMO.getImm();
+  int32_t Constant = CMO.getImm();
+
+  if (!((Natural >= 0 && Constant >= 0) || (Natural <= 0 && Constant <= 0)))
+    return false;
+
+  uint32_t AbsNatural = abs(Natural);
+  uint32_t AbsConstant = abs(Constant);
+
+  unsigned NaturalLen = 0;
+  while (AbsNatural) {
+    ++NaturalLen;
+    AbsNatural >>= 1;
+  }
+  NaturalLen += NaturalLen % 2 ? 1 : 0;
+
+  unsigned ConstantLen = 0;
+  while (AbsConstant) {
+    ++ConstantLen;
+    AbsConstant >>= 1;
+  }
+  ConstantLen += ConstantLen % 2 ? 1 : 0;
+
+  unsigned UsedBits = 4;
+
+  if (!(UsedBits + NaturalLen + ConstantLen <= 32))
+    return false;
+
+  return true;
+}
+
+bool EBCAsmParser::CheckIndex64(const MCOperand &NMO, const MCOperand &CMO) const {
+  int64_t Natural = NMO.getImm();
+  int64_t Constant = CMO.getImm();
+
+  if (!((Natural >= 0 && Constant >= 0) || (Natural <= 0 && Constant <= 0)))
+    return false;
+
+  uint64_t AbsNatural = abs(Natural);
+  uint64_t AbsConstant = abs(Constant);
+
+  unsigned NaturalLen = 0;
+  while (AbsNatural) {
+    ++NaturalLen;
+    AbsNatural >>= 1;
+  }
+  NaturalLen += NaturalLen % 2 ? 1 : 0;
+
+  unsigned ConstantLen = 0;
+  while (AbsConstant) {
+    ++ConstantLen;
+    AbsConstant >>= 1;
+  }
+  ConstantLen += ConstantLen % 2 ? 1 : 0;
+
+  unsigned UsedBits = 4;
+
+  if (!(UsedBits + NaturalLen + ConstantLen <= 64))
+    return false;
+
+  return true;
+}
+
+bool EBCAsmParser::CheckIndex(const MCInst &MI, uint64_t &ErrorInfo) {
+  const MCInstrDesc &Desc = MII.get(MI.getOpcode());
+
+  for (unsigned I = 0, E = MI.getNumOperands(); I < E; ++I) {
+    const MCOperand &NMO = MI.getOperand(I);
+    if (NMO.isImm()) {
+      const MCOperandInfo &NOI = Desc.OpInfo[I];
+      if (NOI.OperandType == EBC::OPERAND_IDXN16) {
+        assert(I + 1 < E && "Invalid number of operands!");
+        const MCOperand &CMO = MI.getOperand(I + 1);
+        const MCOperandInfo &COI = Desc.OpInfo[I + 1];
+        if (!(CMO.isImm() && COI.OperandType == EBC::OPERAND_IDXC16)) {
+          ErrorInfo = I + 1;
+          return false;
+        }
+        if (!CheckIndex16(NMO, CMO)) {
+          ErrorInfo = I;
+          return false;
+        }
+        ++I;
+      } else if (NOI.OperandType == EBC::OPERAND_IDXN32) {
+        assert(I + 1 < E && "Invalid number of operands!");
+        const MCOperand &CMO = MI.getOperand(I + 1);
+        const MCOperandInfo &COI = Desc.OpInfo[I + 1];
+        if (!(CMO.isImm() && COI.OperandType == EBC::OPERAND_IDXC32)) {
+          ErrorInfo = I + 1;
+          return false;
+        }
+        if (!CheckIndex32(NMO, CMO)) {
+          ErrorInfo = I;
+          return false;
+        }
+        ++I;
+      } else if (NOI.OperandType == EBC::OPERAND_IDXN64) {
+        assert(I + 1 < E && "Invalid number of operands!");
+        const MCOperand &CMO = MI.getOperand(I + 1);
+        const MCOperandInfo &COI = Desc.OpInfo[I + 1];
+        if (!(CMO.isImm() && COI.OperandType == EBC::OPERAND_IDXC64)) {
+          ErrorInfo = I + 1;
+          return false;
+        }
+        if (!CheckIndex64(NMO, CMO)) {
+          ErrorInfo = I;
+          return false;
+        }
+        ++I;
+      }
+    }
+  }
+
+  return true;
+}
+
 bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                           OperandVector &Operands,
                                           MCStreamer &Out,
@@ -264,6 +419,10 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   default:
     break;
   case Match_Success:
+    if (!CheckIndex(Inst, ErrorInfo)) {
+      ErrorLoc = ((EBCOperand &)*Operands[ErrorInfo]).getStartLoc();
+      return Error(ErrorLoc, "invalid index");
+    }
     Out.EmitInstruction(Inst, getSTI());
     return false;
   case Match_MissingFeature:
