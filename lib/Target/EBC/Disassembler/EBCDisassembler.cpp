@@ -96,22 +96,22 @@ static DecodeStatus DecodeFRRegisterClass(MCInst &Inst, uint64_t RegNo) {
 
 static void setRegFlags(uint8_t Byte, bool &hasOp1GPR, bool &hasOp2GPR) {
   switch (Byte & 0x3f) {
-  case 0x01:
-  case 0x03:
+  case EBC::OP_JMP:
+  case EBC::OP_CALL:
     if (Byte & 0x40)
       break;
-  case 0x2b:
-  case 0x2c:
-  case 0x2d:
-  case 0x2e:
-  case 0x2f:
-  case 0x30:
-  case 0x31:
-  case 0x35:
-  case 0x36:
-  case 0x37:
-  case 0x38:
-  case 0x39:
+  case EBC::OP_PUSH:
+  case EBC::OP_POP:
+  case EBC::OP_CMPIeq:
+  case EBC::OP_CMPIlte:
+  case EBC::OP_CMPIgte:
+  case EBC::OP_CMPIulte:
+  case EBC::OP_CMPIugte:
+  case EBC::OP_PUSHn:
+  case EBC::OP_POPn:
+  case EBC::OP_MOVI:
+  case EBC::OP_MOVIn:
+  case EBC::OP_MOVREL:
     hasOp1GPR = true;
     break;
   default:
@@ -122,21 +122,20 @@ static void setRegFlags(uint8_t Byte, bool &hasOp1GPR, bool &hasOp2GPR) {
 }
 
 static DecodeStatus decodeRegs(MCInst &Inst, ArrayRef<uint8_t> Bytes) {
-  unsigned Opcode = Inst.getOpcode();
   bool hasOp1GPR = false;
   bool hasOp2GPR = false;
   bool hasOp1FR = false;
   bool hasOp2DR = false;
 
-  switch (Opcode) {
-  case EBC::BREAK:
-  case EBC::RET:
+  switch (Bytes[0] & 0x3f) {
+  case EBC::OP_BREAK:
+  case EBC::OP_RET:
     return MCDisassembler::Success;
-  case EBC::LOADSP:
+  case EBC::OP_LOADSP:
     hasOp1FR = true;
     hasOp2GPR = true;
     break;
-  case EBC::STORESP:
+  case EBC::OP_STORESP:
     hasOp1GPR = true;
     hasOp2DR = true;
     break;
@@ -166,523 +165,158 @@ static DecodeStatus decodeRegs(MCInst &Inst, ArrayRef<uint8_t> Bytes) {
   return Result;
 }
 
-static void setFlags(MCInst &MI) {
-  unsigned Opcode = MI.getOpcode();
+static void setFlags(MCInst &MI, ArrayRef<uint8_t> Bytes) {
+  if (Bytes.size() < 2)
+    return;
+
   unsigned Flags = 0;
 
-  switch (Opcode) {
-  case EBC::BREAK:
+  switch (Bytes[0] & 0x3f) {
+  case EBC::OP_BREAK:
     Flags |= EBC::BreakCode;
     break;
-  case EBC::JMP8CC:
-  case EBC::JMP8CS:
-  case EBC::JMP8Uncond:
+  case EBC::OP_JMP8:
     Flags |= EBC::Op1Imm8;
     break;
-  case EBC::POP32Op1DImm:
-  case EBC::POP64Op1DImm:
-  case EBC::PUSH32Op1DImm:
-  case EBC::PUSH64Op1DImm:
-  case EBC::POPnOp1DImm:
-  case EBC::PUSHnOp1DImm:
-    Flags |= EBC::Op1Imm16;
+  case EBC::OP_POP:
+  case EBC::OP_PUSH:
+  case EBC::OP_POPn:
+  case EBC::OP_PUSHn:
+    if (Bytes[0] & 0x80) {
+      if (Bytes[1] & 0x08)
+        Flags |= EBC::Op1Idx16;
+      else
+        Flags |= EBC::Op1Imm16;
+    }
     break;
-  case EBC::ADD32Op1DOp2DImm:
-  case EBC::ADD32Op1IOp2DImm:
-  case EBC::ADD64Op1DOp2DImm:
-  case EBC::ADD64Op1IOp2DImm:
-  case EBC::AND32Op1DOp2DImm:
-  case EBC::AND32Op1IOp2DImm:
-  case EBC::AND64Op1DOp2DImm:
-  case EBC::AND64Op1IOp2DImm:
-  case EBC::ASHR32Op1DOp2DImm:
-  case EBC::ASHR32Op1IOp2DImm:
-  case EBC::ASHR64Op1DOp2DImm:
-  case EBC::ASHR64Op1IOp2DImm:
-  case EBC::DIV32Op1DOp2DImm:
-  case EBC::DIV32Op1IOp2DImm:
-  case EBC::DIV64Op1DOp2DImm:
-  case EBC::DIV64Op1IOp2DImm:
-  case EBC::DIVU32Op1DOp2DImm:
-  case EBC::DIVU32Op1IOp2DImm:
-  case EBC::DIVU64Op1DOp2DImm:
-  case EBC::DIVU64Op1IOp2DImm:
-  case EBC::MOD32Op1DOp2DImm:
-  case EBC::MOD32Op1IOp2DImm:
-  case EBC::MOD64Op1DOp2DImm:
-  case EBC::MOD64Op1IOp2DImm:
-  case EBC::MODU32Op1DOp2DImm:
-  case EBC::MODU32Op1IOp2DImm:
-  case EBC::MODU64Op1DOp2DImm:
-  case EBC::MODU64Op1IOp2DImm:
-  case EBC::MUL32Op1DOp2DImm:
-  case EBC::MUL32Op1IOp2DImm:
-  case EBC::MUL64Op1DOp2DImm:
-  case EBC::MUL64Op1IOp2DImm:
-  case EBC::MULU32Op1DOp2DImm:
-  case EBC::MULU32Op1IOp2DImm:
-  case EBC::MULU64Op1DOp2DImm:
-  case EBC::MULU64Op1IOp2DImm:
-  case EBC::NEG32Op1DOp2DImm:
-  case EBC::NEG32Op1IOp2DImm:
-  case EBC::NEG64Op1DOp2DImm:
-  case EBC::NEG64Op1IOp2DImm:
-  case EBC::NOT32Op1DOp2DImm:
-  case EBC::NOT32Op1IOp2DImm:
-  case EBC::NOT64Op1DOp2DImm:
-  case EBC::NOT64Op1IOp2DImm:
-  case EBC::OR32Op1DOp2DImm:
-  case EBC::OR32Op1IOp2DImm:
-  case EBC::OR64Op1DOp2DImm:
-  case EBC::OR64Op1IOp2DImm:
-  case EBC::SHL32Op1DOp2DImm:
-  case EBC::SHL32Op1IOp2DImm:
-  case EBC::SHL64Op1DOp2DImm:
-  case EBC::SHL64Op1IOp2DImm:
-  case EBC::SHR32Op1DOp2DImm:
-  case EBC::SHR32Op1IOp2DImm:
-  case EBC::SHR64Op1DOp2DImm:
-  case EBC::SHR64Op1IOp2DImm:
-  case EBC::SUB32Op1DOp2DImm:
-  case EBC::SUB32Op1IOp2DImm:
-  case EBC::SUB64Op1DOp2DImm:
-  case EBC::SUB64Op1IOp2DImm:
-  case EBC::XOR32Op1DOp2DImm:
-  case EBC::XOR32Op1IOp2DImm:
-  case EBC::XOR64Op1DOp2DImm:
-  case EBC::XOR64Op1IOp2DImm:
-  case EBC::EXTNDB32Op1DOp2DImm:
-  case EBC::EXTNDB32Op1IOp2DImm:
-  case EBC::EXTNDB64Op1DOp2DImm:
-  case EBC::EXTNDB64Op1IOp2DImm:
-  case EBC::EXTNDW32Op1DOp2DImm:
-  case EBC::EXTNDW32Op1IOp2DImm:
-  case EBC::EXTNDW64Op1DOp2DImm:
-  case EBC::EXTNDW64Op1IOp2DImm:
-  case EBC::EXTNDD32Op1DOp2DImm:
-  case EBC::EXTNDD32Op1IOp2DImm:
-  case EBC::EXTNDD64Op1DOp2DImm:
-  case EBC::EXTNDD64Op1IOp2DImm:
-  case EBC::CMPeq32Op2DImm:
-  case EBC::CMPeq64Op2DImm:
-  case EBC::CMPlte32Op2DImm:
-  case EBC::CMPlte64Op2DImm:
-  case EBC::CMPgte32Op2DImm:
-  case EBC::CMPgte64Op2DImm:
-  case EBC::CMPulte32Op2DImm:
-  case EBC::CMPulte64Op2DImm:
-  case EBC::CMPugte32Op2DImm:
-  case EBC::CMPugte64Op2DImm:
-    Flags |= EBC::Op2Imm16;
+  case EBC::OP_ADD:
+  case EBC::OP_AND:
+  case EBC::OP_ASHR:
+  case EBC::OP_DIV:
+  case EBC::OP_DIVU:
+  case EBC::OP_MOD:
+  case EBC::OP_MODU:
+  case EBC::OP_MUL:
+  case EBC::OP_MULU:
+  case EBC::OP_NEG:
+  case EBC::OP_NOT:
+  case EBC::OP_OR:
+  case EBC::OP_SHL:
+  case EBC::OP_SHR:
+  case EBC::OP_SUB:
+  case EBC::OP_XOR:
+  case EBC::OP_EXTNDB:
+  case EBC::OP_EXTNDW:
+  case EBC::OP_EXTNDD:
+  case EBC::OP_CMPeq:
+  case EBC::OP_CMPlte:
+  case EBC::OP_CMPgte:
+  case EBC::OP_CMPulte:
+  case EBC::OP_CMPugte:
+    if (Bytes[0] & 0x80) {
+      if (Bytes[1] & 0x80)
+        Flags |= EBC::Op2Idx16;
+      else
+        Flags |= EBC::Op2Imm16;
+    }
+  case EBC::OP_CALL:
+  case EBC::OP_JMP:
+    if ((Bytes[0] & 0x80) && !(Bytes[1] & 0x40)) {
+      if (Bytes[1] & 0x08)
+        Flags |= EBC::Op1Idx32;
+      else
+        Flags |= EBC::Op1Imm32;
+    } else if ((Bytes[0] & 0x80) && (Bytes[1] & 0x40))
+      Flags |= EBC::Op1Imm64;
     break;
-  case EBC::POP32Op1IIdx:
-  case EBC::POP64Op1IIdx:
-  case EBC::PUSH32Op1IIdx:
-  case EBC::PUSH64Op1IIdx:
-  case EBC::POPnOp1IIdx:
-  case EBC::PUSHnOp1IIdx:
-    Flags |= EBC::Op1Idx16;
+  case EBC::OP_CMPIeq:
+  case EBC::OP_CMPIlte:
+  case EBC::OP_CMPIgte:
+  case EBC::OP_CMPIulte:
+  case EBC::OP_CMPIugte:
+    if (Bytes[0] & 0x80)
+      Flags |= EBC::Op2Imm32;
+    else
+      Flags |= EBC::Op2Imm16;
+    if (Bytes[1] & 0x10)
+      Flags |= EBC::Op1Idx16;
     break;
-  case EBC::ADD32Op1DOp2IIdx:
-  case EBC::ADD32Op1IOp2IIdx:
-  case EBC::ADD64Op1DOp2IIdx:
-  case EBC::ADD64Op1IOp2IIdx:
-  case EBC::AND32Op1DOp2IIdx:
-  case EBC::AND32Op1IOp2IIdx:
-  case EBC::AND64Op1DOp2IIdx:
-  case EBC::AND64Op1IOp2IIdx:
-  case EBC::ASHR32Op1DOp2IIdx:
-  case EBC::ASHR32Op1IOp2IIdx:
-  case EBC::ASHR64Op1DOp2IIdx:
-  case EBC::ASHR64Op1IOp2IIdx:
-  case EBC::DIV32Op1DOp2IIdx:
-  case EBC::DIV32Op1IOp2IIdx:
-  case EBC::DIV64Op1DOp2IIdx:
-  case EBC::DIV64Op1IOp2IIdx:
-  case EBC::DIVU32Op1DOp2IIdx:
-  case EBC::DIVU32Op1IOp2IIdx:
-  case EBC::DIVU64Op1DOp2IIdx:
-  case EBC::DIVU64Op1IOp2IIdx:
-  case EBC::MOD32Op1DOp2IIdx:
-  case EBC::MOD32Op1IOp2IIdx:
-  case EBC::MOD64Op1DOp2IIdx:
-  case EBC::MOD64Op1IOp2IIdx:
-  case EBC::MODU32Op1DOp2IIdx:
-  case EBC::MODU32Op1IOp2IIdx:
-  case EBC::MODU64Op1DOp2IIdx:
-  case EBC::MODU64Op1IOp2IIdx:
-  case EBC::MUL32Op1DOp2IIdx:
-  case EBC::MUL32Op1IOp2IIdx:
-  case EBC::MUL64Op1DOp2IIdx:
-  case EBC::MUL64Op1IOp2IIdx:
-  case EBC::MULU32Op1DOp2IIdx:
-  case EBC::MULU32Op1IOp2IIdx:
-  case EBC::MULU64Op1DOp2IIdx:
-  case EBC::MULU64Op1IOp2IIdx:
-  case EBC::NEG32Op1DOp2IIdx:
-  case EBC::NEG32Op1IOp2IIdx:
-  case EBC::NEG64Op1DOp2IIdx:
-  case EBC::NEG64Op1IOp2IIdx:
-  case EBC::NOT32Op1DOp2IIdx:
-  case EBC::NOT32Op1IOp2IIdx:
-  case EBC::NOT64Op1DOp2IIdx:
-  case EBC::NOT64Op1IOp2IIdx:
-  case EBC::OR32Op1DOp2IIdx:
-  case EBC::OR32Op1IOp2IIdx:
-  case EBC::OR64Op1DOp2IIdx:
-  case EBC::OR64Op1IOp2IIdx:
-  case EBC::SHL32Op1DOp2IIdx:
-  case EBC::SHL32Op1IOp2IIdx:
-  case EBC::SHL64Op1DOp2IIdx:
-  case EBC::SHL64Op1IOp2IIdx:
-  case EBC::SHR32Op1DOp2IIdx:
-  case EBC::SHR32Op1IOp2IIdx:
-  case EBC::SHR64Op1DOp2IIdx:
-  case EBC::SHR64Op1IOp2IIdx:
-  case EBC::SUB32Op1DOp2IIdx:
-  case EBC::SUB32Op1IOp2IIdx:
-  case EBC::SUB64Op1DOp2IIdx:
-  case EBC::SUB64Op1IOp2IIdx:
-  case EBC::XOR32Op1DOp2IIdx:
-  case EBC::XOR32Op1IOp2IIdx:
-  case EBC::XOR64Op1DOp2IIdx:
-  case EBC::XOR64Op1IOp2IIdx:
-  case EBC::EXTNDB32Op1DOp2IIdx:
-  case EBC::EXTNDB32Op1IOp2IIdx:
-  case EBC::EXTNDB64Op1DOp2IIdx:
-  case EBC::EXTNDB64Op1IOp2IIdx:
-  case EBC::EXTNDW32Op1DOp2IIdx:
-  case EBC::EXTNDW32Op1IOp2IIdx:
-  case EBC::EXTNDW64Op1DOp2IIdx:
-  case EBC::EXTNDW64Op1IOp2IIdx:
-  case EBC::EXTNDD32Op1DOp2IIdx:
-  case EBC::EXTNDD32Op1IOp2IIdx:
-  case EBC::EXTNDD64Op1DOp2IIdx:
-  case EBC::EXTNDD64Op1IOp2IIdx:
-  case EBC::CMPeq32Op2IIdx:
-  case EBC::CMPeq64Op2IIdx:
-  case EBC::CMPlte32Op2IIdx:
-  case EBC::CMPlte64Op2IIdx:
-  case EBC::CMPgte32Op2IIdx:
-  case EBC::CMPgte64Op2IIdx:
-  case EBC::CMPulte32Op2IIdx:
-  case EBC::CMPulte64Op2IIdx:
-  case EBC::CMPugte32Op2IIdx:
-  case EBC::CMPugte64Op2IIdx:
-    Flags |= EBC::Op2Idx16;
+  case EBC::OP_MOVbw:
+  case EBC::OP_MOVww:
+  case EBC::OP_MOVdw:
+  case EBC::OP_MOVqw:
+  case EBC::OP_MOVnw:
+    if (Bytes[0] & 0x80)
+      Flags |= EBC::Op1Idx16;
+    if (Bytes[0] & 0x40)
+      Flags |= EBC::Op2Idx16;
     break;
-  case EBC::CALL32Op1DEBCAbsImm: 
-  case EBC::CALL32Op1DEBCRelImm:
-  case EBC::CALL32Op1DNativeAbsImm:
-  case EBC::CALL32Op1DNativeRelImm:
-  case EBC::JMP32CCAbsOp1DImm:
-  case EBC::JMP32CCRelOp1DImm:
-  case EBC::JMP32CSAbsOp1DImm:
-  case EBC::JMP32CSRelOp1DImm:
-  case EBC::JMP32UncondAbsOp1DImm:
-  case EBC::JMP32UncondRelOp1DImm:
-    Flags |= EBC::Op1Imm32;
+  case EBC::OP_MOVbd:
+  case EBC::OP_MOVwd:
+  case EBC::OP_MOVdd:
+  case EBC::OP_MOVqd:
+  case EBC::OP_MOVnd:
+    if (Bytes[0] & 0x80)
+      Flags |= EBC::Op1Idx32;
+    if (Bytes[0] & 0x40)
+      Flags |= EBC::Op2Idx32;
     break;
-  case EBC::CALL32Op1IEBCAbsIdx:
-  case EBC::CALL32Op1IEBCRelIdx:
-  case EBC::CALL32Op1INativeAbsIdx:
-  case EBC::CALL32Op1INativeRelIdx:
-  case EBC::JMP32CCAbsOp1IIdx:
-  case EBC::JMP32CCRelOp1IIdx:
-  case EBC::JMP32CSAbsOp1IIdx:
-  case EBC::JMP32CSRelOp1IIdx:
-  case EBC::JMP32UncondAbsOp1IIdx:
-  case EBC::JMP32UncondRelOp1IIdx:
-    Flags |= EBC::Op1Idx32;
+  case EBC::OP_MOVqq:
+    if (Bytes[0] & 0x80)
+      Flags |= EBC::Op1Idx64;
+    if (Bytes[0] & 0x40)
+      Flags |= EBC::Op2Idx64;
     break;
-  case EBC::CALL64EBCAbsImm:
-  case EBC::CALL64EBCRelImm: 
-  case EBC::CALL64NativeAbsImm:
-  case EBC::CALL64NativeRelImm:
-  case EBC::JMP64CCAbsImm:
-  case EBC::JMP64CCRelImm:
-  case EBC::JMP64CSAbsImm:
-  case EBC::JMP64CSRelImm:
-  case EBC::JMP64UncondAbsImm:
-  case EBC::JMP64UncondRelImm:
-    Flags |= EBC::Op1Imm64;
+  case EBC::OP_MOVI:
+  case EBC::OP_MOVREL:
+    switch ((Bytes[0] & 0xc0) >> 6) {
+    case 0x01:
+      Flags |= EBC::Op2Imm16;
+      break;
+    case 0x02:
+      Flags |= EBC::Op2Imm32;
+      break;
+    case 0x03:
+      Flags |= EBC::Op2Imm64;
+      break;
+    }
+    if (Bytes[1] & 0x40)
+      Flags |= EBC::Op1Idx16;
     break;
-  case EBC::CMPIeq32wOp1IIdx:
-  case EBC::CMPIeq64wOp1IIdx:
-  case EBC::CMPIlte32wOp1IIdx:
-  case EBC::CMPIlte64wOp1IIdx:
-  case EBC::CMPIgte32wOp1IIdx:
-  case EBC::CMPIgte64wOp1IIdx:
-  case EBC::CMPIulte32wOp1IIdx:
-  case EBC::CMPIulte64wOp1IIdx:
-  case EBC::CMPIugte32wOp1IIdx:
-  case EBC::CMPIugte64wOp1IIdx:
-    Flags |= EBC::Op1Idx16;
-    // Fall through
-  case EBC::CMPIeq32wOp1D:
-  case EBC::CMPIeq32wOp1I:
-  case EBC::CMPIeq64wOp1D:
-  case EBC::CMPIeq64wOp1I:
-  case EBC::CMPIlte32wOp1D:
-  case EBC::CMPIlte32wOp1I:
-  case EBC::CMPIlte64wOp1D:
-  case EBC::CMPIlte64wOp1I:
-  case EBC::CMPIgte32wOp1D:
-  case EBC::CMPIgte32wOp1I:
-  case EBC::CMPIgte64wOp1D:
-  case EBC::CMPIgte64wOp1I:
-  case EBC::CMPIulte32wOp1D:
-  case EBC::CMPIulte32wOp1I:
-  case EBC::CMPIulte64wOp1D:
-  case EBC::CMPIulte64wOp1I:
-  case EBC::CMPIugte32wOp1D:
-  case EBC::CMPIugte32wOp1I:
-  case EBC::CMPIugte64wOp1D:
-  case EBC::CMPIugte64wOp1I:
-    Flags |= EBC::Op2Imm16;
+  case EBC::OP_MOVsnw:
+    if (Bytes[0] & 0x80)
+      Flags |= EBC::Op1Idx16;
+    if (Bytes[0] & 0x40) {
+      if (Bytes[1] & 0x80)
+        Flags |= EBC::Op2Idx16;
+      else
+        Flags |= EBC::Op2Imm16;
+    }
     break;
-  case EBC::CMPIeq32dOp1IIdx:
-  case EBC::CMPIeq64dOp1IIdx:
-  case EBC::CMPIlte32dOp1IIdx:
-  case EBC::CMPIlte64dOp1IIdx:
-  case EBC::CMPIgte32dOp1IIdx:
-  case EBC::CMPIgte64dOp1IIdx:
-  case EBC::CMPIulte32dOp1IIdx:
-  case EBC::CMPIulte64dOp1IIdx:
-  case EBC::CMPIugte32dOp1IIdx:
-  case EBC::CMPIugte64dOp1IIdx:
-    Flags |= EBC::Op1Idx16;
-    // Fall through
-  case EBC::CMPIeq32dOp1D:
-  case EBC::CMPIeq32dOp1I:
-  case EBC::CMPIeq64dOp1D:
-  case EBC::CMPIeq64dOp1I:
-  case EBC::CMPIlte32dOp1D:
-  case EBC::CMPIlte32dOp1I:
-  case EBC::CMPIlte64dOp1D:
-  case EBC::CMPIlte64dOp1I:
-  case EBC::CMPIgte32dOp1D:
-  case EBC::CMPIgte32dOp1I:
-  case EBC::CMPIgte64dOp1D:
-  case EBC::CMPIgte64dOp1I:
-  case EBC::CMPIulte32dOp1D:
-  case EBC::CMPIulte32dOp1I:
-  case EBC::CMPIulte64dOp1D:
-  case EBC::CMPIulte64dOp1I:
-  case EBC::CMPIugte32dOp1D:
-  case EBC::CMPIugte32dOp1I:
-  case EBC::CMPIugte64dOp1D:
-  case EBC::CMPIugte64dOp1I:
-    Flags |= EBC::Op2Imm32;
+  case EBC::OP_MOVsnd:
+    if (Bytes[0] & 0x80)
+      Flags |= EBC::Op1Idx32;
+    if (Bytes[0] & 0x40) {
+      if (Bytes[1] & 0x80)
+        Flags |= EBC::Op2Idx32;
+      else
+        Flags |= EBC::Op2Imm32;
+    }
     break;
-  case EBC::MOVbwOp1IIdxOp2D:
-  case EBC::MOVbwOp1IIdxOp2I:
-  case EBC::MOVwwOp1IIdxOp2D:
-  case EBC::MOVwwOp1IIdxOp2I:
-  case EBC::MOVdwOp1IIdxOp2D:
-  case EBC::MOVdwOp1IIdxOp2I:
-  case EBC::MOVqwOp1IIdxOp2D:
-  case EBC::MOVqwOp1IIdxOp2I:
-  case EBC::MOVnwOp1IIdxOp2D:
-  case EBC::MOVnwOp1IIdxOp2I:
-    Flags |= EBC::Op1Idx16;
-    break;
-  case EBC::MOVbwOp1DOp2DIdx:
-  case EBC::MOVbwOp1IOp2DIdx:
-  case EBC::MOVwwOp1DOp2DIdx:
-  case EBC::MOVwwOp1IOp2DIdx:
-  case EBC::MOVdwOp1DOp2DIdx:
-  case EBC::MOVdwOp1IOp2DIdx:
-  case EBC::MOVqwOp1DOp2DIdx:
-  case EBC::MOVqwOp1IOp2DIdx:
-  case EBC::MOVbwOp1DOp2IIdx:
-  case EBC::MOVbwOp1IOp2IIdx:
-  case EBC::MOVwwOp1DOp2IIdx:
-  case EBC::MOVwwOp1IOp2IIdx:
-  case EBC::MOVdwOp1DOp2IIdx:
-  case EBC::MOVdwOp1IOp2IIdx:
-  case EBC::MOVqwOp1DOp2IIdx:
-  case EBC::MOVqwOp1IOp2IIdx:
-  case EBC::MOVnwOp1DOp2IIdx:
-  case EBC::MOVnwOp1IOp2IIdx:
-    Flags |= EBC::Op2Idx16;
-    break;
-  case EBC::MOVbwOp1IIdxOp2DIdx:
-  case EBC::MOVwwOp1IIdxOp2DIdx:
-  case EBC::MOVdwOp1IIdxOp2DIdx:
-  case EBC::MOVqwOp1IIdxOp2DIdx:
-  case EBC::MOVbwOp1IIdxOp2IIdx:
-  case EBC::MOVwwOp1IIdxOp2IIdx:
-  case EBC::MOVdwOp1IIdxOp2IIdx:
-  case EBC::MOVqwOp1IIdxOp2IIdx:
-  case EBC::MOVnwOp1IIdxOp2IIdx:
-    Flags |= EBC::Op1Idx16;
-    Flags |= EBC::Op2Idx16;
-    break;
-  case EBC::MOVbdOp1IIdxOp2D:
-  case EBC::MOVbdOp1IIdxOp2I:
-  case EBC::MOVwdOp1IIdxOp2D:
-  case EBC::MOVwdOp1IIdxOp2I:
-  case EBC::MOVddOp1IIdxOp2D:
-  case EBC::MOVddOp1IIdxOp2I:
-  case EBC::MOVqdOp1IIdxOp2D:
-  case EBC::MOVqdOp1IIdxOp2I:
-  case EBC::MOVndOp1IIdxOp2D:
-  case EBC::MOVndOp1IIdxOp2I:
-    Flags |= EBC::Op1Idx32;
-    break;
-  case EBC::MOVbdOp1DOp2DIdx:
-  case EBC::MOVbdOp1IOp2DIdx:
-  case EBC::MOVwdOp1DOp2DIdx:
-  case EBC::MOVwdOp1IOp2DIdx:
-  case EBC::MOVddOp1DOp2DIdx:
-  case EBC::MOVddOp1IOp2DIdx:
-  case EBC::MOVqdOp1DOp2DIdx:
-  case EBC::MOVqdOp1IOp2DIdx:
-  case EBC::MOVbdOp1DOp2IIdx:
-  case EBC::MOVbdOp1IOp2IIdx:
-  case EBC::MOVwdOp1DOp2IIdx:
-  case EBC::MOVwdOp1IOp2IIdx:
-  case EBC::MOVddOp1DOp2IIdx:
-  case EBC::MOVddOp1IOp2IIdx:
-  case EBC::MOVqdOp1DOp2IIdx:
-  case EBC::MOVqdOp1IOp2IIdx:
-  case EBC::MOVndOp1DOp2IIdx:
-  case EBC::MOVndOp1IOp2IIdx:
-    Flags |= EBC::Op2Idx32;
-    break;
-  case EBC::MOVbdOp1IIdxOp2DIdx:
-  case EBC::MOVwdOp1IIdxOp2DIdx:
-  case EBC::MOVddOp1IIdxOp2DIdx:
-  case EBC::MOVqdOp1IIdxOp2DIdx:
-  case EBC::MOVbdOp1IIdxOp2IIdx:
-  case EBC::MOVwdOp1IIdxOp2IIdx:
-  case EBC::MOVddOp1IIdxOp2IIdx:
-  case EBC::MOVqdOp1IIdxOp2IIdx:
-  case EBC::MOVndOp1IIdxOp2IIdx:
-    Flags |= EBC::Op1Idx32;
-    Flags |= EBC::Op2Idx32;
-    break;
-  case EBC::MOVqqOp1IIdxOp2D:
-  case EBC::MOVqqOp1IIdxOp2I:
-    Flags |= EBC::Op1Idx64;
-    break;
-  case EBC::MOVqqOp1DOp2DIdx:
-  case EBC::MOVqqOp1IOp2DIdx:
-  case EBC::MOVqqOp1DOp2IIdx:
-  case EBC::MOVqqOp1IOp2IIdx:
-    Flags |= EBC::Op2Idx64;
-    break;
-  case EBC::MOVqqOp1IIdxOp2DIdx:
-  case EBC::MOVqqOp1IIdxOp2IIdx:
-    Flags |= EBC::Op1Idx64;
-    Flags |= EBC::Op2Idx64;
-    break;
-  case EBC::MOVIbwOp1IIdx:
-  case EBC::MOVIwwOp1IIdx:
-  case EBC::MOVIdwOp1IIdx:
-  case EBC::MOVIqwOp1IIdx:
-  case EBC::MOVRELwOp1IIdx:
-    Flags |= EBC::Op1Idx16;
-    // Fall through
-  case EBC::MOVIbwOp1D:
-  case EBC::MOVIbwOp1I:
-  case EBC::MOVIwwOp1D:
-  case EBC::MOVIwwOp1I:
-  case EBC::MOVIdwOp1D:
-  case EBC::MOVIdwOp1I:
-  case EBC::MOVIqwOp1D:
-  case EBC::MOVIqwOp1I:
-  case EBC::MOVRELwOp1D:
-  case EBC::MOVRELwOp1I:
-    Flags |= EBC::Op2Imm16;
-    break;
-  case EBC::MOVIbdOp1IIdx:
-  case EBC::MOVIwdOp1IIdx:
-  case EBC::MOVIddOp1IIdx:
-  case EBC::MOVIqdOp1IIdx:
-  case EBC::MOVRELdOp1IIdx:
-    Flags |= EBC::Op1Idx16;
-    // Fall through
-  case EBC::MOVIbdOp1D:
-  case EBC::MOVIbdOp1I:
-  case EBC::MOVIwdOp1D:
-  case EBC::MOVIwdOp1I:
-  case EBC::MOVIddOp1D:
-  case EBC::MOVIddOp1I:
-  case EBC::MOVIqdOp1D:
-  case EBC::MOVIqdOp1I:
-  case EBC::MOVRELdOp1D:
-  case EBC::MOVRELdOp1I:
-    Flags |= EBC::Op2Imm32;
-    break;
-  case EBC::MOVIbqOp1IIdx:
-  case EBC::MOVIwqOp1IIdx:
-  case EBC::MOVIdqOp1IIdx:
-  case EBC::MOVIqqOp1IIdx:
-  case EBC::MOVRELqOp1IIdx:
-    Flags |= EBC::Op1Idx16;
-    // Fall through
-  case EBC::MOVIbqOp1D:
-  case EBC::MOVIbqOp1I:
-  case EBC::MOVIwqOp1D:
-  case EBC::MOVIwqOp1I:
-  case EBC::MOVIdqOp1D:
-  case EBC::MOVIdqOp1I:
-  case EBC::MOVIqqOp1D:
-  case EBC::MOVIqqOp1I:
-  case EBC::MOVRELqOp1D:
-  case EBC::MOVRELqOp1I:
-    Flags |= EBC::Op2Imm64;
-    break;
-  case EBC::MOVsnwOp1IIdxOp2DImm:
-    Flags |= EBC::Op1Idx16;
-    // Fall through
-  case EBC::MOVsnwOp1DOp2DImm:
-  case EBC::MOVsnwOp1IOp2DImm:
-    Flags |= EBC::Op2Imm16;
-    break;
-  case EBC::MOVsnwOp1IIdxOp2IIdx:
-    Flags |= EBC::Op1Idx16;
-    // Fall through
-  case EBC::MOVsnwOp1DOp2IIdx:
-  case EBC::MOVsnwOp1IOp2IIdx:
-    Flags |= EBC::Op2Idx16;
-    break;
-  case EBC::MOVsndOp1IIdxOp2DImm:
-    Flags |= EBC::Op1Idx32;
-    // Fall through
-  case EBC::MOVsndOp1DOp2DImm:
-  case EBC::MOVsndOp1IOp2DImm:
-    Flags |= EBC::Op2Imm32;
-    break;
-  case EBC::MOVsndOp1IIdxOp2IIdx:
-    Flags |= EBC::Op1Idx32;
-    // Fall through
-  case EBC::MOVsndOp1DOp2IIdx:
-  case EBC::MOVsndOp1IOp2IIdx:
-    Flags |= EBC::Op2Idx32;
-    break;
-  case EBC::MOVInwOp1IIdx:
-    Flags |= EBC::Op1Idx16;
-    // Fall through
-  case EBC::MOVInwOp1D:
-  case EBC::MOVInwOp1I:
-    Flags |= EBC::Op2Idx16;
-    break;
-  case EBC::MOVIndOp1IIdx:
-    Flags |= EBC::Op1Idx16;
-    // Fall through
-  case EBC::MOVIndOp1D:
-  case EBC::MOVIndOp1I:
-    Flags |= EBC::Op2Idx32;
-    break;
-  case EBC::MOVInqOp1IIdx:
-    Flags |= EBC::Op1Idx16;
-    // Fall through
-  case EBC::MOVInqOp1D:
-  case EBC::MOVInqOp1I:
-    Flags |= EBC::Op2Idx64;
+  case EBC::OP_MOVIn:
+    switch ((Bytes[0] & 0xc0) >> 6) {
+    case 0x01:
+      Flags |= EBC::Op2Idx16;
+      break;
+    case 0x02:
+      Flags |= EBC::Op2Idx32;
+      break;
+    case 0x03:
+      Flags |= EBC::Op2Idx64;
+      break;
+    }
+    if (Bytes[1] & 0x40)
+      Flags |= EBC::Op1Idx16;
     break;
   }
 
@@ -866,7 +500,7 @@ DecodeStatus EBCDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
       Size = 1;
       if (decodeRegs(MI, Bytes) != MCDisassembler::Success)
         return MCDisassembler::Fail;
-      setFlags(MI);
+      setFlags(MI, Bytes);
       return setOperands(MI, Size, Bytes);
     }
   }
@@ -880,7 +514,7 @@ DecodeStatus EBCDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
       Size = 2;
       if (decodeRegs(MI, Bytes) != MCDisassembler::Success)
         return MCDisassembler::Fail;
-      setFlags(MI);
+      setFlags(MI, Bytes);
       return setOperands(MI, Size, Bytes);
     }
   }
