@@ -791,7 +791,7 @@ foreach idxlen = [0b01, 0b10] in {
   foreach Op1Indirect = [0b0, 0b1] in {
     foreach Op2Indirect = [0b0, 0b1] in {
       foreach hasOp1Idx = !if(Op1Indirect, [0b0, 0b1], [0b0]) in {
-        foreach hasOp2Idx = !if(Op2Indirect, [0b0, 0b1], [0b0]) in
+        foreach hasOp2Idx = [0b0, 0b1] in
         def "MOVn"
           # !cond(!eq(idxlen, 0b01) : "w", !eq(idxlen, 0b10) : "d")
           # !if(Op1Indirect, "Op1I", "Op1D")
