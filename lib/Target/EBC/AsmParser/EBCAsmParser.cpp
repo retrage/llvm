@@ -164,10 +164,15 @@ public:
   }
 
   bool isBreakCode8() const {
-    if (!isConstantImm())
+    int64_t Imm;
+    MCSymbolRefExpr::VariantKind VK;
+    if (!isImm())
       return false;
-    int64_t Imm = getConstantImm();
-    return (Imm >= 0 && Imm <= 6);
+    bool IsConstantImm = evaluateConstantImm(Imm, VK);
+    if (!IsConstantImm)
+      return false;
+    else
+      return isUInt<8>(Imm) && (Imm >= 0 && Imm <= 6);
   }
 
   bool isImm8() const { return isImmN<8>(); }
