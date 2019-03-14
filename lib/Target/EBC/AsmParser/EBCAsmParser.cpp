@@ -127,17 +127,40 @@ public:
   bool isImm() const override { return Kind == Immediate; }
   bool isMem() const override { return false; }
 
-  bool isConstantImm() const {
-    return isImm() && dyn_cast<MCConstantExpr>(getImm());
-  }
-
-  int64_t getConstantImm() const {
+  bool evaluateConstantImm(int64_t &Imm,
+                           MCSymbolRefExpr::VariantKind &VK) const {
     const MCExpr *Val = getImm();
-    return static_cast<const MCConstantExpr *>(Val)->getValue();
+    bool Ret = false;
+    if (auto *SE = dyn_cast<MCSymbolRefExpr>(Val)) {
+      Ret = false;
+      VK = SE->getKind();
+    } else if (auto CE = dyn_cast<MCConstantExpr>(Val)) {
+      Ret = true;
+      VK = MCSymbolRefExpr::VK_None;
+      Imm = CE->getValue();
+    }
+    return Ret;
   }
 
   template <int N> bool isImmN() const {
-    return (isConstantImm() && isInt<N>(getConstantImm()));
+    int64_t Imm;
+    MCSymbolRefExpr::VariantKind VK;
+    if (!isImm())
+      return false;
+    bool IsConstantImm = evaluateConstantImm(Imm, VK);
+    bool IsValid;
+    if (!IsConstantImm) {
+      const MCExpr *Expr = getImm();
+      if (isa<MCSymbolRefExpr>(Expr)) {
+        IsValid = true;
+        VK = MCSymbolRefExpr::VK_None;
+      } else {
+        IsValid = false;
+        VK = MCSymbolRefExpr::VK_Invalid;
+      }
+    } else
+      IsValid = isInt<N>(Imm);
+    return IsValid && VK == MCSymbolRefExpr::VK_None;
   }
 
   bool isBreakCode8() const {
@@ -148,23 +171,14 @@ public:
   }
 
   bool isImm8() const { return isImmN<8>(); }
-
   bool isImm16() const { return isImmN<16>(); }
-
   bool isImm32() const { return isImmN<32>(); }
-
   bool isImm64() const { return isImmN<64>(); }
-
   bool isIdxN16() const { return isImmN<12>(); }
-
   bool isIdxC16() const { return isImmN<12>(); }
-
   bool isIdxN32() const { return isImmN<28>(); }
-
   bool isIdxC32() const { return isImmN<28>(); }
-
   bool isIdxN64() const { return isImmN<60>(); }
-
   bool isIdxC64() const { return isImmN<60>(); }
 
   SMLoc getStartLoc() const override { return StartLoc; };

@@ -156,8 +156,6 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
       const MCOperandInfo &Info = Desc.OpInfo[I];
       switch (Info.OperandType) {
       case EBC::OPERAND_BREAKCODE:
-        support::endian::write<uint8_t>(OS, MO.getImm(), support::little);
-        break;
       case EBC::OPERAND_IMM8:
         support::endian::write<uint8_t>(OS, MO.getImm(), support::little);
         break;
