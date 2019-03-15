@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCTargetDesc/EBCFixupKinds.h"
 #include "MCTargetDesc/EBCMCTargetDesc.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -30,6 +31,7 @@ using namespace llvm;
 #define DEBUG_TYPE "mccodeemitter"
 
 STATISTIC(MCNumEmitted, "Number of MC instructions emitted");
+STATISTIC(MCNumFixups, "Number of MC fixups created");
 
 namespace {
 
@@ -97,6 +99,9 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
   }
   }
 
+  for (unsigned I = 0, E = MI.getNumOperands(); I < E; ++I)
+    getMachineOpValue(MI, MI.getOperand(I), Fixups, STI);
+
   // Emit Indexes
   for (unsigned I = 0, E = MI.getNumOperands(); I < E; ++I) {
     const MCOperand &MO = MI.getOperand(I);
@@ -144,6 +149,25 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
       default:
         llvm_unreachable("Unhandled OperandType!");
       }
+    }
+  }
+
+  // Emit 0 for fixups
+  for (unsigned I = 0, E = Fixups.size(); I < E; ++I) {
+    unsigned Kind = Fixups[I].getKind();
+    switch (Kind) {
+    case EBC::fixup_ebc_invalid:
+    default:
+      llvm_unreachable("Unhandled FixupKind!");
+    case EBC::fixup_ebc_jmp8:
+      support::endian::write<uint8_t>(OS, 0, support::little);
+      break;
+    case EBC::fixup_ebc_jmp64abs:
+    case EBC::fixup_ebc_jmp64rel:
+    case EBC::fixup_ebc_call64abs:
+    case EBC::fixup_ebc_call64rel:
+      support::endian::write<uint64_t>(OS, 0, support::little);
+      break;
     }
   }
 
@@ -195,7 +219,46 @@ EBCMCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
 
-  llvm_unreachable("Unhandled expression!");
+  assert(MO.isExpr() &&
+         "getMachineOpValue expects only expressions or immediates");
+  MCInstrDesc const &Desc = MCII.get(MI.getOpcode());
+  unsigned TSFlags = Desc.TSFlags;
+  const MCExpr *Expr = MO.getExpr();
+  MCExpr::ExprKind Kind = Expr->getKind();
+  EBC::Fixups FixupKind = EBC::fixup_ebc_invalid;
+  unsigned Offset = 2;
+  if (Kind == MCExpr::SymbolRef &&
+      cast<MCSymbolRefExpr>(Expr)->getKind() == MCSymbolRefExpr::VK_None) {
+    switch (TSFlags & 0x03) {
+    case 0x01:
+      if ((TSFlags & 0x20) && !(TSFlags & 0x08) && (TSFlags & 0x04)) {
+        if (!(TSFlags & 0x10))
+          FixupKind = EBC::fixup_ebc_call64abs;
+        else
+          FixupKind = EBC::fixup_ebc_call64rel;
+      }
+      break;
+    case 0x02:
+      if ((TSFlags & 0x20) && (TSFlags & 0x04)) {
+        if (!(TSFlags & 0x10))
+          FixupKind = EBC::fixup_ebc_jmp64abs;
+        else
+          FixupKind = EBC::fixup_ebc_jmp64rel;
+      }
+      break;
+    case 0x03:
+      FixupKind = EBC::fixup_ebc_jmp8;
+      Offset = 1;
+      break;
+    }
+  }
+
+  assert(FixupKind != EBC::fixup_ebc_invalid && "Unhandled expression!");
+
+  Fixups.push_back(
+      MCFixup::create(Offset, Expr, MCFixupKind(FixupKind), MI.getLoc()));
+  ++MCNumFixups;
+
   return 0;
 }
 

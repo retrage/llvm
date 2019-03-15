@@ -148,19 +148,14 @@ public:
     if (!isImm())
       return false;
     bool IsConstantImm = evaluateConstantImm(Imm, VK);
-    bool IsValid;
     if (!IsConstantImm) {
       const MCExpr *Expr = getImm();
-      if (isa<MCSymbolRefExpr>(Expr)) {
-        IsValid = true;
-        VK = MCSymbolRefExpr::VK_None;
-      } else {
-        IsValid = false;
-        VK = MCSymbolRefExpr::VK_Invalid;
-      }
+      if (isa<MCSymbolRefExpr>(Expr))
+        return true;
+      else
+        return false;
     } else
-      IsValid = isInt<N>(Imm);
-    return IsValid && VK == MCSymbolRefExpr::VK_None;
+      return isInt<N>(Imm);
   }
 
   bool isBreakCode8() const {

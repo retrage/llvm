@@ -129,6 +129,11 @@ class EBCCALL<bits<6> opcode,
   let mayLoad = !if(!or(Op1Indirect, is64Bit), 1, 0);
   let Inst{13} = isNative;
   let Inst{12} = isRel;
+  let TSFlags{1-0} = 0b01;
+  let TSFlags{2} = !if(is64Bit, 1, 0);
+  let TSFlags{3} = !if(isNative, 1, 0);
+  let TSFlags{4} = !if(isRel, 1, 0);
+  let TSFlags{5} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
 }
 
 class EBCJMP<bits<6> opcode,
@@ -159,6 +164,11 @@ class EBCJMP<bits<6> opcode,
   let Inst{15} = isCond;
   let Inst{14} = isCS;
   let Inst{12} = isRel;
+  let TSFlags{1-0} = 0b10;
+  let TSFlags{2} = !if(is64Bit, 1, 0);
+  let TSFlags{3} = 0;
+  let TSFlags{4} = !if(isRel, 1, 0);
+  let TSFlags{5} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
 }
 
 class EBCJMP8<bits<6> opcode, bit isCond, bit isCS,
@@ -172,6 +182,11 @@ class EBCJMP8<bits<6> opcode, bit isCond, bit isCS,
   let CodeSize = 2;
   let Inst{7} = isCond;
   let Inst{6} = isCS;
+  let TSFlags{1-0} = 0b11;
+  let TSFlags{2} = 0;
+  let TSFlags{3} = 0;
+  let TSFlags{4} = 0;
+  let TSFlags{5} = 0;
 }
 
 class EBCPUSHPOP<bits<6> opcode, bit hasImmIdx, bit is64Bit, bit Op1Indirect,
