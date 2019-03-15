@@ -18,9 +18,7 @@ namespace llvm {
 namespace EBC {
 enum Fixups {
   fixup_ebc_jmp8 = FirstTargetFixupKind,
-  fixup_ebc_jmp64abs,
   fixup_ebc_jmp64rel,
-  fixup_ebc_call64abs,
   fixup_ebc_call64rel,
 
   // fixup_ebc_invalid - used as a sentinel and a marker, must be last fixup

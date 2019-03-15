@@ -162,9 +162,7 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
     case EBC::fixup_ebc_jmp8:
       support::endian::write<uint8_t>(OS, 0, support::little);
       break;
-    case EBC::fixup_ebc_jmp64abs:
     case EBC::fixup_ebc_jmp64rel:
-    case EBC::fixup_ebc_call64abs:
     case EBC::fixup_ebc_call64rel:
       support::endian::write<uint64_t>(OS, 0, support::little);
       break;
@@ -232,17 +230,13 @@ EBCMCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
     switch (TSFlags & 0x03) {
     case 0x01:
       if ((TSFlags & 0x20) && !(TSFlags & 0x08) && (TSFlags & 0x04)) {
-        if (!(TSFlags & 0x10))
-          FixupKind = EBC::fixup_ebc_call64abs;
-        else
+        if (TSFlags & 0x10)
           FixupKind = EBC::fixup_ebc_call64rel;
       }
       break;
     case 0x02:
       if ((TSFlags & 0x20) && (TSFlags & 0x04)) {
-        if (!(TSFlags & 0x10))
-          FixupKind = EBC::fixup_ebc_jmp64abs;
-        else
+        if (TSFlags & 0x10)
           FixupKind = EBC::fixup_ebc_jmp64rel;
       }
       break;

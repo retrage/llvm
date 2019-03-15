@@ -55,9 +55,7 @@ public:
       //
       // name              offset bits   flags
       { "fixup_ebc_jmp8",       0,   8,  MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ebc_jmp64abs",   0,  64,  0 },
       { "fixup_ebc_jmp64rel",   0,  64,  MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ebc_call64abs",  0,  64,  0 },
       { "fixup_ebc_call64rel",  0,  64,  MCFixupKindInfo::FKF_IsPCRel }
     };
 
@@ -95,9 +93,7 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
     return 2;
   case FK_Data_4:
     return 4;
-  case EBC::fixup_ebc_jmp64abs:
   case EBC::fixup_ebc_jmp64rel:
-  case EBC::fixup_ebc_call64abs:
   case EBC::fixup_ebc_call64rel:
   case FK_Data_8:
     return 8;
@@ -123,16 +119,10 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
       if ((SignedValue > INT8_MAX * 2) || (SignedValue < INT8_MIN * 2))
         Ctx.reportError(Fixup.getLoc(), "fixup must be in range [-256, 254]");
       return SignedValue / 2;
-    case EBC::fixup_ebc_jmp64abs:
-      if (SignedValue % 2)
-        Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
-      return SignedValue;
     case EBC::fixup_ebc_jmp64rel:
       SignedValue -= 8;
       if (SignedValue % 2)
         Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
-      return SignedValue;
-    case EBC::fixup_ebc_call64abs:
       return SignedValue;
     case EBC::fixup_ebc_call64rel:
       SignedValue -= 8;

@@ -61,8 +61,6 @@ unsigned EBCCOFFObjectWriter::getRelocType(
     case MCSymbolRefExpr::VK_SECREL:
       return COFF::IMAGE_REL_EBC_SECREL;
     }
-  case EBC::fixup_ebc_jmp64abs:
-  case EBC::fixup_ebc_call64abs:
   case FK_Data_8:
     return COFF::IMAGE_REL_EBC_ADDR64;
   case EBC::fixup_ebc_jmp64rel:
