@@ -54,25 +54,25 @@ class EBCInst1Op<bits<6> opcode,
                 bit hasImmIdx, bit is64Bit, bit Op1Indirect,
                 dag outs, dag ins, string opcodestr, string argstr>
     : EBCInst16<opcode, outs, ins, opcodestr, argstr, []> {
-  bits<3> Op1;
+  bits<3> op1;
 
   let Inst{7} = hasImmIdx;
   let Inst{6} = is64Bit;
-  let Inst{10-8} = Op1;
   let Inst{11} = Op1Indirect;
+  let Inst{10-8} = op1;
 }
 
 class EBCInst2Op<bits<6> opcode,
                 bit hasImmIdx, bit is64Bit, bit Op1Indirect, bit Op2Indirect,
                 dag outs, dag ins, string opcodestr, string argstr>
     : EBCInst16<opcode, outs, ins, opcodestr, argstr, []> {
-  bits<3> Op1;
-  bits<3> Op2;
+  bits<3> op1;
+  bits<3> op2;
 
   let Inst{7} = hasImmIdx;
   let Inst{6} = is64Bit;
-  let Inst{10-8} = Op1;
-  let Inst{14-12} = Op2;
-  let Inst{11} = Op1Indirect;
   let Inst{15} = Op2Indirect;
+  let Inst{14-12} = op2;
+  let Inst{11} = Op1Indirect;
+  let Inst{10-8} = op1;
 }

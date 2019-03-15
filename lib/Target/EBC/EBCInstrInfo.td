@@ -226,6 +226,7 @@ class EBCALUBase<bits<6> opcode, bit hasImmIdx, bit is64Bit,
       # !cond(!eq(hasImmIdx, 0) : "",
               !eq(!and(hasImmIdx, Op2Indirect), 0) : immstr,
               !eq(!and(hasImmIdx, Op2Indirect), 1) : idxstr)> {
+  bits<3> dst;
   let CodeSize = !if(hasImmIdx, 4, 2);
   let mayLoad = !if(Op2Indirect, 1, 0);
   let mayStore = !if(Op1Indirect, 1, 0);
@@ -257,14 +258,13 @@ class EBCCMPIBase<bits<6> opcode,
           "cmpi" # !if(is64Bit, "64", "32") # !if(immlen, "d", "w")# opsuffix,
           !if(Op1Indirect, "@", "") # op1str
         # !if(hasOp1Idx, " " # idxstr, "") # ", " # immstr, []> {
-  bits<3> Op1;
-  bits<3> Op2;
+  bits<3> op1;
 
   let Inst{7} = immlen;
   let Inst{6} = is64Bit;
-  let Inst{10-8} = Op1;
-  let Inst{11} = Op1Indirect;
   let Inst{12} = hasOp1Idx;
+  let Inst{11} = Op1Indirect;
+  let Inst{10-8} = op1;
 
   let CodeSize = !cond(!and(!eq(hasOp1Idx, 0), !eq(immlen, 0)) : 4,
                    !and(!eq(hasOp1Idx, 0), !eq(immlen, 1)) : 6,
@@ -294,8 +294,8 @@ class EBCMOVBase<bits<6> opcode, bits<2> idxlen, bits<2> movlen,
         # !if(hasOp2Idx, " ", "") # !if(hasOp2Idx, op2idxstr, ""), []> {
   field bits<16> Inst;
   field bits<16> SoftFail = 0;
-  bits<3> Op1;
-  bits<3> Op2;
+  bits<3> op1;
+  bits<3> op2;
 
   let Size = 2;
   let Opcode = !add(opcode, !shl(idxlen, 2), movlen);
@@ -304,9 +304,9 @@ class EBCMOVBase<bits<6> opcode, bits<2> idxlen, bits<2> movlen,
   let Inst{6} = hasOp2Idx;
   let Inst{5-0} = Opcode;
   let Inst{15} = Op2Indirect;
-  let Inst{14-12} = Op2;
+  let Inst{14-12} = op2;
   let Inst{11} = Op1Indirect;
-  let Inst{10-8} = Op1;
+  let Inst{10-8} = op1;
 
   let CodeSize = !add(2, !if(hasOp1Idx, !shl(1, idxlen), 0),
                      !if(hasOp2Idx, !shl(1, idxlen), 0));
@@ -328,13 +328,13 @@ class EBCMOVIBase<bits<6> opcode, bits<2> immlen, bits<2> movlen,
                   !eq(immlen, 0b10) : "d", !eq(immlen, 0b11) : "q"),
             !if(Op1Indirect, "@", "") # op1str
           # !if(hasOp1Idx, " " # op1idxstr, "") # ", " # immstr, []> {
-  bits<3> Op1;
+  bits<3> op1;
 
   let Inst{7-6} = immlen;
   let Inst{14} = hasOp1Idx;
   let Inst{13-12} = movlen;
   let Inst{11} = Op1Indirect;
-  let Inst{10-8} = Op1;
+  let Inst{10-8} = op1;
 
   let CodeSize = !add(2, !if(hasOp1Idx, 2, 0), !shl(1, immlen));
   let mayLoad = 0;
@@ -353,12 +353,12 @@ class EBCMOVRELBase<bits<6> opcode, bits<2> immlen,
                     !eq(immlen, 0b11) : "q"),
               !if(Op1Indirect, "@", "") # op1str
             # !if(hasOp1Idx, " " # op1idxstr, "") # ", " # immstr, []> {
-  bits<3> Op1;
+  bits<3> op1;
 
   let Inst{7-6} = immlen;
   let Inst{14} = hasOp1Idx;
   let Inst{11} = Op1Indirect;
-  let Inst{10-8} = Op1;
+  let Inst{10-8} = op1;
 
   let CodeSize = !add(2, !if(hasOp1Idx, 2, 0), !shl(1, immlen));
   let mayLoad = 0;
@@ -381,15 +381,15 @@ class EBCMOVnBase<bits<6> opcode, bits<2> idxlen,
           # !if(hasOp1Idx, " " # op1idxstr, "") # ", "
           # !if(Op2Indirect, "@", "") # op2str
           # !if(hasOp2Idx, " " # op2idxstr, ""), []> {
-  bits<3> Op1;
-  bits<3> Op2;
+  bits<3> op1;
+  bits<3> op2;
 
   let Inst{7} = hasOp1Idx;
   let Inst{6} = hasOp2Idx;
-  let Inst{10-8} = Op1;
-  let Inst{14-12} = Op2;
-  let Inst{11} = Op1Indirect;
   let Inst{15} = Op2Indirect;
+  let Inst{14-12} = op2;
+  let Inst{11} = Op1Indirect;
+  let Inst{10-8} = op1;
 
   let CodeSize = !add(2, !if(hasOp1Idx, !shl(1, idxlen), 0), !if(hasOp2Idx, !shl(1, idxlen), 0));
   let mayLoad = !if(Op2Indirect, 1, 0);
@@ -421,15 +421,15 @@ class EBCMOVsnBase<bits<6> opcode, bits<2> idxlen,
           # !cond(!eq(hasOp2Idx, 0) : "",
                   !and(hasOp2Idx, !eq(Op2Indirect, 0)) : " " # op2immstr,
                   !and(hasOp2Idx, Op2Indirect) : " " # op2idxstr), []> {
-  bits<3> Op1;
-  bits<3> Op2;
+  bits<3> op1;
+  bits<3> op2;
 
   let Inst{7} = hasOp1Idx;
   let Inst{6} = hasOp2Idx;
-  let Inst{10-8} = Op1;
-  let Inst{14-12} = Op2;
-  let Inst{11} = Op1Indirect;
   let Inst{15} = Op2Indirect;
+  let Inst{14-12} = op2;
+  let Inst{11} = Op1Indirect;
+  let Inst{10-8} = op1;
 
   let CodeSize = !add(2, !if(hasOp1Idx, !shl(1, idxlen), 0), !if(hasOp2Idx, !shl(1, idxlen), 0));
   let mayLoad = !if(Op2Indirect, 1, 0);
@@ -448,12 +448,12 @@ class EBCMOVInBase<bits<6> opcode, bits<2> idxlen,
                   !eq(idxlen, 0b11) : "q"),
             !if(Op1Indirect, "@", "") # op1str
           # !if(hasOp1Idx, " " # op1idxstr, "") # ", " # op2idxstr, []> {
-  bits<3> Op1;
+  bits<3> op1;
 
   let Inst{7-6} = idxlen;
-  let Inst{10-8} = Op1;
-  let Inst{11} = Op1Indirect;
   let Inst{14} = hasOp1Idx;
+  let Inst{11} = Op1Indirect;
+  let Inst{10-8} = op1;
 
   let CodeSize = !add(2, !if(hasOp1Idx, 2, 0), !shl(1, idxlen));
   let mayLoad = 0;
@@ -635,7 +635,7 @@ foreach isCond = [0b0, 0b1] in {
     # !cond(!eq(isCond, 0) : "Uncond",
             !and(isCond, !eq(isCS, 0)) : "CC",
             !and(isCond, !eq(isCS, 1)) : "CS")
-      : EBCJMP8<0x000010, isCond, isCS, (outs), (ins imm8:$imm), "$imm">;
+      : EBCJMP8<0b000010, isCond, isCS, (outs), (ins imm8:$imm), "$imm">;
 }
 } // hasSideEffects = 0, mayLoad = 0, mayStore = 0
 

@@ -30,8 +30,6 @@ using namespace llvm;
 
 typedef MCDisassembler::DecodeStatus DecodeStatus;
 
-#include "EBCGenDisassemblerTables.inc"
-
 namespace {
 class EBCDisassembler : public MCDisassembler {
 
@@ -63,7 +61,9 @@ static const unsigned GPRDecoderTable[] = {
   EBC::r4, EBC::r5, EBC::r6, EBC::r7,
 };
 
-static DecodeStatus DecodeGPRRegisterClass(MCInst &Inst, uint64_t RegNo) {
+static DecodeStatus DecodeGPRRegisterClass(MCInst &Inst, uint64_t RegNo,
+                                           uint64_t Address,
+                                           const void *Decoder) {
   if (RegNo > sizeof(GPRDecoderTable))
     return MCDisassembler::Fail;
 
@@ -76,7 +76,9 @@ static const unsigned DRDecoderTable[] = {
   EBC::flags, EBC::ip,
 };
 
-static DecodeStatus DecodeDRRegisterClass(MCInst &Inst, uint64_t RegNo) {
+static DecodeStatus DecodeDRRegisterClass(MCInst &Inst, uint64_t RegNo,
+                                           uint64_t Address,
+                                           const void *Decoder) {
   if (RegNo > sizeof(DRDecoderTable))
     return MCDisassembler::Fail;
 
@@ -85,7 +87,9 @@ static DecodeStatus DecodeDRRegisterClass(MCInst &Inst, uint64_t RegNo) {
   return MCDisassembler::Success;
 }
 
-static DecodeStatus DecodeFRRegisterClass(MCInst &Inst, uint64_t RegNo) {
+static DecodeStatus DecodeFRRegisterClass(MCInst &Inst, uint64_t RegNo,
+                                           uint64_t Address,
+                                           const void *Decoder) {
   if (RegNo != 0)
     return MCDisassembler::Fail;
 
@@ -94,76 +98,7 @@ static DecodeStatus DecodeFRRegisterClass(MCInst &Inst, uint64_t RegNo) {
   return MCDisassembler::Success;
 }
 
-static void setRegFlags(uint8_t Byte, bool &hasOp1GPR, bool &hasOp2GPR) {
-  switch (Byte & 0x3f) {
-  case EBC::OP_JMP:
-  case EBC::OP_CALL:
-    if (Byte & 0x40)
-      break;
-  case EBC::OP_PUSH:
-  case EBC::OP_POP:
-  case EBC::OP_CMPIeq:
-  case EBC::OP_CMPIlte:
-  case EBC::OP_CMPIgte:
-  case EBC::OP_CMPIulte:
-  case EBC::OP_CMPIugte:
-  case EBC::OP_PUSHn:
-  case EBC::OP_POPn:
-  case EBC::OP_MOVI:
-  case EBC::OP_MOVIn:
-  case EBC::OP_MOVREL:
-    hasOp1GPR = true;
-    break;
-  default:
-    hasOp1GPR = true;
-    hasOp2GPR = true;
-    break;
-  }
-}
-
-static DecodeStatus decodeRegs(MCInst &Inst, ArrayRef<uint8_t> Bytes) {
-  bool hasOp1GPR = false;
-  bool hasOp2GPR = false;
-  bool hasOp1FR = false;
-  bool hasOp2DR = false;
-
-  switch (Bytes[0] & 0x3f) {
-  case EBC::OP_BREAK:
-  case EBC::OP_RET:
-    return MCDisassembler::Success;
-  case EBC::OP_LOADSP:
-    hasOp1FR = true;
-    hasOp2GPR = true;
-    break;
-  case EBC::OP_STORESP:
-    hasOp1GPR = true;
-    hasOp2DR = true;
-    break;
-  default:
-    setRegFlags(Bytes[0], hasOp1GPR, hasOp2GPR);
-    break;
-  }
-
-  uint8_t tmp;
-  DecodeStatus Result;
-
-  tmp = Bytes[1] & 0x07;
-  if (hasOp1GPR)
-    Result = DecodeGPRRegisterClass(Inst, tmp);
-  else if (hasOp1FR)
-    Result = DecodeFRRegisterClass(Inst, tmp);
-
-  if (Result != MCDisassembler::Success)
-    return Result;
-
-  tmp = (Bytes[1] & 0x70) >> 4;
-  if (hasOp2GPR)
-    Result = DecodeGPRRegisterClass(Inst, tmp);
-  else if (hasOp2DR)
-    Result = DecodeDRRegisterClass(Inst, tmp);
-
-  return Result;
-}
+#include "EBCGenDisassemblerTables.inc"
 
 static void setFlags(MCInst &MI, ArrayRef<uint8_t> Bytes) {
   if (Bytes.size() < 2)
@@ -219,14 +154,15 @@ static void setFlags(MCInst &MI, ArrayRef<uint8_t> Bytes) {
       else
         Flags |= EBC::Op2Imm16;
     }
+    break;
   case EBC::OP_CALL:
   case EBC::OP_JMP:
-    if ((Bytes[0] & 0x80) && !(Bytes[1] & 0x40)) {
+    if ((Bytes[0] & 0x80) && !(Bytes[0] & 0x40)) {
       if (Bytes[1] & 0x08)
         Flags |= EBC::Op1Idx32;
       else
         Flags |= EBC::Op1Imm32;
-    } else if ((Bytes[0] & 0x80) && (Bytes[1] & 0x40))
+    } else if ((Bytes[0] & 0x80) && (Bytes[0] & 0x40))
       Flags |= EBC::Op1Imm64;
     break;
   case EBC::OP_CMPIeq:
@@ -334,8 +270,7 @@ static DecodeStatus decodeBreakCode(MCInst &MI, uint64_t &Size,
 
 static DecodeStatus decodeImm8(MCInst &MI, uint64_t &Size,
                                                 ArrayRef<uint8_t> Bytes) {
-  uint8_t Imm = Bytes[0];
-  assert(isInt<8>(Imm) && "Invalid immediate");
+  int64_t Imm = Bytes[0];
   MI.addOperand(MCOperand::createImm(Imm));
   Size += 1;
   return MCDisassembler::Success;
@@ -343,8 +278,7 @@ static DecodeStatus decodeImm8(MCInst &MI, uint64_t &Size,
 
 static DecodeStatus decodeImm16(MCInst &MI, uint64_t &Size,
                                                 ArrayRef<uint8_t> Bytes) {
-  uint16_t Imm = support::endian::read16le(Bytes.data());
-  assert(isInt<16>(Imm) && "Invalid immediate");
+  int64_t Imm = support::endian::read16le(Bytes.data());
   MI.addOperand(MCOperand::createImm(Imm));
   Size += 2;
   return MCDisassembler::Success;
@@ -352,8 +286,7 @@ static DecodeStatus decodeImm16(MCInst &MI, uint64_t &Size,
 
 static DecodeStatus decodeImm32(MCInst &MI, uint64_t &Size,
                                                 ArrayRef<uint8_t> Bytes) {
-  uint32_t Imm = support::endian::read32le(Bytes.data());
-  assert(isInt<32>(Imm) && "Invalid immediate");
+  int64_t Imm = support::endian::read32le(Bytes.data());
   MI.addOperand(MCOperand::createImm(Imm));
   Size += 4;
   return MCDisassembler::Success;
@@ -361,8 +294,7 @@ static DecodeStatus decodeImm32(MCInst &MI, uint64_t &Size,
 
 static DecodeStatus decodeImm64(MCInst &MI, uint64_t &Size,
                                                 ArrayRef<uint8_t> Bytes) {
-  uint64_t Imm = support::endian::read64le(Bytes.data());
-  assert(isInt<64>(Imm) && "Invalid immediate");
+  int64_t Imm = support::endian::read64le(Bytes.data());
   MI.addOperand(MCOperand::createImm(Imm));
   Size += 8;
   return MCDisassembler::Success;
@@ -442,7 +374,7 @@ static DecodeStatus setOperands(MCInst &MI, uint64_t &Size,
   ArrayRef<uint8_t> OpBytes = Bytes.slice(Size);
 
   if (Flags & EBC::BreakCode)
-    return decodeBreakCode(MI, Size, Bytes);
+    return decodeBreakCode(MI, Size, OpBytes);
 
   if (Flags & EBC::Op1Imm8)
     Result = decodeImm8(MI, Size, OpBytes);
@@ -459,10 +391,10 @@ static DecodeStatus setOperands(MCInst &MI, uint64_t &Size,
   else if (Flags & EBC::Op1Idx64)
     Result = decodeIdx64(MI, Size, OpBytes);
 
-  OpBytes = Bytes.slice(Size);
-
   if (Result != MCDisassembler::Success)
     return Result;
+
+  OpBytes = Bytes.slice(Size);
 
   if (Flags & EBC::Op2Imm16)
     Result = decodeImm16(MI, Size, OpBytes);
@@ -498,8 +430,6 @@ DecodeStatus EBCDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     Result = decodeInstruction(DecoderTable8, MI, Insn, Address, this, STI);
     if (Result == MCDisassembler::Success) {
       Size = 1;
-      if (decodeRegs(MI, Bytes) != MCDisassembler::Success)
-        return MCDisassembler::Fail;
       setFlags(MI, Bytes);
       return setOperands(MI, Size, Bytes);
     }
@@ -512,8 +442,6 @@ DecodeStatus EBCDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
 
     if (Result == MCDisassembler::Success) {
       Size = 2;
-      if (decodeRegs(MI, Bytes) != MCDisassembler::Success)
-        return MCDisassembler::Fail;
       setFlags(MI, Bytes);
       return setOperands(MI, Size, Bytes);
     }
