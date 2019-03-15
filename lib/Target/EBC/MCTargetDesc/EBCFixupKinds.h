@@ -20,6 +20,9 @@ enum Fixups {
   fixup_ebc_jmp8 = FirstTargetFixupKind,
   fixup_ebc_jmp64rel,
   fixup_ebc_call64rel,
+  fixup_ebc_movrelw,
+  fixup_ebc_movreld,
+  fixup_ebc_movrelq,
 
   // fixup_ebc_invalid - used as a sentinel and a marker, must be last fixup
   fixup_ebc_invalid,

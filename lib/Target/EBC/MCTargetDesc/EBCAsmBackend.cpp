@@ -56,7 +56,10 @@ public:
       // name              offset bits   flags
       { "fixup_ebc_jmp8",       0,   8,  MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_ebc_jmp64rel",   0,  64,  MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ebc_call64rel",  0,  64,  MCFixupKindInfo::FKF_IsPCRel }
+      { "fixup_ebc_call64rel",  0,  64,  MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ebc_movrelw",    0,  16,  MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ebc_movreld",    0,  32,  MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ebc_movrelq",    0,  64,  MCFixupKindInfo::FKF_IsPCRel }
     };
 
       if (Kind < FirstTargetFixupKind)
@@ -89,12 +92,15 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case EBC::fixup_ebc_jmp8:
   case FK_Data_1:
     return 1;
+  case EBC::fixup_ebc_movrelw:
   case FK_Data_2:
     return 2;
+  case EBC::fixup_ebc_movreld:
   case FK_Data_4:
     return 4;
   case EBC::fixup_ebc_jmp64rel:
   case EBC::fixup_ebc_call64rel:
+  case EBC::fixup_ebc_movrelq:
   case FK_Data_8:
     return 8;
   }
@@ -125,6 +131,15 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
         Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
       return SignedValue;
     case EBC::fixup_ebc_call64rel:
+      SignedValue -= 8;
+      return SignedValue;
+    case EBC::fixup_ebc_movrelw:
+      SignedValue -= 2;
+      return SignedValue;
+    case EBC::fixup_ebc_movreld:
+      SignedValue -= 4;
+      return SignedValue;
+    case EBC::fixup_ebc_movrelq:
       SignedValue -= 8;
       return SignedValue;
   }

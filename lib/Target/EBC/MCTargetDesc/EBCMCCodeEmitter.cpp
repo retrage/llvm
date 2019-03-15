@@ -162,8 +162,15 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
     case EBC::fixup_ebc_jmp8:
       support::endian::write<uint8_t>(OS, 0, support::little);
       break;
+    case EBC::fixup_ebc_movrelw:
+      support::endian::write<uint16_t>(OS, 0, support::little);
+      break;
+    case EBC::fixup_ebc_movreld:
+      support::endian::write<uint32_t>(OS, 0, support::little);
+      break;
     case EBC::fixup_ebc_jmp64rel:
     case EBC::fixup_ebc_call64rel:
+    case EBC::fixup_ebc_movrelq:
       support::endian::write<uint64_t>(OS, 0, support::little);
       break;
     }
@@ -228,6 +235,21 @@ EBCMCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   if (Kind == MCExpr::SymbolRef &&
       cast<MCSymbolRefExpr>(Expr)->getKind() == MCSymbolRefExpr::VK_None) {
     switch (TSFlags & 0x03) {
+    case 0x00:
+      if (TSFlags & 0x100)
+        Offset += 2;
+      switch ((TSFlags & 0xc0) >> 6) {
+      case 0x01:
+        FixupKind = EBC::fixup_ebc_movrelw;
+        break;
+      case 0x02:
+        FixupKind = EBC::fixup_ebc_movreld;
+        break;
+      case 0x03:
+        FixupKind = EBC::fixup_ebc_movrelq;
+        break;
+      }
+      break;
     case 0x01:
       if ((TSFlags & 0x20) && !(TSFlags & 0x08) && (TSFlags & 0x04)) {
         if (TSFlags & 0x10)

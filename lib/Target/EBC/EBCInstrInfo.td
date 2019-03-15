@@ -421,6 +421,8 @@ class EBCMOVRELBase<bits<6> opcode, bits<2> immlen,
   let CodeSize = !add(2, !if(hasOp1Idx, 2, 0), !shl(1, immlen));
   let mayLoad = 0;
   let mayStore = !if(Op1Indirect, 1, 0);
+  let TSFlags{8} = hasOp1Idx;
+  let TSFlags{7-6} = immlen;
 }
 
 class EBCMOVnBase<bits<6> opcode, bits<2> idxlen,

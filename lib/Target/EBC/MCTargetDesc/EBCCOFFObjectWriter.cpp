@@ -52,6 +52,10 @@ unsigned EBCCOFFObjectWriter::getRelocType(
   }
   case EBC::fixup_ebc_jmp8:
     return COFF::IMAGE_REL_EBC_REL8;
+  case EBC::fixup_ebc_movrelw:
+    return COFF::IMAGE_REL_EBC_REL16;
+  case EBC::fixup_ebc_movreld:
+    return COFF::IMAGE_REL_EBC_REL32;
   case FK_Data_4:
     switch (Modifier) {
     default:
@@ -63,6 +67,7 @@ unsigned EBCCOFFObjectWriter::getRelocType(
     }
   case FK_Data_8:
     return COFF::IMAGE_REL_EBC_ADDR64;
+  case EBC::fixup_ebc_movrelq:
   case EBC::fixup_ebc_jmp64rel:
   case EBC::fixup_ebc_call64rel:
     return COFF::IMAGE_REL_EBC_REL64;

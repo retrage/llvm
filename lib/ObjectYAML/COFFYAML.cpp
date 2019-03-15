@@ -228,6 +228,7 @@ void ScalarEnumerationTraits<COFF::RelocationTypeEBC>::enumeration(
   ECase(IMAGE_REL_EBC_ADDR32NB);
   ECase(IMAGE_REL_EBC_REL64);
   ECase(IMAGE_REL_EBC_REL32);
+  ECase(IMAGE_REL_EBC_REL16);
   ECase(IMAGE_REL_EBC_REL8);
   ECase(IMAGE_REL_EBC_SECTION);
   ECase(IMAGE_REL_EBC_SECREL);
