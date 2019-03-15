@@ -104,71 +104,114 @@ def idxc64 : Operand<i64> {
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
 
-class EBCCALL<bits<6> opcode,
-                bit hasImmIdx, bit is64Bit, bit isNative,
+class EBCCALL32<bits<6> opcode,
+                bit hasImmIdx, bit isNative,
                 bit isRel, bit Op1Indirect,
                 dag outs, dag ins, dag immins, dag idxins,
                 string op1str, string immstr, string idxstr>
-      : EBCInst1Op<opcode, hasImmIdx, is64Bit, Op1Indirect, outs,
+      : EBCInst1Op<opcode, hasImmIdx, 0, Op1Indirect, outs,
           !cond(!eq(hasImmIdx, 0) : ins,
                 !eq(!and(hasImmIdx, Op1Indirect), 0) : !con(ins, immins),
                 !eq(!and(hasImmIdx, Op1Indirect), 1) : !con(ins, idxins)),
-          "call"
-        # !if(is64Bit, "64", "32")
+          "call32"
         # !if(isNative, "ex", "")
         # !if(isRel, "", "a"),
           !if(Op1Indirect, "@", "")
-        # !if(is64Bit, "", op1str)
+        # op1str
         # !if(hasImmIdx, " ", "")
         # !cond(!eq(hasImmIdx, 0) : "",
                 !eq(!and(hasImmIdx, Op1Indirect), 0) : immstr,
                 !eq(!and(hasImmIdx, Op1Indirect), 1) : idxstr)> {
-  let CodeSize = !cond(!and(!eq(is64Bit, 0), !eq(hasImmIdx, 0)) : 2,
-                   !and(!eq(is64Bit, 0), !eq(hasImmIdx, 1)) : 6,
-                   !eq(is64Bit, 1) : 10);
-  let mayLoad = !if(!or(Op1Indirect, is64Bit), 1, 0);
+  let CodeSize = !cond(!eq(hasImmIdx, 0) : 2,
+                       !eq(hasImmIdx, 1) : 6);
+  let mayLoad = !if(Op1Indirect, 1, 0);
   let Inst{13} = isNative;
   let Inst{12} = isRel;
-  let TSFlags{1-0} = 0b01;
-  let TSFlags{2} = !if(is64Bit, 1, 0);
-  let TSFlags{3} = !if(isNative, 1, 0);
-  let TSFlags{4} = !if(isRel, 1, 0);
   let TSFlags{5} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
+  let TSFlags{4} = !if(isRel, 1, 0);
+  let TSFlags{3} = !if(isNative, 1, 0);
+  let TSFlags{2} = 0;
+  let TSFlags{1-0} = 0b01;
 }
 
-class EBCJMP<bits<6> opcode,
-                bit hasImmIdx, bit is64Bit, bit isCond,
+class EBCCALL64<bits<6> opcode,
+                bit isNative, bit isRel,
+                dag outs, dag ins, dag immins,
+                string immstr>
+      : EBCInst16<opcode, outs, !con(ins, immins),
+          "call64"
+        # !if(isNative, "ex", "")
+        # !if(isRel, "", "a"),
+          immstr, []> {
+  let CodeSize = 10;
+  let mayLoad = 0;
+  let Inst{7} = 1;
+  let Inst{6} = 1;
+  let Inst{13} = isNative;
+  let Inst{12} = isRel;
+  let TSFlags{5} = 1;
+  let TSFlags{4} = !if(isRel, 1, 0);
+  let TSFlags{3} = !if(isNative, 1, 0);
+  let TSFlags{2} = 1;
+  let TSFlags{1-0} = 0b01;
+}
+
+class EBCJMP32<bits<6> opcode,
+                bit hasImmIdx, bit isCond,
                 bit isCS, bit isRel, bit Op1Indirect,
                 dag outs, dag ins, dag immins, dag idxins,
                 string op1str, string immstr, string idxstr>
-      : EBCInst1Op<opcode, hasImmIdx, is64Bit, Op1Indirect, outs,
+      : EBCInst1Op<opcode, hasImmIdx, 0, Op1Indirect, outs,
           !cond(!eq(hasImmIdx, 0) : ins,
                 !eq(!and(hasImmIdx, Op1Indirect), 0) : !con(ins, immins),
                 !eq(!and(hasImmIdx, Op1Indirect), 1) : !con(ins, idxins)),
-          "jmp"
-        # !if(is64Bit, "64", "32")
+          "jmp32"
         # !cond(!eq(isCond, 0) : "",
                 !and(isCond, !eq(isCS, 0)) : "cc",
                 !and(isCond, isCS) : "cs")
         # !if(isRel, "", "a"),
           !if(Op1Indirect, "@", "")
-        # !if(is64Bit, "", op1str)
+        # op1str
         # !if(hasImmIdx, " ", "")
         # !cond(!eq(hasImmIdx, 0) : "",
                 !eq(!and(hasImmIdx, Op1Indirect), 0) : immstr,
                 !eq(!and(hasImmIdx, Op1Indirect), 1) : idxstr)> {
-  let CodeSize = !cond(!and(!eq(is64Bit, 0), !eq(hasImmIdx, 0)) : 2,
-                   !and(!eq(is64Bit, 0), !eq(hasImmIdx, 1)) : 6,
-                   !eq(is64Bit, 1) : 10);
+  let CodeSize = !cond(!eq(hasImmIdx, 0) : 2,
+                       !eq(hasImmIdx, 1) : 6);
   let mayLoad = !if(!and(Op1Indirect, !eq(hasImmIdx, 0)), 1, 0);
   let Inst{15} = isCond;
   let Inst{14} = isCS;
   let Inst{12} = isRel;
-  let TSFlags{1-0} = 0b10;
-  let TSFlags{2} = !if(is64Bit, 1, 0);
-  let TSFlags{3} = 0;
-  let TSFlags{4} = !if(isRel, 1, 0);
   let TSFlags{5} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
+  let TSFlags{4} = !if(isRel, 1, 0);
+  let TSFlags{3} = 0;
+  let TSFlags{2} = 0;
+  let TSFlags{1-0} = 0b10;
+}
+
+class EBCJMP64<bits<6> opcode,
+                bit isCond, bit isCS, bit isRel,
+                dag outs, dag ins, dag immins,
+                string immstr>
+      : EBCInst16<opcode, outs, !con(ins, immins),
+          "jmp64"
+        # !cond(!eq(isCond, 0) : "",
+                !and(isCond, !eq(isCS, 0)) : "cc",
+                !and(isCond, isCS) : "cs")
+        # !if(isRel, "", "a"),
+          immstr, []> {
+  let CodeSize = 10;
+  let mayLoad = 0;
+  let Inst{7} = 1;
+  let Inst{6} = 1;
+  let Inst{15} = isCond;
+  let Inst{14} = isCS;
+  let Inst{12} = isRel;
+  let TSFlags{5} = 1;
+  let TSFlags{4} = !if(isRel, 1, 0);
+  let TSFlags{3} = 0;
+  let TSFlags{2} = 1;
+  let TSFlags{1-0} = 0b10;
 }
 
 class EBCJMP8<bits<6> opcode, bit isCond, bit isCS,
@@ -182,11 +225,11 @@ class EBCJMP8<bits<6> opcode, bit isCond, bit isCS,
   let CodeSize = 2;
   let Inst{7} = isCond;
   let Inst{6} = isCS;
-  let TSFlags{1-0} = 0b11;
-  let TSFlags{2} = 0;
-  let TSFlags{3} = 0;
-  let TSFlags{4} = 0;
   let TSFlags{5} = 0;
+  let TSFlags{4} = 0;
+  let TSFlags{3} = 0;
+  let TSFlags{2} = 0;
+  let TSFlags{1-0} = 0b11;
 }
 
 class EBCPUSHPOP<bits<6> opcode, bit hasImmIdx, bit is64Bit, bit Op1Indirect,
@@ -587,8 +630,8 @@ foreach hasImmIdx = [0b0, 0b1] in {
           # !cond(!eq(hasImmIdx, 0) : "",
                   !eq(!and(hasImmIdx, Op1Indirect), 0) : "Imm",
                   !eq(!and(hasImmIdx, Op1Indirect), 1) : "Idx")
-            : EBCCALL<0b000011,
-                  hasImmIdx, 0, isNative, isRel, Op1Indirect,
+            : EBCCALL32<0b000011,
+                  hasImmIdx, isNative, isRel, Op1Indirect,
                   (outs), (ins GPR:$op1),
                   (ins imm32:$imm), (ins idxn32:$idxn, idxc32:$idxc),
                   "$op1", "$imm", "(${idxn},${idxc})">;
@@ -601,8 +644,8 @@ foreach isNative = [0b0, 0b1] in {
     # !if(isNative, "Native", "EBC")
     # !if(isRel, "Rel", "Abs")
     # "Imm"
-      : EBCCALL<0b000011, 1, 1, isNative, isRel, 0,
-                  (outs), (ins), (ins imm64:$imm), (ins), "", "$imm", "">;
+      : EBCCALL64<0b000011, isNative, isRel,
+                  (outs), (ins), (ins imm64:$imm), "$imm">;
 }
 } // hasSideEffects = 0, mayStore = 0
 
@@ -619,7 +662,7 @@ foreach Op1Indirect = [0b0, 0b1] in {
           # !if(isRel, "Rel", "Abs")
           # !if(Op1Indirect, "Op1I", "Op1D")
           # !if(hasImmIdx, !if(Op1Indirect, "Idx", "Imm"), "")
-            : EBCJMP<0b000001, hasImmIdx, 0, isCond, isCS, isRel, Op1Indirect,
+            : EBCJMP32<0b000001, hasImmIdx, isCond, isCS, isRel, Op1Indirect,
                     (outs), (ins GPR:$op1), (ins imm32:$imm),
                     (ins idxn32:$idxn, idxc32:$idxc),
                     "$op1", "$imm", "(${idxn},${idxc})">;
@@ -636,9 +679,8 @@ foreach isCond = [0b0, 0b1] in {
               !and(isCond, !eq(isCS, 1)) : "CS")
       # !if(isRel, "Rel", "Abs")
       # "Imm"
-        : EBCJMP<0b000001, 1, 1, isCond, isCS, isRel, 0,
-                (outs), (ins), (ins imm64:$imm), (ins),
-                "", "$imm", "">;
+        : EBCJMP64<0b000001, isCond, isCS, isRel,
+                (outs), (ins), (ins imm64:$imm), "$imm">;
   }
 }
 } // hasSideEffects = 0, mayStore = 0
