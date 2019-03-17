@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the RISCVMCAsmInfo properties.
+// This file contains the declarations of the EBCMCAsmInfo properties.
 //
 //===----------------------------------------------------------------------===//
 

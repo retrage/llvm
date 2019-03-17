@@ -14,6 +14,13 @@
 include "EBCInstrFormats.td"
 
 //===----------------------------------------------------------------------===//
+// EBC specific DAG Nodes.
+//===----------------------------------------------------------------------===//
+
+def RetFlag : SDNode<"EBC::RET_FLAG", SDTNone,
+                     [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+
+//===----------------------------------------------------------------------===//
 // Operand and SDNode transformation definitions.
 //===----------------------------------------------------------------------===//
 
@@ -49,22 +56,22 @@ def breakcode : Operand<i8> {
 }
 
 let OperandType = "OPERAND_IMM8" in
-def imm8 : Operand<i8> {
+def imm8 : Operand<i8>, ImmLeaf<i8, [{return isInt<8>(Imm);}]> {
   let ParserMatchClass = ImmAsmOperand<8>;
 }
 
 let OperandType = "OPERAND_IMM16" in
-def imm16 : Operand<i16> {
+def imm16 : Operand<i16>, ImmLeaf<i16, [{return isInt<16>(Imm);}]> {
   let ParserMatchClass = ImmAsmOperand<16>;
 }
 
 let OperandType = "OPERAND_IMM32" in
-def imm32 : Operand<i32> {
+def imm32 : Operand<i32>, ImmLeaf<i32, [{return isInt<32>(Imm);}]> {
   let ParserMatchClass = ImmAsmOperand<32>;
 }
 
 let OperandType = "OPERAND_IMM64" in
-def imm64 : Operand<i64> {
+def imm64 : Operand<i64>, ImmLeaf<i64, [{return isInt<64>(Imm);}]> {
   let ParserMatchClass = ImmAsmOperand<64>;
 }
 
@@ -611,8 +618,8 @@ let isTrap = 1 in
 def BREAK : EBCInst8<0b000000, (outs), (ins breakcode:$code),
                 "break", "$code", []>;
 
-let isReturn = 1 in
-def RET : EBCInst16<0b000100, (outs), (ins), "ret", "", []>;
+let isBarrier = 1, isReturn = 1, isTerminator = 1 in
+def RET : EBCInst16<0b000100, (outs), (ins), "ret", "", [(RetFlag)]>;
 
 def LOADSP : EBCInst2Op<0b101001, 0, 0, 0, 0, (outs FR:$op1), (ins GPR:$op2),
                 "loadsp", "$op1, $op2">;

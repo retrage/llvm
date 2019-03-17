@@ -10,10 +10,11 @@
 include "llvm/Target/Target.td"
 
 //===----------------------------------------------------------------------===//
-// Register file, instruction descriptions.
+// Register file, calling conventions, instruction descriptions.
 //===----------------------------------------------------------------------===//
 
 include "EBCRegisterInfo.td"
+include "EBCCallingConv.td"
 include "EBCInstrInfo.td"
 
 //===----------------------------------------------------------------------===//

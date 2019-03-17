@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "EBC.h"
 #include "EBCTargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/Passes.h"
@@ -47,10 +48,30 @@ EBCTargetMachine::EBCTargetMachine(const Target &T, const Triple &TT,
     : LLVMTargetMachine(T, computeDataLayout(TT), TT, CPU, FS, Options,
                         getEffectiveRelocModel(TT, RM),
                         getEffectiveCodeModel(CM, CodeModel::Small), OL),
-      TLOF(make_unique<TargetLoweringObjectFileCOFF>()) {
+      TLOF(make_unique<TargetLoweringObjectFileCOFF>()),
+      Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
 }
 
+namespace {
+class EBCPassConfig : public TargetPassConfig {
+public:
+  EBCPassConfig(EBCTargetMachine &TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {}
+
+  EBCTargetMachine &getEBCTargetMachine() const {
+    return getTM<EBCTargetMachine>();
+  }
+  bool addInstSelector() override;
+};
+}
+
 TargetPassConfig *EBCTargetMachine::createPassConfig(PassManagerBase &PM) {
-  return new TargetPassConfig(*this, PM);
+  return new EBCPassConfig(*this, PM);
+}
+
+bool EBCPassConfig::addInstSelector() {
+  addPass(createEBCISelDag(getEBCTargetMachine()));
+
+  return false;
 }

@@ -38,6 +38,6 @@ def flags : EBCDReg<0, "flags">;
 def ip    : EBCDReg<1, "ip">;
 
 // Register classes
-def GPR : RegisterClass<"EBC", [i64], 64, (add (sequence "r%u", 0, 7))>;
+def GPR : RegisterClass<"EBC", [i64], 64, (add (sequence "r%u", 1, 7), r0)>;
 def DR  : RegisterClass<"EBC", [i64], 64, (add flags, ip)>;
 def FR  : RegisterClass<"EBC", [i64], 64, (add flags)>;
