@@ -312,7 +312,7 @@ class EBCCMPIBase<bits<6> opcode,
           dag outs, dag ins, dag immins, dag idxins,
           string opsuffix, string op1str, string immstr, string idxstr>
       : EBCInst16<opcode, outs,
-          !if(hasOp1Idx, !con(ins, immins, idxins), !con(ins, immins)),
+          !if(hasOp1Idx, !con(ins, idxins, immins), !con(ins, immins)),
           "cmpi" # !if(is64Bit, "64", "32") # !if(immlen, "d", "w")# opsuffix,
           !if(Op1Indirect, "@", "") # op1str
         # !if(hasOp1Idx, " " # idxstr, "") # ", " # immstr, []> {
@@ -378,7 +378,7 @@ class EBCMOVIBase<bits<6> opcode, bits<2> immlen, bits<2> movlen,
             string op1str, string immstr, string op1idxstr>
       : EBCInst16<opcode, outs,
             !cond(!eq(hasOp1Idx, 0) : !con(ins, immins),
-                  !eq(hasOp1Idx, 1) : !con(ins, immins, op1idxins)),
+                  !eq(hasOp1Idx, 1) : !con(ins, op1idxins, immins)),
             "movi"
           # !cond(!eq(movlen, 0b00) : "b", !eq(movlen, 0b01) : "w",
                   !eq(movlen, 0b10) : "d", !eq(movlen, 0b11) : "q")
@@ -405,7 +405,7 @@ class EBCMOVRELBase<bits<6> opcode, bits<2> immlen,
               string op1str, string immstr, string op1idxstr>
       : EBCInst16<opcode, outs,
               !cond(!eq(hasOp1Idx, 0) : !con(ins, immins),
-                    !eq(hasOp1Idx, 1) : !con(ins, immins, op1idxins)),
+                    !eq(hasOp1Idx, 1) : !con(ins, op1idxins, immins)),
               "movrel"
             # !cond(!eq(immlen, 0b01) : "w", !eq(immlen, 0b10) : "d",
                     !eq(immlen, 0b11) : "q"),
