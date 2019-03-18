@@ -24,29 +24,19 @@ def RetFlag : SDNode<"EBC::RET_FLAG", SDTNone,
 // Operand and SDNode transformation definitions.
 //===----------------------------------------------------------------------===//
 
-class BreakCodeAsmOperand<int width> : AsmOperandClass {
-  let Name = "BreakCode" # width;
+class AsmOperand<string prefix, int width> : AsmOperandClass {
+  let Name = prefix # width;
   let RenderMethod = "addImmOperands";
   let DiagnosticType = !strconcat("Invalid", Name);
 }
 
-class ImmAsmOperand<int width> : AsmOperandClass {
-  let Name = "Imm" # width;
-  let RenderMethod = "addImmOperands";
-  let DiagnosticType = !strconcat("Invalid", Name);
-}
+class BreakCodeAsmOperand<int width> : AsmOperand<"BreakCode", width> {}
 
-class IdxNAsmOperand<int width> : AsmOperandClass {
-  let Name = "IdxN" # width;
-  let RenderMethod = "addImmOperands";
-  let DiagnosticType = !strconcat("Invalid", Name);
-}
+class ImmAsmOperand<int width> : AsmOperand<"Imm", width> {}
 
-class IdxCAsmOperand<int width> : AsmOperandClass {
-  let Name = "IdxC" # width;
-  let RenderMethod = "addImmOperands";
-  let DiagnosticType = !strconcat("Invalid", Name);
-}
+class IdxNAsmOperand<int width> : AsmOperand<"IdxN", width> {}
+
+class IdxCAsmOperand<int width> : AsmOperand<"IdxC", width> {}
 
 let OperandNamespace = "EBC" in {
 
