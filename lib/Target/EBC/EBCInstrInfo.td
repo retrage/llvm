@@ -923,3 +923,15 @@ foreach idxlen = [0b01, 0b10, 0b11] in {
         "$op1", "(${op1idxn},${op1idxc})", "(${op2idxn},${op2idxc})">;
   }
 }
+
+//===----------------------------------------------------------------------===//
+// Pseudo-instructions and codegen patterns
+//
+// Naming convention: For 'generic' pattern classes, we use the naming
+// convention PatTy1Ty2. For pattern classes which offer a more complex
+// expension, prefix the class name, e.g. BccPat.
+//===----------------------------------------------------------------------===//
+
+/// Immediates
+
+def : Pat<(imm64:$imm), (MOVIqqOp1D imm64:$imm)>;

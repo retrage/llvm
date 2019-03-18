@@ -29,3 +29,45 @@
 using namespace llvm;
 
 EBCInstrInfo::EBCInstrInfo() : EBCGenInstrInfo() {}
+
+void EBCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator MBBI,
+                               const DebugLoc &DL, unsigned DstReg,
+                               unsigned SrcReg, bool KillSrc) const {
+  assert(EBC::GPRRegClass.contains(DstReg, SrcReg) &&
+         "Impossible reg-to-reg copy");
+
+  BuildMI(MBB, MBBI, DL, get(EBC::MOVqqOp1DOp2D), DstReg)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+}
+
+void EBCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator MBBI,
+                                       unsigned SrcReg, bool IsKill, int FI,
+                                       const TargetRegisterClass *RC,
+                                       const TargetRegisterInfo *TRI) const {
+  DebugLoc DL;
+  if (MBBI != MBB.end())
+    DL = MBBI->getDebugLoc();
+
+  if (RC == &EBC::GPRRegClass)
+    BuildMI(MBB, MBBI, DL, get(EBC::PUSH64Op1D))
+        .addReg(SrcReg, getKillRegState(IsKill));
+  else
+    llvm_unreachable("Can't store this register to stack slot");
+}
+
+void EBCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                        MachineBasicBlock::iterator MBBI,
+                                        unsigned DstReg, int FI,
+                                        const TargetRegisterClass *RC,
+                                        const TargetRegisterInfo *TRI) const {
+  DebugLoc DL;
+  if (MBBI != MBB.end())
+    DL = MBBI->getDebugLoc();
+
+  if (RC == &EBC::GPRRegClass)
+    BuildMI(MBB, MBBI, DL, get(EBC::POP64Op1D), DstReg);
+  else
+    llvm_unreachable("Can't load this register from stack slot");
+}
