@@ -48,6 +48,9 @@ EBCTargetLowering::EBCTargetLowering(const TargetMachine &TM,
 
   setStackPointerRegisterToSaveRestore(EBC::r0);
 
+  for (auto N : {ISD::EXTLOAD, ISD::SEXTLOAD, ISD::ZEXTLOAD})
+    setLoadExtAction(N, MVT::i64, MVT::i1, Promote);
+
   // TODO: add all necessary setOperationAction calls.
 
   setBooleanContents(ZeroOrOneBooleanContent);
@@ -82,7 +85,7 @@ SDValue EBCTargetLowering::LowerFormalArguments(
   }
 
   MachineFunction &MF = DAG.getMachineFunction();
-  MachineRegisterInfo &RegInfo = MF.getRegInfo();
+  MachineFrameInfo &MFI = MF.getFrameInfo();
 
   if (IsVarArg)
     report_fatal_error("VarArg not supported");
@@ -93,22 +96,44 @@ SDValue EBCTargetLowering::LowerFormalArguments(
   CCInfo.AnalyzeFormalArguments(Ins, CC_EBC);
 
   for (auto &VA : ArgLocs) {
-    if (!VA.isRegLoc())
-      report_fatal_error("Defined with too many args");
+    if (!VA.isMemLoc())
+      report_fatal_error("CCValAssign must be mem");
+    unsigned ArgOffset = VA.getLocMemOffset();
+    unsigned ArgSize = VA.getValVT().getSizeInBits() / 8;
 
-    // Arguments passed in registers.
-    EVT RegVT = VA.getLocVT();
-    if (RegVT != MVT::i64) {
-      LLVM_DEBUG(dbgs() << "LowerFormalArguments Unhandled argument type: "
-                        << RegVT.getEVTString() << "\n");
-      report_fatal_error("unhandled argument type");
+    int FI = MFI.CreateFixedObject(ArgSize, ArgOffset, true);
+
+    // Create load nodes to retrieve arguments from the stack.
+    SDValue FIN = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
+    SDValue ArgValue;
+
+    // For NON_EXTLOAD, generic code in getLoad assert(ValVT == MemVT)
+    ISD::LoadExtType ExtType = ISD::NON_EXTLOAD;
+    MVT MemVT = VA.getValVT();
+
+    switch (VA.getLocInfo()) {
+    default:
+      break;
+    case CCValAssign::BCvt:
+      MemVT = VA.getLocVT();
+      break;
+    case CCValAssign::SExt:
+      ExtType = ISD::SEXTLOAD;
+      break;
+    case CCValAssign::ZExt:
+      ExtType = ISD::ZEXTLOAD;
+      break;
+    case CCValAssign::AExt:
+      ExtType = ISD::EXTLOAD;
+      break;
     }
-    const unsigned VReg =
-      RegInfo.createVirtualRegister(&EBC::GPRRegClass);
-    RegInfo.addLiveIn(VA.getLocReg(), VReg);
-    SDValue ArgIn = DAG.getCopyFromReg(Chain, DL, VReg, RegVT);
 
-    InVals.push_back(ArgIn);
+    ArgValue = DAG.getExtLoad(
+        ExtType, DL, VA.getLocVT(), Chain, FIN,
+        MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI),
+        MemVT);
+
+    InVals.push_back(ArgValue);
   }
   return Chain;
 }

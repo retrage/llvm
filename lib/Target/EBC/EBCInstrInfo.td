@@ -330,13 +330,18 @@ class EBCCMPIBase<bits<6> opcode,
 
 class EBCMOVBase<bits<6> opcode, bits<2> idxlen, bits<2> movlen,
             bit hasOp1Idx, bit hasOp2Idx, bit Op1Indirect, bit Op2Indirect,
-            dag outs, dag ins, dag op1idxins, dag op2idxins,
+            dag op1outs, dag op2outs, dag op1ins, dag op2ins,
+            dag op1idxins, dag op2idxins,
             string op1str, string op2str, string op1idxstr, string op2idxstr>
-      : EBCInst<opcode, outs,
-          !cond(!and(!eq(hasOp1Idx, 0), !eq(hasOp2Idx, 0)) : ins,
-                !and(hasOp1Idx, !eq(hasOp2Idx, 0)) : !con(ins, op1idxins),
-                !and(!eq(hasOp1Idx, 0), hasOp2Idx) : !con(ins, op2idxins),
-                !and(hasOp1Idx, hasOp2Idx) : !con(ins, op1idxins, op2idxins)),
+      : EBCInst<opcode, !con(op1outs, op2outs),
+          !cond(!and(!eq(hasOp1Idx, 0), !eq(hasOp2Idx, 0))
+                : !con(op1ins, op2ins),
+                !and(hasOp1Idx, !eq(hasOp2Idx, 0))
+                : !con(op1ins, op2ins, op1idxins),
+                !and(!eq(hasOp1Idx, 0), hasOp2Idx)
+                : !con(op1ins, op2ins, op2idxins),
+                !and(hasOp1Idx, hasOp2Idx)
+                : !con(op1ins, op2ins, op1idxins, op2idxins)),
           "mov"
         # !cond(!eq(movlen, 0b00) : "b", !eq(movlen, 0b01) : "w",
                 !eq(movlen, 0b10) : "d", !eq(movlen, 0b11) : "q")
@@ -585,7 +590,8 @@ multiclass EBCMOV<bits<6> opcode, bits<2> idxlen, bits<2> movlen> {
           # !if(Op2Indirect, "Op2I", "Op2D") # !if(hasOp2Idx, "Idx", "")
           : EBCMOVBase<opcode, idxlen, movlen,
             hasOp1Idx, hasOp2Idx, Op1Indirect, Op2Indirect,
-            (outs GPR:$op1), (ins GPR:$op2),
+            !if(Op1Indirect, (outs), (outs GPR:$op1)), (outs),
+            !if(Op1Indirect, (ins GPR:$op1), (ins)), (ins GPR:$op2),
             !cond(!eq(idxlen, 0b01) : (ins idxn16:$op1idxn, idxc16:$op1idxc),
                   !eq(idxlen, 0b10) : (ins idxn32:$op1idxn, idxc32:$op1idxc),
                   !eq(idxlen, 0b11) : (ins idxn64:$op1idxn, idxc64:$op1idxc)),
@@ -922,6 +928,32 @@ foreach idxlen = [0b01, 0b10, 0b11] in {
 // expension, prefix the class name, e.g. BccPat.
 //===----------------------------------------------------------------------===//
 
+/// Generic pattern classes
+
+class PatGprGpr<SDPatternOperator OpNode, EBCInst Inst>
+    : Pat<(OpNode GPR:$op1, GPR:$op2), (Inst GPR:$op1, GPR:$op2)>;
+
+/// Simple arithmetic operations
+
+def : PatGprGpr<add, ADD64Op1DOp2D>;
+def : PatGprGpr<sub, SUB64Op1DOp2D>;
+
 /// Immediates
 
 def : Pat<(imm64:$imm), (MOVIqqOp1D imm64:$imm)>;
+
+/// Loads
+
+multiclass LdPat<PatFrag LoadOp, EBCInst Inst> {
+  def : Pat<(LoadOp GPR:$op2), (Inst GPR:$op2)>;
+}
+
+defm : LdPat<load, MOVqqOp1DOp2I>;
+
+/// Stores
+
+multiclass StPat<PatFrag StoreOp, EBCInst Inst> {
+  def : Pat<(StoreOp GPR:$op1, GPR:$op2), (Inst GPR:$op1, GPR:$op2)>;
+}
+
+defm : StPat<store, MOVqqOp1IOp2D>;
