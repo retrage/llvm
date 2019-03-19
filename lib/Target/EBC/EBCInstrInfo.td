@@ -944,16 +944,29 @@ def : Pat<(imm64:$imm), (MOVIqqOp1D imm64:$imm)>;
 
 /// Loads
 
-multiclass LdPat<PatFrag LoadOp, EBCInst Inst> {
-  def : Pat<(LoadOp GPR:$op2), (Inst GPR:$op2)>;
-}
+class ExtLdPat<PatFrag LoadOp, EBCInst MOVOp, EBCInst EXTNDOp>
+    : Pat<(LoadOp GPR:$op2), (EXTNDOp GPR:$op2, (MOVOp GPR:$op2))>;
 
-defm : LdPat<load, MOVqqOp1DOp2I>;
+class LdPat<PatFrag LoadOp, EBCInst MOVOp>
+    : Pat<(LoadOp GPR:$op2), (MOVOp GPR:$op2)>;
+
+def : ExtLdPat<sextloadi8, MOVbwOp1DOp2I, EXTNDB64Op1DOp2D>;
+def : ExtLdPat<extloadi8, MOVbwOp1DOp2I, EXTNDB64Op1DOp2D>;
+def : ExtLdPat<sextloadi16, MOVwwOp1DOp2I, EXTNDW64Op1DOp2D>;
+def : ExtLdPat<extloadi16, MOVwwOp1DOp2I, EXTNDW64Op1DOp2D>;
+def : ExtLdPat<sextloadi32, MOVdwOp1DOp2I, EXTNDD64Op1DOp2D>;
+def : ExtLdPat<extloadi32, MOVdwOp1DOp2I, EXTNDD64Op1DOp2D>;
+def : LdPat<load, MOVqqOp1DOp2I>;
+def : LdPat<zextloadi8, MOVbwOp1DOp2I>;
+def : LdPat<zextloadi16, MOVwwOp1DOp2I>;
+def : LdPat<zextloadi32, MOVdwOp1DOp2I>;
 
 /// Stores
 
-multiclass StPat<PatFrag StoreOp, EBCInst Inst> {
-  def : Pat<(StoreOp GPR:$op1, GPR:$op2), (Inst GPR:$op1, GPR:$op2)>;
-}
+class StPat<PatFrag StoreOp, EBCInst MOVOp>
+    : Pat<(StoreOp GPR:$op1, GPR:$op2), (MOVOp GPR:$op1, GPR:$op2)>;
 
-defm : StPat<store, MOVqqOp1IOp2D>;
+def : StPat<truncstorei8, MOVbwOp1IOp2D>;
+def : StPat<truncstorei16, MOVwwOp1IOp2D>;
+def : StPat<truncstorei32, MOVdwOp1IOp2D>;
+def : StPat<store, MOVqqOp1IOp2D>;

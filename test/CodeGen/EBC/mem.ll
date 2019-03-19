@@ -2,6 +2,66 @@
 ; RUN: llc -mtriple=ebc -verify-machineinstrs < %s \
 ; RUN:  | FileCheck %s -check-prefix=EBC
 
+define i64 @sextloadi8(i8 *%a) nounwind {
+; EBC-LABEL:  sextloadi8:
+; EBC:        ; %bb.0:
+; EBC-NEXT:   push64    r1
+; EBC-NEXT:   movqw     r7, @r0 (-1,0)
+; EBC-NEXT:   movqq     r7, @r7
+; EBC-NEXT:   movbw     r1, @r7
+; EBC-NEXT:   moviqq    r1, 1
+; EBC-NEXT:   add64     r7, r1
+; EBC-NEXT:   movbw     r1, @r7
+; EBC-NEXT:   extndb64  r7, r1
+; EBC-NEXT:   pop64     r1
+; EBC-NEXT:   ret
+  %1 = getelementptr i8, i8* %a, i64 1
+  %2 = load i8, i8* %1
+  %3 = sext i8 %2 to i64
+  %4 = load volatile i8, i8* %a
+  ret i64 %3
+}
+
+define i64 @sextloadi16(i16 *%a) nounwind {
+; EBC-LABEL:  sextloadi16:
+; EBC:        ; %bb.0:
+; EBC-NEXT:   push64    r1
+; EBC-NEXT:   movqw     r7, @r0 (-1,0)
+; EBC-NEXT:   movqq     r7, @r7
+; EBC-NEXT:   movww     r1, @r7
+; EBC-NEXT:   moviqq    r1, 4
+; EBC-NEXT:   add64     r7, r1
+; EBC-NEXT:   movww     r1, @r7
+; EBC-NEXT:   extndw64  r7, r1
+; EBC-NEXT:   pop64     r1
+; EBC-NEXT:   ret
+  %1 = getelementptr i16, i16* %a, i64 2
+  %2 = load i16, i16* %1
+  %3 = sext i16 %2 to i64
+  %4 = load volatile i16, i16* %a
+  ret i64 %3
+}
+
+define i64 @sextloadi32(i32 *%a) nounwind {
+; EBC-LABEL:  sextloadi32:
+; EBC:        ; %bb.0:
+; EBC-NEXT:   push64    r1
+; EBC-NEXT:   movqw     r7, @r0 (-1,0)
+; EBC-NEXT:   movqq     r7, @r7
+; EBC-NEXT:   movdw     r1, @r7
+; EBC-NEXT:   moviqq    r1, 12
+; EBC-NEXT:   add64     r7, r1
+; EBC-NEXT:   movdw     r1, @r7
+; EBC-NEXT:   extndd64  r7, r1
+; EBC-NEXT:   pop64     r1
+; EBC-NEXT:   ret
+  %1 = getelementptr i32, i32* %a, i64 3
+  %2 = load i32, i32* %1
+  %3 = sext i32 %2 to i64
+  %4 = load volatile i32, i32* %a
+  ret i64 %3
+}
+
 define i64 @load(i64 *%a) nounwind {
 ; EBC-LABEL:  load:
 ; EBC:        ; %bb.0:
@@ -9,15 +69,93 @@ define i64 @load(i64 *%a) nounwind {
 ; EBC-NEXT:     movqw   r7, @r0 (-1,0)
 ; EBC-NEXT:     movqq   r7, @r7
 ; EBC-NEXT:     movqq   r1, @r7
-; EBC-NEXT:     moviqq  r1, 24
+; EBC-NEXT:     moviqq  r1, 32
 ; EBC-NEXT:     add64   r7, r1
 ; EBC-NEXT:     movqq   r7, @r7
 ; EBC-NEXT:     pop64   r1
 ; EBC-NEXT:     ret
-  %1 = getelementptr i64, i64* %a, i64 3
+  %1 = getelementptr i64, i64* %a, i64 4
   %2 = load i64, i64* %1
   %3 = load volatile i64, i64* %a
   ret i64 %2
+}
+
+define void @truncstorei8(i8 *%a, i8 %b) nounwind {
+; EBC-LABEL:    truncstorei8:
+; EBC:          ; %bb.0:
+; EBC-NEXT:       push64    r1
+; EBC-NEXT:       push64    r2
+; EBC-NEXT:       push64    r3
+; EBC-NEXT:       movqw     r7, @r0 (-2,0)
+; EBC-NEXT:       movbw     r1, @r7
+; EBC-NEXT:       extndb64  r7, r1
+; EBC-NEXT:       movqw     r1, @r0 (-1,0)
+; EBC-NEXT:       movqq     r1, @r1
+; EBC-NEXT:       moviqq    r2, 5
+; EBC-NEXT:       movqq     r3, r1
+; EBC-NEXT:       add64     r3, r2
+; EBC-NEXT:       movbw     @r7, r3
+; EBC-NEXT:       movbw     @r7, r1
+; EBC-NEXT:       pop64     r3
+; EBC-NEXT:       pop64     r2
+; EBC-NEXT:       pop64     r1
+; EBC-NEXT:       ret
+  store i8 %b, i8* %a
+  %1 = getelementptr i8, i8* %a, i64 5
+  store i8 %b, i8* %1
+  ret void
+}
+
+define void @truncstorei16(i16 *%a, i16 %b) nounwind {
+; EBC-LABEL:    truncstorei16:
+; EBC:          ; %bb.0:
+; EBC-NEXT:       push64    r1
+; EBC-NEXT:       push64    r2
+; EBC-NEXT:       push64    r3
+; EBC-NEXT:       movqw     r7, @r0 (-2,0)
+; EBC-NEXT:       movww     r1, @r7
+; EBC-NEXT:       extndw64  r7, r1
+; EBC-NEXT:       movqw     r1, @r0 (-1,0)
+; EBC-NEXT:       movqq     r1, @r1
+; EBC-NEXT:       moviqq    r2, 12
+; EBC-NEXT:       movqq     r3, r1
+; EBC-NEXT:       add64     r3, r2
+; EBC-NEXT:       movww     @r7, r3
+; EBC-NEXT:       movww     @r7, r1
+; EBC-NEXT:       pop64     r3
+; EBC-NEXT:       pop64     r2
+; EBC-NEXT:       pop64     r1
+; EBC-NEXT:       ret
+  store i16 %b, i16* %a
+  %1 = getelementptr i16, i16* %a, i64 6
+  store i16 %b, i16* %1
+  ret void
+}
+
+define void @truncstorei32(i32 *%a, i32 %b) nounwind {
+; EBC-LABEL:    truncstorei32:
+; EBC:          ; %bb.0:
+; EBC-NEXT:       push64    r1
+; EBC-NEXT:       push64    r2
+; EBC-NEXT:       push64    r3
+; EBC-NEXT:       movqw     r7, @r0 (-2,0)
+; EBC-NEXT:       movdw     r1, @r7
+; EBC-NEXT:       extndd64  r7, r1
+; EBC-NEXT:       movqw     r1, @r0 (-1,0)
+; EBC-NEXT:       movqq     r1, @r1
+; EBC-NEXT:       moviqq    r2, 28
+; EBC-NEXT:       movqq     r3, r1
+; EBC-NEXT:       add64     r3, r2
+; EBC-NEXT:       movdw     @r7, r3
+; EBC-NEXT:       movdw     @r7, r1
+; EBC-NEXT:       pop64     r3
+; EBC-NEXT:       pop64     r2
+; EBC-NEXT:       pop64     r1
+; EBC-NEXT:       ret
+  store i32 %b, i32* %a
+  %1 = getelementptr i32, i32* %a, i64 7
+  store i32 %b, i32* %1
+  ret void
 }
 
 define void @store(i64 *%a, i64 %b) nounwind {
