@@ -937,6 +937,15 @@ class PatGprGpr<SDPatternOperator OpNode, EBCInst Inst>
 
 def : PatGprGpr<add, ADD64Op1DOp2D>;
 def : PatGprGpr<sub, SUB64Op1DOp2D>;
+def : PatGprGpr<mul, MUL64Op1DOp2D>;
+def : PatGprGpr<sdiv, DIV64Op1DOp2D>;
+def : PatGprGpr<udiv, DIVU64Op1DOp2D>;
+def : PatGprGpr<shl, SHL64Op1DOp2D>;
+def : PatGprGpr<srl, SHR64Op1DOp2D>;
+def : PatGprGpr<sra, ASHR64Op1DOp2D>;
+def : PatGprGpr<and, AND64Op1DOp2D>;
+def : PatGprGpr<or, OR64Op1DOp2D>;
+def : PatGprGpr<xor, XOR64Op1DOp2D>;
 
 /// Immediates
 
