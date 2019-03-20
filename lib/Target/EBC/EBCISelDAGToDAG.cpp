@@ -60,7 +60,7 @@ void EBCDAGToDAGISel::Select(SDNode *Node) {
     SDValue Op2IdxN = CurDAG->getTargetConstant(FI, DL, MVT::i16);
     SDValue Op2IdxC = CurDAG->getTargetConstant(0, DL, MVT::i16);
     ArrayRef<SDValue> Ops = {Op2, Op2IdxN, Op2IdxC};
-    ReplaceNode(Node, CurDAG->getMachineNode(EBC::MOVqwOp1DOp2IIdx,
+    ReplaceNode(Node, CurDAG->getMachineNode(EBC::MOVqwOp1DOp2DIdx,
                                              DL, VT, Ops));
     return;
   }
