@@ -309,8 +309,12 @@ static DecodeStatus decodeIdx16(MCInst &MI, uint64_t &Size,
   uint8_t Assigned = (Idx & (0x7 << 12)) >> 12;
   unsigned NaturalLen = Assigned * 2;
   unsigned ConstantLen = 16 - (UsedBits + NaturalLen);
-  uint16_t NaturalMask = UINT16_MAX >> (UsedBits + ConstantLen);
-  uint16_t ConstantMask = (UINT16_MAX >> (UsedBits + NaturalLen)) << NaturalLen;
+  uint16_t NaturalMask = 0;
+  uint16_t ConstantMask = 0;
+  if (UsedBits + ConstantLen != 16)
+    NaturalMask = UINT16_MAX >> (UsedBits + ConstantLen);
+  if (UsedBits + NaturalLen != 16)
+    ConstantMask = (UINT16_MAX >> (UsedBits + NaturalLen)) << NaturalLen;
 
   int16_t Natural = (Sign ? -1 : 1) * (Idx & NaturalMask);
   int16_t Constant = (Sign ? -1 : 1) * ((Idx & ConstantMask) >> NaturalLen);
@@ -328,11 +332,15 @@ static DecodeStatus decodeIdx32(MCInst &MI, uint64_t &Size,
 
   unsigned UsedBits = 4; // Sign bit + 3-bit assigned to natural unit
   bool Sign = Idx >> 31;
-  uint8_t Assigned = (Idx & (0x7 << 28)) >> 28;
+  uint8_t Assigned = (Idx & ((uint32_t)0x7 << 28)) >> 28;
   unsigned NaturalLen = Assigned * 4;
   unsigned ConstantLen = 32 - (UsedBits + NaturalLen);
-  uint32_t NaturalMask = UINT32_MAX >> (UsedBits + ConstantLen);
-  uint32_t ConstantMask = (UINT32_MAX >> (UsedBits + NaturalLen)) << NaturalLen;
+  uint32_t NaturalMask = 0;
+  uint32_t ConstantMask = 0;
+  if (UsedBits + ConstantLen != 32)
+    NaturalMask = UINT32_MAX >> (UsedBits + ConstantLen);
+  if (UsedBits + NaturalLen != 32)
+    ConstantMask = (UINT32_MAX >> (UsedBits + NaturalLen)) << NaturalLen;
 
   int32_t Natural = (Sign ? -1 : 1) * (Idx & NaturalMask);
   int32_t Constant = (Sign ? -1 : 1) * ((Idx & ConstantMask) >> NaturalLen);
@@ -353,8 +361,12 @@ static DecodeStatus decodeIdx64(MCInst &MI, uint64_t &Size,
   uint8_t Assigned = (Idx & ((uint64_t)0x7 << 60)) >> 60;
   unsigned NaturalLen = Assigned * 8;
   unsigned ConstantLen = 64 - (UsedBits + NaturalLen);
-  uint64_t NaturalMask = UINT64_MAX >> (UsedBits + ConstantLen);
-  uint64_t ConstantMask = (UINT64_MAX >> (UsedBits + NaturalLen)) << NaturalLen;
+  uint64_t NaturalMask = 0;
+  uint64_t ConstantMask = 0;
+  if (UsedBits + ConstantLen != 64)
+    NaturalMask = UINT64_MAX >> (UsedBits + ConstantLen);
+  if (UsedBits + NaturalLen != 64)
+    ConstantMask = (UINT64_MAX >> (UsedBits + NaturalLen)) << NaturalLen;
 
   int64_t Natural = (Sign ? -1 : 1) * (Idx & NaturalMask);
   int64_t Constant = (Sign ? -1 : 1) * ((Idx & ConstantMask) >> NaturalLen);

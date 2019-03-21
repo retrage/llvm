@@ -280,16 +280,16 @@ EBCMCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
 
 uint16_t
 EBCMCCodeEmitter::getIdx16Value(const MCOperand &NMO, const MCOperand &CMO) const {
-  int16_t Natual = NMO.getImm();
+  int16_t Natural = NMO.getImm();
   int16_t Constant = CMO.getImm();
 
-  assert(((Natual >= 0 && Constant >= 0)
-        || (Natual <= 0 && Constant <= 0))
+  assert(((Natural >= 0 && Constant >= 0)
+        || (Natural <= 0 && Constant <= 0))
         && "Both natural and constant must have same signs");
 
-  bool Sign = (Natual <= 0 && Constant <= 0);
+  bool Sign = (Natural <= 0 && Constant <= 0);
 
-  uint16_t AbsNatural = abs(Natual);
+  uint16_t AbsNatural = abs(Natural);
   uint16_t AbsConstant = abs(Constant);
 
   unsigned NaturalLen = 0;
@@ -306,31 +306,31 @@ EBCMCCodeEmitter::getIdx16Value(const MCOperand &NMO, const MCOperand &CMO) cons
   }
   ConstantLen += ConstantLen % 2 ? 1 : 0;
 
-  unsigned UsedBits = 4; // Sign bit + 3-bit assgined to natural unit
+  unsigned UsedBits = 4; // Sign bit + 3-bit assigned to natural unit
 
   assert((UsedBits + NaturalLen + ConstantLen <= 16)
         && "Unit length is too long");
 
-  uint8_t Assgined = NaturalLen / 2;
+  uint8_t Assigned = NaturalLen / 2;
 
-  uint16_t Index = ((Sign ? 1 : 0) << 15) + (Assgined << 12)
-                  + (abs(Constant) << NaturalLen) + abs(Natual);
+  uint16_t Index = ((Sign ? 1 : 0) << 15) + (Assigned << 12)
+                  + (abs(Constant) << NaturalLen) + abs(Natural);
 
   return Index;
 }
 
 uint32_t
 EBCMCCodeEmitter::getIdx32Value(const MCOperand &NMO, const MCOperand &CMO) const {
-  int32_t Natual = NMO.getImm();
+  int32_t Natural = NMO.getImm();
   int32_t Constant = CMO.getImm();
 
-  assert(((Natual >= 0 && Constant >= 0)
-        || (Natual <= 0 && Constant <= 0))
+  assert(((Natural >= 0 && Constant >= 0)
+        || (Natural <= 0 && Constant <= 0))
         && "Both natural and constant must have same signs");
 
-  bool Sign = (Natual <= 0 && Constant <= 0);
+  bool Sign = (Natural <= 0 && Constant <= 0);
 
-  uint32_t AbsNatural = abs(Natual);
+  uint32_t AbsNatural = abs(Natural);
   uint32_t AbsConstant = abs(Constant);
 
   unsigned NaturalLen = 0;
@@ -347,32 +347,32 @@ EBCMCCodeEmitter::getIdx32Value(const MCOperand &NMO, const MCOperand &CMO) cons
   }
   ConstantLen += ConstantLen % 2 ? 1 : 0;
 
-  unsigned UsedBits = 4; // Sign bit + 3-bit assgined to natural unit
+  unsigned UsedBits = 4; // Sign bit + 3-bit assigned to natural unit
 
   assert((UsedBits + NaturalLen + ConstantLen <= 32)
         && "Unit length is too long");
 
-  uint8_t Assgined = NaturalLen / 4;
+  uint8_t Assigned = NaturalLen / 4;
 
-  uint32_t Index = ((Sign ? 1 : 0) << 31) + (Assgined << 28)
-                  + (abs(Constant) << NaturalLen) + abs(Natual);
+  uint32_t Index = ((Sign ? 1 : 0) << 31) + (Assigned << 28)
+                  + (abs(Constant) << NaturalLen) + abs(Natural);
 
   return Index;
 }
 
 uint64_t
 EBCMCCodeEmitter::getIdx64Value(const MCOperand &NMO, const MCOperand &CMO) const {
-  int64_t Natual = NMO.getImm();
+  int64_t Natural = NMO.getImm();
   int64_t Constant = CMO.getImm();
 
-  assert(((Natual >= 0 && Constant >= 0)
-        || (Natual <= 0 && Constant <= 0))
+  assert(((Natural >= 0 && Constant >= 0)
+        || (Natural <= 0 && Constant <= 0))
         && "Both natural and constant must have same signs");
 
-  bool Sign = (Natual <= 0 && Constant <= 0);
+  bool Sign = (Natural <= 0 && Constant <= 0);
 
-  uint64_t AbsNatural = abs(Natual);
-  uint64_t AbsConstant = abs(Constant);
+  uint64_t AbsNatural = Natural < 0 ? -Natural : Natural;
+  uint64_t AbsConstant = Constant < 0 ? -Constant : Constant;
 
   unsigned NaturalLen = 0;
   while (AbsNatural) {
@@ -388,15 +388,18 @@ EBCMCCodeEmitter::getIdx64Value(const MCOperand &NMO, const MCOperand &CMO) cons
   }
   ConstantLen += ConstantLen % 2 ? 1 : 0;
 
-  unsigned UsedBits = 4; // Sign bit + 3-bit assgined to natural unit
+  unsigned UsedBits = 4; // Sign bit + 3-bit assigned to natural unit
 
   assert((UsedBits + NaturalLen + ConstantLen <= 64)
         && "Unit length is too long");
 
-  uint8_t Assgined = NaturalLen / 8;
+  uint8_t Assigned = NaturalLen / 8;
 
-  uint64_t Index = ((uint64_t)(Sign ? 1 : 0) << 63) + ((uint64_t)Assgined << 60)
-                  + (abs(Constant) << NaturalLen) + abs(Natual);
+  AbsNatural = Natural < 0 ? -Natural : Natural;
+  AbsConstant = Constant < 0 ? -Constant : Constant;
+
+  uint64_t Index = ((uint64_t)(Sign ? 1 : 0) << 63) + ((uint64_t)Assigned << 60)
+                  + (AbsConstant << NaturalLen) + AbsNatural;
 
   return Index;
 }

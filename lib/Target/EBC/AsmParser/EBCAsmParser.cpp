@@ -142,7 +142,7 @@ public:
     return Ret;
   }
 
-  template <int N> bool isImmN() const {
+  template <uint8_t N> bool isImmN() const {
     int64_t Imm;
     MCSymbolRefExpr::VariantKind VK;
     if (!isImm())
@@ -156,6 +156,23 @@ public:
         return false;
     } else
       return isInt<N>(Imm);
+  }
+
+  template <uint8_t N> bool isIdxN() const {
+    int64_t Imm;
+    int64_t Lim = ((int64_t)1 << (N - 4)) - 1;
+    MCSymbolRefExpr::VariantKind VK;
+    if (!isImm())
+      return false;
+    bool IsConstantImm = evaluateConstantImm(Imm, VK);
+    if (!IsConstantImm) {
+      const MCExpr *Expr = getImm();
+      if (isa<MCSymbolRefExpr>(Expr))
+        return true;
+      else
+        return false;
+    } else
+      return isInt<N - 3>(Imm) && (Imm <= Lim) && (Imm >= -Lim);
   }
 
   bool isBreakCode8() const {
@@ -174,12 +191,12 @@ public:
   bool isImm16() const { return isImmN<16>(); }
   bool isImm32() const { return isImmN<32>(); }
   bool isImm64() const { return isImmN<64>(); }
-  bool isIdxN16() const { return isImmN<12>(); }
-  bool isIdxC16() const { return isImmN<12>(); }
-  bool isIdxN32() const { return isImmN<28>(); }
-  bool isIdxC32() const { return isImmN<28>(); }
-  bool isIdxN64() const { return isImmN<60>(); }
-  bool isIdxC64() const { return isImmN<60>(); }
+  bool isIdxN16() const { return isIdxN<16>(); }
+  bool isIdxC16() const { return isIdxN<16>(); }
+  bool isIdxN32() const { return isIdxN<32>(); }
+  bool isIdxC32() const { return isIdxN<32>(); }
+  bool isIdxN64() const { return isIdxN<60>(); }
+  bool isIdxC64() const { return isIdxN<60>(); }
 
   SMLoc getStartLoc() const override { return StartLoc; };
   SMLoc getEndLoc() const override { return EndLoc; };
@@ -484,15 +501,15 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidIdxN16:
   case Match_InvalidIdxC16:
     return generateImmOutOfRangeError(
-        Operands, ErrorInfo, -(1 << 11), (1 << 11));
+        Operands, ErrorInfo, -((1 << 12) - 1), (1 << 12) - 1);
   case Match_InvalidIdxN32:
   case Match_InvalidIdxC32:
     return generateImmOutOfRangeError(
-        Operands, ErrorInfo, -(1 << 27), (1 << 27));
+        Operands, ErrorInfo, -((1 << 28) - 1), (1 << 28) - 1);
   case Match_InvalidIdxN64:
   case Match_InvalidIdxC64:
     return generateImmOutOfRangeError(
-        Operands, ErrorInfo, -((int64_t)1 << 59), ((int64_t)1 << 59));
+        Operands, ErrorInfo, -(((int64_t)1 << 56) - 1), ((int64_t)1 << 56) - 1);
   }
 
   llvm_unreachable("Unknown match type detected!");
