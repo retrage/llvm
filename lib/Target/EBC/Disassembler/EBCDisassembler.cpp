@@ -270,7 +270,7 @@ static DecodeStatus decodeBreakCode(MCInst &MI, uint64_t &Size,
 
 static DecodeStatus decodeImm8(MCInst &MI, uint64_t &Size,
                                                 ArrayRef<uint8_t> Bytes) {
-  int64_t Imm = Bytes[0];
+  int8_t Imm = Bytes[0];
   MI.addOperand(MCOperand::createImm(Imm));
   Size += 1;
   return MCDisassembler::Success;
@@ -278,7 +278,7 @@ static DecodeStatus decodeImm8(MCInst &MI, uint64_t &Size,
 
 static DecodeStatus decodeImm16(MCInst &MI, uint64_t &Size,
                                                 ArrayRef<uint8_t> Bytes) {
-  int64_t Imm = support::endian::read16le(Bytes.data());
+  int16_t Imm = support::endian::read16le(Bytes.data());
   MI.addOperand(MCOperand::createImm(Imm));
   Size += 2;
   return MCDisassembler::Success;
@@ -286,7 +286,7 @@ static DecodeStatus decodeImm16(MCInst &MI, uint64_t &Size,
 
 static DecodeStatus decodeImm32(MCInst &MI, uint64_t &Size,
                                                 ArrayRef<uint8_t> Bytes) {
-  int64_t Imm = support::endian::read32le(Bytes.data());
+  int32_t Imm = support::endian::read32le(Bytes.data());
   MI.addOperand(MCOperand::createImm(Imm));
   Size += 4;
   return MCDisassembler::Success;
