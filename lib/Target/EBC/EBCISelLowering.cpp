@@ -52,6 +52,7 @@ EBCTargetLowering::EBCTargetLowering(const TargetMachine &TM,
     setLoadExtAction(N, MVT::i64, MVT::i1, Promote);
 
   // TODO: add all necessary setOperationAction calls.
+  setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
 
   setBooleanContents(ZeroOrOneBooleanContent);
 
@@ -65,7 +66,27 @@ SDValue EBCTargetLowering::LowerOperation(SDValue Op,
   switch (Op.getOpcode()) {
   default:
     report_fatal_error("unimplemented operand");
+  case ISD::GlobalAddress:
+    return lowerGlobalAddress(Op, DAG);
   }
+}
+
+SDValue EBCTargetLowering::lowerGlobalAddress(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  EVT Ty = Op.getValueType();
+  GlobalAddressSDNode *N = cast<GlobalAddressSDNode>(Op);
+  const GlobalValue *GV = N->getGlobal();
+  int64_t Offset = N->getOffset();
+
+  // TODO: this should be improved by using natural indexing.
+  SDValue GA = DAG.getTargetGlobalAddress(GV, DL, Ty);
+  SDValue MN = SDValue(DAG.getMachineNode(EBC::MOVRELqOp1D, DL, Ty, GA), 0);
+  if (Offset != 0)
+    return DAG.getNode(ISD::ADD, DL, Ty, MN,
+                       DAG.getConstant(Offset, DL, MVT::i64));
+
+  return MN;
 }
 
 // Calling Convention Implementation.

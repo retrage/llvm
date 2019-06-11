@@ -20,10 +20,18 @@
 
 namespace llvm {
 class EBCTargetMachine;
+class AsmPrinter;
+class FunctionPass;
 class MCInst;
+class MCOperand;
 class MachineInstr;
+class MachineOperand;
 
-void LowerEBCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI);
+void LowerEBCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
+                                  const AsmPrinter &AP);
+bool LowerEBCMachineOperandToMCOperand(const MachineOperand &MO,
+                                       MCOperand &MCOp,
+                                       const AsmPrinter &AP);
 
 FunctionPass *createEBCISelDag(EBCTargetMachine &TM);
 }
