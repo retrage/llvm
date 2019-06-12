@@ -204,11 +204,11 @@ EBCTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
 }
 
 const char *EBCTargetLowering::getTargetNodeName(unsigned Opcode) const {
-  switch ((EBC::NodeType)Opcode) {
+  switch ((EBCISD::NodeType)Opcode) {
   case EBCISD::FIRST_NUMBER:
     break;
   case EBCISD::RET_FLAG:
-    return "EBC::RET_FLAG";
+    return "EBCISD::RET_FLAG";
   }
   return nullptr;
 }

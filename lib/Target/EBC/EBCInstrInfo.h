@@ -42,6 +42,6 @@ public:
                             int FrameIndex, const TargetRegisterClass *RC,
                             const TargetRegisterInfo *TRI) const override;
 };
-}
+} // end namespace llvm
 
 #endif
