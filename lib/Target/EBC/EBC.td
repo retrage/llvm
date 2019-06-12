@@ -31,7 +31,10 @@ def EBCInstrInfo : InstrInfo;
 
 def EBCAsmParser : AsmParser;
 
+def EBCAsmWriter : AsmWriter;
+
 def EBC : Target {
   let InstructionSet = EBCInstrInfo;
   let AssemblyParsers = [EBCAsmParser];
+  let AssemblyWriters = [EBCAsmWriter];
 }
