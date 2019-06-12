@@ -17,7 +17,7 @@ include "EBCInstrFormats.td"
 // EBC specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
-def RetFlag : SDNode<"EBC::RET_FLAG", SDTNone,
+def RetFlag : SDNode<"EBCISD::RET_FLAG", SDTNone,
                      [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
 //===----------------------------------------------------------------------===//

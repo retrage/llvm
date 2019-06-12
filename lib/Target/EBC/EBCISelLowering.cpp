@@ -200,14 +200,14 @@ EBCTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     RetOps.push_back(Flag);
   }
 
-  return DAG.getNode(EBC::RET_FLAG, DL, MVT::Other, RetOps);
+  return DAG.getNode(EBCISD::RET_FLAG, DL, MVT::Other, RetOps);
 }
 
 const char *EBCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch ((EBC::NodeType)Opcode) {
-  case EBC::FIRST_NUMBER:
+  case EBCISD::FIRST_NUMBER:
     break;
-  case EBC::RET_FLAG:
+  case EBCISD::RET_FLAG:
     return "EBC::RET_FLAG";
   }
   return nullptr;

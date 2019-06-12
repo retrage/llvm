@@ -21,10 +21,12 @@
 
 namespace llvm {
 class EBCSubtarget;
-namespace EBC {
+namespace EBCISD {
 enum NodeType : unsigned {
+  /// Start the numbering where the builtin ops leave off.
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
-  RET_FLAG
+  /// Return from subroutine.
+  RET_FLAG,
 };
 }
 
