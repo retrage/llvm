@@ -45,11 +45,6 @@ def breakcode : Operand<i8> {
   let ParserMatchClass = BreakCodeAsmOperand<8>;
 }
 
-let OperandType = "OPERAND_IMM8" in
-def imm8 : Operand<i8>, ImmLeaf<i8, [{return isInt<8>(Imm);}]> {
-  let ParserMatchClass = ImmAsmOperand<8>;
-}
-
 let OperandType = "OPERAND_IMM16" in
 def imm16 : Operand<i16>, ImmLeaf<i16, [{return isInt<16>(Imm);}]> {
   let ParserMatchClass = ImmAsmOperand<16>;
@@ -93,6 +88,28 @@ def idxn64 : Operand<i64> {
 let OperandType = "OPERAND_IDXC64" in
 def idxc64 : Operand<i64> {
   let ParserMatchClass = IdxCAsmOperand<64>;
+}
+
+let OperandType = "OPERAND_IMM8_JMP" in
+def imm8_jmp : Operand<OtherVT> {
+  let ParserMatchClass = ImmAsmOperand<8>;
+  let MCOperandPredicate = [{
+    int8_t Imm;
+    if (MCOp.evaluateAsConstantImm(Imm))
+      return isInt<8>(Imm);
+    return MCOp.isBareSymbolRef();
+  }];
+}
+
+let OperandType = "OPERAND_IMM64_JMP" in
+def imm64_jmp : Operand<OtherVT> {
+  let ParserMatchClass = ImmAsmOperand<64>;
+  let MCOperandPredicate = [{
+    int64_t Imm;
+    if (MCOp.evaluateAsConstantImm(Imm))
+      return isInt<64>(Imm);
+    return MCOp.isBareSymbolRef();
+  }];
 }
 
 } // OperandNamespace = "EBC"
@@ -685,7 +702,7 @@ foreach isCond = [0b0, 0b1] in {
       # !if(isRel, "Rel", "Abs")
       # "Imm"
         : EBCJMP64<0b000001, isCond, isCS, isRel,
-                (outs), (ins), (ins imm64:$imm), "$imm">;
+                (outs), (ins), (ins imm64_jmp:$imm), "$imm">;
   }
 }
 } // hasSideEffects = 0, mayStore = 0
@@ -697,7 +714,7 @@ foreach isCond = [0b0, 0b1] in {
     # !cond(!eq(isCond, 0) : "Uncond",
             !and(isCond, !eq(isCS, 0)) : "CC",
             !and(isCond, !eq(isCS, 1)) : "CS")
-      : EBCJMP8<0b000010, isCond, isCS, (outs), (ins imm8:$imm), "$imm">;
+      : EBCJMP8<0b000010, isCond, isCS, (outs), (ins imm8_jmp:$imm), "$imm">;
 }
 } // hasSideEffects = 0, mayLoad = 0, mayStore = 0
 

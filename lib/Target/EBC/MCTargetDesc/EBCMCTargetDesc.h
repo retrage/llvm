@@ -50,8 +50,6 @@ namespace EBC {
 enum OperandType {
   /// break code
   OPERAND_BREAKCODE,
-  /// 8-bit immediates
-  OPERAND_IMM8,
   /// 16-bit immediates
   OPERAND_IMM16,
   /// 32-bit immediates
@@ -70,6 +68,10 @@ enum OperandType {
   OPERAND_IDXN64,
   /// 64-bit index constant units
   OPERAND_IDXC64,
+  /// 8-bit immediates for JMP8
+  OPERAND_IMM8_JMP,
+  /// 64-bit immediates for JMP64
+  OPERAND_IMM64_JMP,
 };
 }
 
