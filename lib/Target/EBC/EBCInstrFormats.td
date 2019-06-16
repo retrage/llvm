@@ -64,7 +64,7 @@ class EBCInst1Op<bits<6> opcode,
 
 class EBCInst2Op<bits<6> opcode,
                 bit hasImmIdx, bit is64Bit, bit Op1Indirect, bit Op2Indirect,
-                dag outs, dag ins, string opcodestr, string argstr>
+                dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
     : EBCInst16<opcode, outs, ins, opcodestr, argstr, []> {
   bits<3> op1;
   bits<3> op2;

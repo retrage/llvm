@@ -59,6 +59,7 @@ private:
     return true;
   }
   SDValue lowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
 };
 }
 

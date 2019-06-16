@@ -17,8 +17,17 @@ include "EBCInstrFormats.td"
 // EBC specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
+def SDT_EBCBrcond : SDTypeProfile<0, 1,
+                                  [SDTCisVT<0, OtherVT>]>;
+def SDT_EBCCmp : SDTypeProfile<0, 2,
+                               [SDTCisSameAs<0, 1>]>;
+
 def RetFlag : SDNode<"EBCISD::RET_FLAG", SDTNone,
                      [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+
+def EBCbrcond : SDNode<"EBCISD::BRCOND", SDT_EBCBrcond,
+                        [SDNPHasChain, SDNPInGlue]>;
+def EBCcmp : SDNode<"EBCISD::CMP", SDT_EBCCmp, [SDNPOutGlue]>;
 
 //===----------------------------------------------------------------------===//
 // Operand and SDNode transformation definitions.
@@ -206,14 +215,14 @@ class EBCJMP32<bits<6> opcode,
 class EBCJMP64<bits<6> opcode,
                 bit isCond, bit isCS, bit isRel,
                 dag outs, dag ins, dag immins,
-                string immstr>
+                string immstr, list<dag> pattern>
       : EBCInst16<opcode, outs, !con(ins, immins),
           "jmp64"
         # !cond(!eq(isCond, 0) : "",
                 !and(isCond, !eq(isCS, 0)) : "cc",
                 !and(isCond, isCS) : "cs")
         # !if(isRel, "", "a"),
-          immstr, []> {
+          immstr, pattern> {
   let CodeSize = 10;
   let mayLoad = 0;
   let Inst{7} = 1;
@@ -297,7 +306,8 @@ class EBCALUBase<bits<6> opcode, bit hasImmIdx, bit is64Bit,
       # !if(Op2Indirect, "@", "") # op2str # !if(hasImmIdx, " ", "")
       # !cond(!eq(hasImmIdx, 0) : "",
               !eq(!and(hasImmIdx, Op2Indirect), 0) : immstr,
-              !eq(!and(hasImmIdx, Op2Indirect), 1) : idxstr)> {
+              !eq(!and(hasImmIdx, Op2Indirect), 1) : idxstr),
+        []> {
   bits<3> dst;
   let CodeSize = !if(hasImmIdx, 4, 2);
   let mayLoad = !if(Op2Indirect, 1, 0);
@@ -307,7 +317,7 @@ class EBCALUBase<bits<6> opcode, bit hasImmIdx, bit is64Bit,
 class EBCCMPBase<bits<6> opcode, bit hasImmIdx, bit is64Bit, bit Op2Indirect,
           dag outs, dag ins, dag immins, dag idxins,
           string opsuffix, string op1str, string op2str,
-          string immstr, string idxstr>
+          string immstr, string idxstr, list<dag> pattern>
       : EBCInst2Op<opcode, hasImmIdx, is64Bit, 0, Op2Indirect, outs,
           !cond(!eq(hasImmIdx, 0) : ins,
                 !eq(!and(hasImmIdx, Op2Indirect), 0) : !con(ins, immins),
@@ -316,7 +326,8 @@ class EBCCMPBase<bits<6> opcode, bit hasImmIdx, bit is64Bit, bit Op2Indirect,
           op1str # ", " # !if(Op2Indirect, "@", "") # op2str
         # !cond(!eq(hasImmIdx, 0) : "",
                 !and(!eq(hasImmIdx, 1), !eq(Op2Indirect, 0)) : " " # immstr,
-                !and(!eq(hasImmIdx, 1), !eq(Op2Indirect, 1)) : " " # idxstr)> {
+                !and(!eq(hasImmIdx, 1), !eq(Op2Indirect, 1)) : " " # idxstr),
+          pattern> {
   let CodeSize = !if(hasImmIdx, 4, 2);
   let mayLoad = !if(Op2Indirect, 1, 0);
 }
@@ -559,6 +570,7 @@ multiclass EBCALU<bits<6> opcode, string opcodestr> {
   }
 }
 
+let Defs = [flags] in
 multiclass EBCCMP<bits<6> opcode, string opsuffix> {
   foreach hasImmIdx = [0b0, 0b1] in {
     foreach is64Bit = [0b0, 0b1] in {
@@ -569,7 +581,8 @@ multiclass EBCCMP<bits<6> opcode, string opsuffix> {
         : EBCCMPBase<opcode, hasImmIdx, is64Bit, Op2Indirect,
           (outs), (ins GPR:$op1, GPR:$op2),
           (ins imm16:$imm), (ins idxn16:$idxn, idxc16:$idxc),
-          opsuffix, "$op1", "$op2", "$imm", "(${idxn},${idxc})">;
+          opsuffix, "$op1", "$op2", "$imm", "(${idxn},${idxc})",
+          [(EBCcmp i64:$op1, i64:$op2), (implicit flags)]>;
     }
   }
 }
@@ -635,10 +648,10 @@ let isBarrier = 1, isReturn = 1, isTerminator = 1 in
 def RET : EBCInst16<0b000100, (outs), (ins), "ret", "", [(RetFlag)]>;
 
 def LOADSP : EBCInst2Op<0b101001, 0, 0, 0, 0, (outs FR:$op1), (ins GPR:$op2),
-                "loadsp", "$op1, $op2">;
+                "loadsp", "$op1, $op2", []>;
 
 def STORESP : EBCInst2Op<0b101010, 0, 0, 0, 0, (outs GPR:$op1), (ins DR:$op2),
-                "storesp", "$op1, $op2">;
+                "storesp", "$op1, $op2", []>;
 }
 
 let hasSideEffects = 0, mayStore = 0 in {
@@ -671,12 +684,14 @@ foreach isNative = [0b0, 0b1] in {
 }
 } // hasSideEffects = 0, mayStore = 0
 
-let hasSideEffects = 0, mayStore = 0 in {
+let hasSideEffects = 0, mayStore = 0, isBranch = 1 in {
 foreach Op1Indirect = [0b0, 0b1] in {
   foreach hasImmIdx = [0b0, 0b1] in {
     foreach isCond = [0b0, 0b1] in {
       foreach isCS = !if(isCond, [0b0, 0b1], [0b0]) in {
         foreach isRel = [0b0, 0b1] in
+        let isBarrier = !if(isCond, 0, 1) in
+        let isTerminator = !if(isCond, 0, 1) in
         def "JMP32"
           # !cond(!eq(isCond, 0) : "Uncond",
                   !and(isCond, !eq(isCS, 0)) : "CC",
@@ -692,9 +707,13 @@ foreach Op1Indirect = [0b0, 0b1] in {
     }
   }
 }
+
+let Uses = [flags] in
 foreach isCond = [0b0, 0b1] in {
   foreach isCS = !if(isCond, [0b0, 0b1], [0b0]) in {
     foreach isRel = [0b0, 0b1] in
+    let isBarrier = !if(isCond, 0, 1) in
+    let isTerminator = !if(isCond, 0, 1) in
     def "JMP64"
       # !cond(!eq(isCond, 0) : "Uncond",
               !and(isCond, !eq(isCS, 0)) : "CC",
@@ -702,7 +721,10 @@ foreach isCond = [0b0, 0b1] in {
       # !if(isRel, "Rel", "Abs")
       # "Imm"
         : EBCJMP64<0b000001, isCond, isCS, isRel,
-                (outs), (ins), (ins imm64_jmp:$imm), "$imm">;
+                (outs), (ins), (ins imm64_jmp:$imm), "$imm",
+                !if(isCond,
+                    [(EBCbrcond bb:$imm), (implicit flags)],
+                    [(EBCbrcond bb:$imm)])>;
   }
 }
 } // hasSideEffects = 0, mayStore = 0
@@ -996,3 +1018,6 @@ def : StPat<truncstorei8, MOVbwOp1IOp2D>;
 def : StPat<truncstorei16, MOVwwOp1IOp2D>;
 def : StPat<truncstorei32, MOVdwOp1IOp2D>;
 def : StPat<store, MOVqqOp1IOp2D>;
+
+def PseudoBR : Pseudo<(outs), (ins imm64_jmp:$imm), [(br bb:$imm)]>,
+               PseudoInstExpansion<(JMP64UncondAbsImm imm64_jmp:$imm)>;

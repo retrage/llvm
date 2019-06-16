@@ -54,6 +54,8 @@ EBCTargetLowering::EBCTargetLowering(const TargetMachine &TM,
   // TODO: add all necessary setOperationAction calls.
   setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
 
+  setOperationAction(ISD::BR_CC, MVT::i64, Custom);
+
   setBooleanContents(ZeroOrOneBooleanContent);
 
   // Function alignments (log2).
@@ -68,7 +70,73 @@ SDValue EBCTargetLowering::LowerOperation(SDValue Op,
     report_fatal_error("unimplemented operand");
   case ISD::GlobalAddress:
     return lowerGlobalAddress(Op, DAG);
+  case ISD::BR_CC:
+    return lowerBR_CC(Op, DAG);
   }
+}
+
+SDValue EBCTargetLowering::lowerBR_CC(SDValue Op,
+                                      SelectionDAG &DAG) const {
+  SDValue Chain = Op.getOperand(0);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
+  SDValue LHS = Op.getOperand(2);
+  SDValue RHS = Op.getOperand(3);
+  SDValue Dest = Op.getOperand(4);
+
+  SDLoc DL(Op);
+
+  bool IsCS = false;
+
+  switch (CC) {
+  default:
+    IsCS = true;
+    break;
+  case ISD::SETNE:
+    CC = ISD::SETEQ;
+    break;
+  case ISD::SETLT:
+    CC = ISD::SETGE;
+    break;
+  case ISD::SETGT:
+    CC = ISD::SETLE;
+    break;
+  case ISD::SETULT:
+    CC = ISD::SETUGE;
+    break;
+  case ISD::SETUGT:
+    CC = ISD::SETULE;
+    break;
+  }
+
+  unsigned CmpOpcode;
+
+  switch (CC) {
+    default:
+      report_fatal_error("unimplemented operand");
+    case ISD::SETEQ:
+      CmpOpcode = EBC::CMPeq64Op2D;
+      break;
+    case ISD::SETGE:
+      CmpOpcode = EBC::CMPgte64Op2D;
+      break;
+    case ISD::SETLE:
+      CmpOpcode = EBC::CMPlte64Op2D;
+      break;
+    case ISD::SETUGE:
+      CmpOpcode = EBC::CMPugte64Op2D;
+      break;
+    case ISD::SETULE:
+      CmpOpcode = EBC::CMPulte64Op2D;
+      break;
+  }
+
+  SDValue Cmp = SDValue(DAG.getMachineNode(CmpOpcode, DL, MVT::Glue,
+                                           LHS, RHS), 0);
+
+  unsigned JmpOpcode = IsCS ? EBC::JMP64CSAbsImm : EBC::JMP64CCAbsImm;
+
+  return SDValue(DAG.getMachineNode(JmpOpcode, DL, MVT::Other,
+                                    Dest, Chain, Cmp), 0);
 }
 
 SDValue EBCTargetLowering::lowerGlobalAddress(SDValue Op,
@@ -209,6 +277,10 @@ const char *EBCTargetLowering::getTargetNodeName(unsigned Opcode) const {
     break;
   case EBCISD::RET_FLAG:
     return "EBCISD::RET_FLAG";
+  case EBCISD::BRCOND:
+    return "EBCISD::BRCOND";
+  case EBCISD::CMP:
+    return "EBCISD::CMP";
   }
   return nullptr;
 }
