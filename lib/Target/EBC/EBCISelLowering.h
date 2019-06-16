@@ -27,8 +27,12 @@ enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
   /// Return from subroutine.
   RET_FLAG,
+  /// EBC conditional branches.
+  BRCOND,
+  /// Compare instruction.
+  CMP,
 };
-}
+} // end namespace EBCISD
 
 class EBCTargetLowering : public TargetLowering {
   const EBCSubtarget &Subtarget;
