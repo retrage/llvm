@@ -55,6 +55,7 @@ EBCTargetLowering::EBCTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
 
   setOperationAction(ISD::BR_CC, MVT::i64, Custom);
+  setOperationAction(ISD::BRCOND, MVT::Other, Expand);
 
   setBooleanContents(ZeroOrOneBooleanContent);
 

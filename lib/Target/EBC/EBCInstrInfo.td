@@ -684,14 +684,12 @@ foreach isNative = [0b0, 0b1] in {
 }
 } // hasSideEffects = 0, mayStore = 0
 
-let hasSideEffects = 0, mayStore = 0, isBranch = 1 in {
+let hasSideEffects = 1, mayStore = 0, isBranch = 1 in {
 foreach Op1Indirect = [0b0, 0b1] in {
   foreach hasImmIdx = [0b0, 0b1] in {
     foreach isCond = [0b0, 0b1] in {
       foreach isCS = !if(isCond, [0b0, 0b1], [0b0]) in {
         foreach isRel = [0b0, 0b1] in
-        let isBarrier = !if(isCond, 0, 1) in
-        let isTerminator = !if(isCond, 0, 1) in
         def "JMP32"
           # !cond(!eq(isCond, 0) : "Uncond",
                   !and(isCond, !eq(isCS, 0)) : "CC",
@@ -712,8 +710,6 @@ let Uses = [flags] in
 foreach isCond = [0b0, 0b1] in {
   foreach isCS = !if(isCond, [0b0, 0b1], [0b0]) in {
     foreach isRel = [0b0, 0b1] in
-    let isBarrier = !if(isCond, 0, 1) in
-    let isTerminator = !if(isCond, 0, 1) in
     def "JMP64"
       # !cond(!eq(isCond, 0) : "Uncond",
               !and(isCond, !eq(isCS, 0)) : "CC",
@@ -727,9 +723,7 @@ foreach isCond = [0b0, 0b1] in {
                     [(EBCbrcond bb:$imm)])>;
   }
 }
-} // hasSideEffects = 0, mayStore = 0
 
-let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 foreach isCond = [0b0, 0b1] in {
   foreach isCS = !if(isCond, [0b0, 0b1], [0b0]) in
   def "JMP8"
@@ -738,7 +732,7 @@ foreach isCond = [0b0, 0b1] in {
             !and(isCond, !eq(isCS, 1)) : "CS")
       : EBCJMP8<0b000010, isCond, isCS, (outs), (ins imm8_jmp:$imm), "$imm">;
 }
-} // hasSideEffects = 0, mayLoad = 0, mayStore = 0
+} // hasSideEffects = 1, mayStore = 0, isBranch = 1
 
 let hasSideEffects = 0, mayStore = 0 in {
 foreach hasImmIdx = [0b0, 0b1] in {
@@ -1018,6 +1012,8 @@ def : StPat<truncstorei8, MOVbwOp1IOp2D>;
 def : StPat<truncstorei16, MOVwwOp1IOp2D>;
 def : StPat<truncstorei32, MOVdwOp1IOp2D>;
 def : StPat<store, MOVqqOp1IOp2D>;
+
+/// Branches and jumps
 
 def PseudoBR : Pseudo<(outs), (ins imm64_jmp:$imm), [(br bb:$imm)]>,
                PseudoInstExpansion<(JMP64UncondAbsImm imm64_jmp:$imm)>;
