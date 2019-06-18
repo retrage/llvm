@@ -26,6 +26,8 @@ struct EBCRegisterInfo : public EBCGenRegisterInfo {
   EBCRegisterInfo(unsigned HwMode);
 
   const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;
+  const uint32_t *getCallPreservedMask(const MachineFunction &MF,
+                                       CallingConv::ID CC) const override;
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 

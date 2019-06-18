@@ -36,6 +36,12 @@ EBCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return CSR_SaveList;
 }
 
+const uint32_t *
+EBCRegisterInfo::getCallPreservedMask(const MachineFunction & /*MF*/,
+                                      CallingConv::ID /*CC*/) const {
+  return CSR_RegMask;
+}
+
 BitVector EBCRegisterInfo::getReservedRegs(const MachineFunction &MF) const  {
   BitVector Reserved(getNumRegs());
 

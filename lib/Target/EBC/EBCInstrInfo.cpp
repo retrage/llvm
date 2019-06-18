@@ -28,7 +28,8 @@
 
 using namespace llvm;
 
-EBCInstrInfo::EBCInstrInfo() : EBCGenInstrInfo() {}
+EBCInstrInfo::EBCInstrInfo()
+    : EBCGenInstrInfo(EBC::ADJCALLSTACKDOWN, EBC::ADJCALLSTACKUP) {}
 
 void EBCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator MBBI,

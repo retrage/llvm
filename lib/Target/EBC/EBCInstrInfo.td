@@ -17,11 +17,22 @@ include "EBCInstrFormats.td"
 // EBC specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
+def SDT_EBCCall : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
+def SDT_EBCCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i64>, SDTCisVT<1, i64>]>;
+def SDT_EBCCallSeqEnd : SDCallSeqEnd<[SDTCisVT<0, i64>, SDTCisVT<1, i64>]>;
 def SDT_EBCBrcond : SDTypeProfile<0, 1,
                                   [SDTCisVT<0, OtherVT>]>;
 def SDT_EBCCmp : SDTypeProfile<0, 2,
                                [SDTCisSameAs<0, 1>]>;
 
+
+def EBCcall : SDNode<"EBCISD::CALL", SDT_EBCCall,
+                      [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
+                       SDNPVariadic]>;
+def EBCcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_EBCCallSeqStart,
+                              [SDNPHasChain, SDNPOutGlue]>;
+def EBCcallseq_end : SDNode<"ISD::CALLSEQ_END", SDT_EBCCallSeqEnd,
+                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 def RetFlag : SDNode<"EBCISD::RET_FLAG", SDTNone,
                      [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
@@ -654,7 +665,7 @@ def STORESP : EBCInst2Op<0b101010, 0, 0, 0, 0, (outs GPR:$op1), (ins DR:$op2),
                 "storesp", "$op1, $op2", []>;
 }
 
-let hasSideEffects = 0, mayStore = 0 in {
+let isCall = 1 in {
 foreach hasImmIdx = [0b0, 0b1] in {
   foreach isNative = [0b0, 0b1] in {
     foreach isRel = [0b0, 0b1] in {
@@ -680,9 +691,9 @@ foreach isNative = [0b0, 0b1] in {
     # !if(isRel, "Rel", "Abs")
     # "Imm"
       : EBCCALL64<0b000011, isNative, isRel,
-                  (outs), (ins), (ins imm64:$imm), "$imm">;
+                  (outs), (ins), (ins imm64_jmp:$imm), "$imm">;
 }
-} // hasSideEffects = 0, mayStore = 0
+} // isCall = 1
 
 let hasSideEffects = 1, mayStore = 0, isBranch = 1 in {
 foreach Op1Indirect = [0b0, 0b1] in {
@@ -1017,3 +1028,20 @@ def : StPat<store, MOVqqOp1IOp2D>;
 
 def PseudoBR : Pseudo<(outs), (ins imm64_jmp:$imm), [(br bb:$imm)]>,
                PseudoInstExpansion<(JMP64UncondAbsImm imm64_jmp:$imm)>;
+
+let isCall = 1 in {
+def PseudoCALL32 : Pseudo<(outs), (ins GPR:$op1), [(EBCcall GPR:$op1)]>,
+                   PseudoInstExpansion<(CALL32Op1DEBCAbs GPR:$op1)>;
+def PseudoCALL64 : Pseudo<(outs), (ins imm64_jmp:$imm), [(EBCcall bb:$imm)]>,
+                   PseudoInstExpansion<(CALL64EBCAbsImm imm64_jmp:$imm)>;
+} // isCall = 1
+
+/// Other pseudo-instructions
+
+// Pessimistically assume the stack pointer will be clobbered
+let Defs = [r0], Uses = [r0] in {
+def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
+                              [(EBCcallseq_start timm:$amt1, timm:$amt2)]>;
+def ADJCALLSTACKUP : Pseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
+                              [(EBCcallseq_end timm:$amt1, timm:$amt2)]>;
+} // Defs = [r0], Uses = [r0]
