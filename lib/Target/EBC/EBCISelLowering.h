@@ -33,6 +33,8 @@ enum NodeType : unsigned {
   CMP,
   /// Call instruction.
   CALL,
+  /// SelectCC instruction.
+  SELECT_CC,
 };
 } // end namespace EBCISD
 
@@ -48,6 +50,10 @@ public:
 
   // This method returns the name of a target specific DAG node.
   const char *getTargetNodeName(unsigned Opcode) const override;
+
+  MachineBasicBlock *
+  EmitInstrWithCustomInserter(MachineInstr &MI,
+                              MachineBasicBlock *BB) const override;
 
 private:
   // Lower incoming arguments, copy physregs into vregs
@@ -68,6 +74,7 @@ private:
   }
   SDValue lowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerSELECT(SDValue Op, SelectionDAG &DAG) const;
 };
 }
 

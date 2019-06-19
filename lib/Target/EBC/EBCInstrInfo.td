@@ -24,6 +24,10 @@ def SDT_EBCBrcond : SDTypeProfile<0, 1,
                                   [SDTCisVT<0, OtherVT>]>;
 def SDT_EBCCmp : SDTypeProfile<0, 2,
                                [SDTCisSameAs<0, 1>]>;
+def SDT_EBCSelectCC : SDTypeProfile<1, 6, [SDTCisSameAs<1, 2>,
+                                           SDTCisSameAs<0, 5>,
+                                           SDTCisVT<4, i64>,
+                                           SDTCisSameAs<5, 6>]>;
 
 
 def EBCcall : SDNode<"EBCISD::CALL", SDT_EBCCall,
@@ -39,6 +43,8 @@ def RetFlag : SDNode<"EBCISD::RET_FLAG", SDTNone,
 def EBCbrcond : SDNode<"EBCISD::BRCOND", SDT_EBCBrcond,
                         [SDNPHasChain, SDNPInGlue]>;
 def EBCcmp : SDNode<"EBCISD::CMP", SDT_EBCCmp, [SDNPOutGlue]>;
+def EBCselectCC : SDNode<"EBCISD::SELECT_CC", SDT_EBCSelectCC,
+                         [SDNPInGlue]>;
 
 //===----------------------------------------------------------------------===//
 // Operand and SDNode transformation definitions.
@@ -1035,6 +1041,13 @@ def PseudoCALL32 : Pseudo<(outs), (ins GPR:$op1), [(EBCcall GPR:$op1)]>,
 def PseudoCALL64 : Pseudo<(outs), (ins imm64_jmp:$imm), [(EBCcall bb:$imm)]>,
                    PseudoInstExpansion<(CALL64EBCAbsImm imm64_jmp:$imm)>;
 } // isCall = 1
+
+let usesCustomInserter = 1 in
+def PseudoSELECT
+    : Pseudo<(outs GPR:$dst),
+             (ins GPR:$lhs, GPR:$rhs, imm64:$imm, imm64:$cs, GPR:$src, GPR:$src2),
+             [(set GPR:$dst, (EBCselectCC GPR:$lhs, GPR:$rhs,
+               imm64:$imm, imm64:$cs, GPR:$src, GPR:$src2))]>;
 
 /// Other pseudo-instructions
 

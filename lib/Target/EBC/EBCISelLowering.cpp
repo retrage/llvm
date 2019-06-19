@@ -57,6 +57,9 @@ EBCTargetLowering::EBCTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::BR_CC, MVT::i64, Custom);
   setOperationAction(ISD::BRCOND, MVT::Other, Expand);
 
+  setOperationAction(ISD::SELECT, MVT::i64, Custom);
+  setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
+
   setBooleanContents(ZeroOrOneBooleanContent);
 
   // Function alignments (log2).
@@ -64,29 +67,8 @@ EBCTargetLowering::EBCTargetLowering(const TargetMachine &TM,
   setPrefFunctionAlignment(3);
 }
 
-SDValue EBCTargetLowering::LowerOperation(SDValue Op,
-                                            SelectionDAG &DAG) const {
-  switch (Op.getOpcode()) {
-  default:
-    report_fatal_error("unimplemented operand");
-  case ISD::GlobalAddress:
-    return lowerGlobalAddress(Op, DAG);
-  case ISD::BR_CC:
-    return lowerBR_CC(Op, DAG);
-  }
-}
-
-SDValue EBCTargetLowering::lowerBR_CC(SDValue Op,
-                                      SelectionDAG &DAG) const {
-  SDValue Chain = Op.getOperand(0);
-  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
-  SDValue LHS = Op.getOperand(2);
-  SDValue RHS = Op.getOperand(3);
-  SDValue Dest = Op.getOperand(4);
-
-  SDLoc DL(Op);
-
-  bool IsCS = false;
+static void normalizeSetCC(ISD::CondCode &CC, bool &IsCS) {
+  IsCS = false;
 
   switch (CC) {
   default:
@@ -108,28 +90,53 @@ SDValue EBCTargetLowering::lowerBR_CC(SDValue Op,
     CC = ISD::SETULE;
     break;
   }
+}
 
-  unsigned CmpOpcode;
-
+static unsigned getCmpOpcodeForIntCondCode(ISD::CondCode CC) {
   switch (CC) {
     default:
-      report_fatal_error("unimplemented operand");
+      llvm_unreachable("Unsupported CondCode");
     case ISD::SETEQ:
-      CmpOpcode = EBC::CMPeq64Op2D;
-      break;
+      return EBC::CMPeq64Op2D;
     case ISD::SETGE:
-      CmpOpcode = EBC::CMPgte64Op2D;
-      break;
+      return EBC::CMPgte64Op2D;
     case ISD::SETLE:
-      CmpOpcode = EBC::CMPlte64Op2D;
-      break;
+      return EBC::CMPlte64Op2D;
     case ISD::SETUGE:
-      CmpOpcode = EBC::CMPugte64Op2D;
-      break;
+      return EBC::CMPugte64Op2D;
     case ISD::SETULE:
-      CmpOpcode = EBC::CMPulte64Op2D;
-      break;
+      return EBC::CMPulte64Op2D;
   }
+}
+
+SDValue EBCTargetLowering::LowerOperation(SDValue Op,
+                                            SelectionDAG &DAG) const {
+  switch (Op.getOpcode()) {
+  default:
+    report_fatal_error("unimplemented operand");
+  case ISD::GlobalAddress:
+    return lowerGlobalAddress(Op, DAG);
+  case ISD::BR_CC:
+    return lowerBR_CC(Op, DAG);
+  case ISD::SELECT:
+    return lowerSELECT(Op, DAG);
+  }
+}
+
+SDValue EBCTargetLowering::lowerBR_CC(SDValue Op,
+                                      SelectionDAG &DAG) const {
+  SDValue Chain = Op.getOperand(0);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
+  SDValue LHS = Op.getOperand(2);
+  SDValue RHS = Op.getOperand(3);
+  SDValue Dest = Op.getOperand(4);
+
+  SDLoc DL(Op);
+  bool IsCS;
+  unsigned CmpOpcode;
+
+  normalizeSetCC(CC, IsCS);
+  CmpOpcode = getCmpOpcodeForIntCondCode(CC);
 
   SDValue Cmp = SDValue(DAG.getMachineNode(CmpOpcode, DL, MVT::Glue,
                                            LHS, RHS), 0);
@@ -138,6 +145,109 @@ SDValue EBCTargetLowering::lowerBR_CC(SDValue Op,
 
   return SDValue(DAG.getMachineNode(JmpOpcode, DL, MVT::Other,
                                     Dest, Chain, Cmp), 0);
+}
+
+SDValue EBCTargetLowering::lowerSELECT(SDValue Op, SelectionDAG &DAG) const {
+  SDValue CondV = Op.getOperand(0);
+  SDValue TrueV = Op.getOperand(1);
+  SDValue FalseV = Op.getOperand(2);
+
+  SDLoc DL(Op);
+
+  if (Op.getSimpleValueType() == MVT::i64 && CondV.getOpcode() == ISD::SETCC &&
+      CondV.getOperand(0).getSimpleValueType() == MVT::i64) {
+    SDValue LHS = CondV.getOperand(0);
+    SDValue RHS = CondV.getOperand(1);
+    auto CC = cast<CondCodeSDNode>(CondV.getOperand(2));
+    ISD::CondCode CCVal = CC->get();
+    bool IsCS;
+
+    normalizeSetCC(CCVal, IsCS);
+
+    SDValue TargetCC = DAG.getConstant(CCVal, DL, MVT::i64);
+    SDValue TargetIsCS = DAG.getConstant(IsCS ? 1 : 0, DL, MVT::i64);
+    SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
+    SDValue Ops[] = {LHS, RHS, TargetCC, TargetIsCS, TrueV, FalseV};
+    return DAG.getNode(EBCISD::SELECT_CC, DL, VTs, Ops);
+  }
+
+  SDValue Zero = DAG.getConstant(0, DL, MVT::i64);
+  SDValue SetEQ = DAG.getConstant(ISD::SETEQ, DL, MVT::i64);
+  SDValue TargetIsCS = DAG.getConstant(0, DL, MVT::i64);
+
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
+  SDValue Ops[] = {CondV, Zero, SetEQ, TargetIsCS, TrueV, FalseV};
+
+  return DAG.getNode(EBCISD::SELECT_CC, DL, VTs, Ops);
+}
+
+MachineBasicBlock *
+EBCTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
+                                               MachineBasicBlock *BB) const {
+  const TargetInstrInfo &TII = *BB->getParent()->getSubtarget().getInstrInfo();
+  DebugLoc DL = MI.getDebugLoc();
+
+  assert(MI.getOpcode() == EBC::PseudoSELECT &&
+         "Unexpected instr type to insert");
+
+  // To "insert" a SELECT instruction, we actually have to insert the triangle
+  // control flow pattern. The incoming instruction knows the destination vreg
+  // to set, the condition code register to branch on, the true/false values to
+  // select between, and the condcode to use to select the appropriate branch.
+  //
+  // We produce the following control flow:
+  //     HeadMBB
+  //     |  \
+  //     |  IfFalseMBB
+  //     |  /
+  //     TailMBB
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineFunction::iterator I = ++BB->getIterator();
+
+  MachineBasicBlock *HeadMBB = BB;
+  MachineFunction *F = BB->getParent();
+  MachineBasicBlock *TailMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *IfFalseMBB = F->CreateMachineBasicBlock(LLVM_BB);
+
+  F->insert(I, IfFalseMBB);
+  F->insert(I, TailMBB);
+  // Move all remaining instructions to TailMBB.
+  TailMBB->splice(TailMBB->begin(), HeadMBB,
+                  std::next(MachineBasicBlock::iterator(MI)), HeadMBB->end());
+  // Update machine-CFG edges by transferring all successors of the current
+  // block to the new block which will contain the Phi node for the select.
+  TailMBB->transferSuccessorsAndUpdatePHIs(HeadMBB);
+  // Set the successors for HeadMBB;
+  HeadMBB->addSuccessor(IfFalseMBB);
+  HeadMBB->addSuccessor(TailMBB);
+
+  // Insert appropriate branch.
+  unsigned LHS = MI.getOperand(1).getReg();
+  unsigned RHS = MI.getOperand(2).getReg();
+  auto CC = static_cast<ISD::CondCode>(MI.getOperand(3).getImm());
+  unsigned CmpOpcode = getCmpOpcodeForIntCondCode(CC);
+  auto IsCS = static_cast<bool>(MI.getOperand(4).getImm());
+  unsigned JmpOpcode = IsCS ? EBC::JMP64CSAbsImm : EBC::JMP64CCAbsImm;
+
+  BuildMI(HeadMBB, DL, TII.get(CmpOpcode))
+    .addReg(LHS)
+    .addReg(RHS);
+  BuildMI(HeadMBB, DL, TII.get(JmpOpcode))
+    .addMBB(TailMBB);
+
+  // IfFalseMBB just falls through to TailMBB;
+  IfFalseMBB->addSuccessor(TailMBB);
+
+  // %Result = phi [ %TrueValue, HeadMBB ], [ %FalseValue, IfFalseMBB ]
+  BuildMI(*TailMBB, TailMBB->begin(), DL, TII.get(EBC::PHI),
+          MI.getOperand(0).getReg())
+      .addReg(MI.getOperand(5).getReg())
+      .addMBB(HeadMBB)
+      .addReg(MI.getOperand(6).getReg())
+      .addMBB(IfFalseMBB);
+
+  MI.eraseFromParent(); // The pseudo instruction is gone now.
+  return TailMBB;
 }
 
 SDValue EBCTargetLowering::lowerGlobalAddress(SDValue Op,
@@ -418,6 +528,8 @@ const char *EBCTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "EBCISD::BRCOND";
   case EBCISD::CMP:
     return "EBCISD::CMP";
+  case EBCISD::SELECT_CC:
+    return "EBCISD::SELECT_CC";
   }
   return nullptr;
 }
