@@ -53,6 +53,7 @@ EBCTargetLowering::EBCTargetLowering(const TargetMachine &TM,
 
   // TODO: add all necessary setOperationAction calls.
   setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
+  setOperationAction(ISD::BlockAddress, MVT::i64, Custom);
 
   setOperationAction(ISD::BR_CC, MVT::i64, Custom);
   setOperationAction(ISD::BRCOND, MVT::Other, Expand);
@@ -116,6 +117,8 @@ SDValue EBCTargetLowering::LowerOperation(SDValue Op,
     report_fatal_error("unimplemented operand");
   case ISD::GlobalAddress:
     return lowerGlobalAddress(Op, DAG);
+  case ISD::BlockAddress:
+    return lowerBlockAddress(Op, DAG);
   case ISD::BR_CC:
     return lowerBR_CC(Op, DAG);
   case ISD::SELECT:
@@ -264,6 +267,20 @@ SDValue EBCTargetLowering::lowerGlobalAddress(SDValue Op,
   if (Offset != 0)
     return DAG.getNode(ISD::ADD, DL, Ty, MN,
                        DAG.getConstant(Offset, DL, MVT::i64));
+
+  return MN;
+}
+
+SDValue EBCTargetLowering::lowerBlockAddress(SDValue Op,
+                                             SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  EVT Ty = Op.getValueType();
+  BlockAddressSDNode *N = cast<BlockAddressSDNode>(Op);
+  const BlockAddress *B = N->getBlockAddress();
+  int64_t Offset = N->getOffset();
+
+  SDValue BA = DAG.getTargetBlockAddress(B, Ty, Offset);
+  SDValue MN = SDValue(DAG.getMachineNode(EBC::MOVRELqOp1D, DL, Ty, BA), 0);
 
   return MN;
 }
