@@ -1049,6 +1049,12 @@ def PseudoSELECT
              [(set GPR:$dst, (EBCselectCC GPR:$lhs, GPR:$rhs,
                imm64:$imm, imm64:$cs, GPR:$src, GPR:$src2))]>;
 
+let isBarrier = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1 in
+def PseudoBRIND : Pseudo<(outs), (ins GPR:$op1), []>,
+                  PseudoInstExpansion<(JMP32UncondAbsOp1I GPR:$op1)>;
+
+def : Pat<(brind GPR:$op1), (JMP32UncondAbsOp1I GPR:$op1)>;
+
 /// Other pseudo-instructions
 
 // Pessimistically assume the stack pointer will be clobbered
