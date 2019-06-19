@@ -58,6 +58,7 @@ EBCTargetLowering::EBCTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::BR_CC, MVT::i64, Custom);
   setOperationAction(ISD::BRCOND, MVT::Other, Expand);
 
+  setOperationAction(ISD::SETCC, MVT::i64, Custom);
   setOperationAction(ISD::SELECT, MVT::i64, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
 
@@ -123,6 +124,8 @@ SDValue EBCTargetLowering::LowerOperation(SDValue Op,
     return lowerBR_CC(Op, DAG);
   case ISD::SELECT:
     return lowerSELECT(Op, DAG);
+  case ISD::SETCC:
+    return lowerSETCC(Op, DAG);
   }
 }
 
@@ -180,6 +183,25 @@ SDValue EBCTargetLowering::lowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
   SDValue Ops[] = {CondV, Zero, SetEQ, TargetIsCS, TrueV, FalseV};
+
+  return DAG.getNode(EBCISD::SELECT_CC, DL, VTs, Ops);
+}
+
+SDValue EBCTargetLowering::lowerSETCC(SDValue Op, SelectionDAG &DAG) const {
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+  SDLoc DL(Op);
+  bool IsCS;
+
+  normalizeSetCC(CC, IsCS);
+
+  SDValue TargetCC = DAG.getConstant(CC, DL, MVT::i64);
+  SDValue TargetIsCS = DAG.getConstant(IsCS ? 1 : 0, DL, MVT::i64);
+  SDValue TrueV = DAG.getConstant(1, DL, Op.getValueType());
+  SDValue FalseV = DAG.getConstant(0, DL, Op.getValueType());
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
+  SDValue Ops[] = {LHS, RHS, TargetCC, TargetIsCS, TrueV, FalseV};
 
   return DAG.getNode(EBCISD::SELECT_CC, DL, VTs, Ops);
 }
