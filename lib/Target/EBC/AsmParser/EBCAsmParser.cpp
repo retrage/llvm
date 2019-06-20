@@ -305,14 +305,16 @@ bool EBCAsmParser::CheckIndex16(const MCOperand &NMO, const MCOperand &CMO,
     ++NaturalLen;
     AbsNatural >>= 1;
   }
-  NaturalLen += NaturalLen % 2 ? 1 : 0;
+  if (NaturalLen % 2)
+    NaturalLen = (NaturalLen / 2 + 1) * 2;
 
   unsigned ConstantLen = 0;
   while (AbsConstant) {
     ++ConstantLen;
     AbsConstant >>= 1;
   }
-  ConstantLen += ConstantLen % 2 ? 1 : 0;
+  if (ConstantLen % 2)
+    ConstantLen = (ConstantLen / 2 + 1) * 2;
 
   unsigned UsedBits = 4;
 
@@ -342,14 +344,16 @@ bool EBCAsmParser::CheckIndex32(const MCOperand &NMO, const MCOperand &CMO,
     ++NaturalLen;
     AbsNatural >>= 1;
   }
-  NaturalLen += NaturalLen % 2 ? 1 : 0;
+  if (NaturalLen % 4)
+    NaturalLen = (NaturalLen / 4 + 1) * 4;
 
   unsigned ConstantLen = 0;
   while (AbsConstant) {
     ++ConstantLen;
     AbsConstant >>= 1;
   }
-  ConstantLen += ConstantLen % 2 ? 1 : 0;
+  if (ConstantLen % 4)
+    ConstantLen = (ConstantLen / 4 + 1) * 4;
 
   unsigned UsedBits = 4;
 
@@ -379,14 +383,16 @@ bool EBCAsmParser::CheckIndex64(const MCOperand &NMO, const MCOperand &CMO,
     ++NaturalLen;
     AbsNatural >>= 1;
   }
-  NaturalLen += NaturalLen % 2 ? 1 : 0;
+  if (NaturalLen % 8)
+    NaturalLen = (NaturalLen / 8 + 1) * 8;
 
   unsigned ConstantLen = 0;
   while (AbsConstant) {
     ++ConstantLen;
     AbsConstant >>= 1;
   }
-  ConstantLen += ConstantLen % 2 ? 1 : 0;
+  if (ConstantLen % 8)
+    ConstantLen = (ConstantLen / 8 + 1) * 8;
 
   unsigned UsedBits = 4;
 
