@@ -67,17 +67,17 @@ class IdxCAsmOperand<int width> : AsmOperand<"IdxC", width> {}
 let OperandNamespace = "EBC" in {
 
 let OperandType = "OPERAND_BREAKCODE" in
-def breakcode : Operand<i8> {
+def breakcode : Operand<i64> {
   let ParserMatchClass = BreakCodeAsmOperand<8>;
 }
 
 let OperandType = "OPERAND_IMM16" in
-def imm16 : Operand<i16>, ImmLeaf<i16, [{return isInt<16>(Imm);}]> {
+def imm16 : Operand<i64>, ImmLeaf<i64, [{return isInt<16>(Imm);}]> {
   let ParserMatchClass = ImmAsmOperand<16>;
 }
 
 let OperandType = "OPERAND_IMM32" in
-def imm32 : Operand<i32>, ImmLeaf<i32, [{return isInt<32>(Imm);}]> {
+def imm32 : Operand<i64>, ImmLeaf<i64, [{return isInt<32>(Imm);}]> {
   let ParserMatchClass = ImmAsmOperand<32>;
 }
 
@@ -87,22 +87,22 @@ def imm64 : Operand<i64>, ImmLeaf<i64, [{return isInt<64>(Imm);}]> {
 }
 
 let OperandType = "OPERAND_IDXN16" in
-def idxn16 : Operand<i16> {
+def idxn16 : Operand<i64> {
   let ParserMatchClass = IdxNAsmOperand<16>;
 }
 
 let OperandType = "OPERAND_IDXC16" in
-def idxc16 : Operand<i16> {
+def idxc16 : Operand<i64> {
   let ParserMatchClass = IdxCAsmOperand<16>;
 }
 
 let OperandType = "OPERAND_IDXN32" in
-def idxn32 : Operand<i32> {
+def idxn32 : Operand<i64> {
   let ParserMatchClass = IdxNAsmOperand<32>;
 }
 
 let OperandType = "OPERAND_IDXC32" in
-def idxc32 : Operand<i32> {
+def idxc32 : Operand<i64> {
   let ParserMatchClass = IdxCAsmOperand<32>;
 }
 
