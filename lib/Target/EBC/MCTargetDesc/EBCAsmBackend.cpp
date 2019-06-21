@@ -129,18 +129,33 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
       SignedValue -= 8;
       if (SignedValue % 2)
         Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
+      if ((SignedValue > INT64_MAX) || (SignedValue < INT64_MIN))
+        Ctx.reportError(Fixup.getLoc(), "fixup must be in range [INT64_MIN, INT64_MAX]");
       return SignedValue;
     case EBC::fixup_ebc_call64rel:
       SignedValue -= 8;
+      // FIXME: UEFI specification does not imply the callee alignment,
+      // however, the size of all EBC instructions are multiple of 2,
+      // so the fixup must be 2-byte aligned.
+      if (SignedValue % 2)
+        Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
+      if ((SignedValue > INT64_MAX) || (SignedValue < INT64_MIN))
+        Ctx.reportError(Fixup.getLoc(), "fixup must be in range [INT64_MIN, INT64_MAX]");
       return SignedValue;
     case EBC::fixup_ebc_movrelw:
       SignedValue -= 2;
+      if ((SignedValue > INT16_MAX) || (SignedValue < INT16_MIN))
+        Ctx.reportError(Fixup.getLoc(), "fixup must be in range [INT16_MIN, INT16_MAX]");
       return SignedValue;
     case EBC::fixup_ebc_movreld:
       SignedValue -= 4;
+      if ((SignedValue > INT32_MAX) || (SignedValue < INT32_MIN))
+        Ctx.reportError(Fixup.getLoc(), "fixup must be in range [INT32_MIN, INT32_MAX]");
       return SignedValue;
     case EBC::fixup_ebc_movrelq:
       SignedValue -= 8;
+      if ((SignedValue > INT64_MAX) || (SignedValue < INT64_MIN))
+        Ctx.reportError(Fixup.getLoc(), "fixup must be in range [INT64_MIN, INT64_MAX]");
       return SignedValue;
   }
 }
