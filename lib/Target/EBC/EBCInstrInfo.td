@@ -1018,6 +1018,8 @@ def : PatGprGprImm<xor, XOR64Op1DOp2DImm>;
 
 /// Immediates
 
+def : Pat<(imm16:$imm), (MOVIwwOp1D imm16:$imm)>;
+def : Pat<(imm32:$imm), (MOVIddOp1D imm32:$imm)>;
 def : Pat<(imm64:$imm), (MOVIqqOp1D imm64:$imm)>;
 
 /// Loads
