@@ -299,16 +299,14 @@ EBCMCCodeEmitter::getIdx16Value(const MCOperand &NMO, const MCOperand &CMO) cons
     ++NaturalLen;
     AbsNatural >>= 1;
   }
-  if (NaturalLen % 2)
-    NaturalLen = (NaturalLen / 2 + 1) * 2;
+  NaturalLen = alignTo(NaturalLen, 2);
 
   unsigned ConstantLen = 0;
   while (AbsConstant) {
     ++ConstantLen;
     AbsConstant >>= 1;
   }
-  if (ConstantLen % 2)
-    ConstantLen = (ConstantLen / 2 + 1) * 2;
+  ConstantLen = alignTo(ConstantLen, 2);
 
   unsigned UsedBits = 4; // Sign bit + 3-bit assigned to natural unit
 
@@ -342,16 +340,14 @@ EBCMCCodeEmitter::getIdx32Value(const MCOperand &NMO, const MCOperand &CMO) cons
     ++NaturalLen;
     AbsNatural >>= 1;
   }
-  if (NaturalLen % 4)
-    NaturalLen = (NaturalLen / 4 + 1) * 4;
+  NaturalLen = alignTo(NaturalLen, 4);
 
   unsigned ConstantLen = 0;
   while (AbsConstant) {
     ++ConstantLen;
     AbsConstant >>= 1;
   }
-  if (ConstantLen % 4)
-    ConstantLen = (ConstantLen / 4 + 1) * 4;
+  ConstantLen = alignTo(ConstantLen, 4);
 
   unsigned UsedBits = 4; // Sign bit + 3-bit assigned to natural unit
 
@@ -385,16 +381,14 @@ EBCMCCodeEmitter::getIdx64Value(const MCOperand &NMO, const MCOperand &CMO) cons
     ++NaturalLen;
     AbsNatural >>= 1;
   }
-  if (NaturalLen % 8)
-    NaturalLen = (NaturalLen / 8 + 1) * 8;
+  NaturalLen = alignTo(NaturalLen, 8);
 
   unsigned ConstantLen = 0;
   while (AbsConstant) {
     ++ConstantLen;
     AbsConstant >>= 1;
   }
-  if (ConstantLen % 8)
-    ConstantLen = (ConstantLen / 8 + 1) * 8;
+  ConstantLen = alignTo(ConstantLen, 8);
 
   unsigned UsedBits = 4; // Sign bit + 3-bit assigned to natural unit
 

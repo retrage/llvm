@@ -33,13 +33,11 @@ struct EBCOperand;
 class EBCAsmParser : public MCTargetAsmParser {
   SMLoc getLoc() const { return getParser().getTok().getLoc(); }
 
+  template<uint8_t N>
+  bool checkIndex(const MCOperand &NMO, const MCOperand &CMO, StringRef &Msg);
+  bool validateIndex(const MCInst &MI, uint64_t &ErrorInfo, StringRef &Msg);
   bool generateImmOutOfRangeError(OperandVector &Operands, uint64_t ErrorInfo,
                                   int64_t Lower, int64_t Upper, Twine Msg);
-
-  bool CheckIndex16(const MCOperand &NMO, const MCOperand &CMO, StringRef &Msg);
-  bool CheckIndex32(const MCOperand &NMO, const MCOperand &CMO, StringRef &Msg);
-  bool CheckIndex64(const MCOperand &NMO, const MCOperand &CMO, StringRef &Msg);
-  bool CheckIndex(const MCInst &MI, uint64_t &ErrorInfo, StringRef &Msg);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                               OperandVector &Operands, MCStreamer &Out,
@@ -287,85 +285,8 @@ bool EBCAsmParser::generateImmOutOfRangeError(
   return Error(ErrorLoc, Msg + " [" + Twine(Lower) + ", " + Twine(Upper) + "]");
 }
 
-bool EBCAsmParser::CheckIndex16(const MCOperand &NMO, const MCOperand &CMO,
-                                                              StringRef &Msg) {
-  int16_t Natural = NMO.getImm();
-  int16_t Constant = CMO.getImm();
-
-  if (!((Natural >= 0 && Constant >= 0) || (Natural <= 0 && Constant <= 0))) {
-    Msg = StringRef("natural unit and constant unit must have same signs");
-    return false;
-  }
-
-  uint16_t AbsNatural = abs(Natural);
-  uint16_t AbsConstant = abs(Constant);
-
-  unsigned NaturalLen = 0;
-  while (AbsNatural) {
-    ++NaturalLen;
-    AbsNatural >>= 1;
-  }
-  if (NaturalLen % 2)
-    NaturalLen = (NaturalLen / 2 + 1) * 2;
-
-  unsigned ConstantLen = 0;
-  while (AbsConstant) {
-    ++ConstantLen;
-    AbsConstant >>= 1;
-  }
-  if (ConstantLen % 2)
-    ConstantLen = (ConstantLen / 2 + 1) * 2;
-
-  unsigned UsedBits = 4;
-
-  if (!(UsedBits + NaturalLen + ConstantLen <= 16)) {
-    Msg = StringRef("unit length is too long");
-    return false;
-  }
-
-  return true;
-}
-
-bool EBCAsmParser::CheckIndex32(const MCOperand &NMO, const MCOperand &CMO,
-                                                              StringRef &Msg) {
-  int32_t Natural = NMO.getImm();
-  int32_t Constant = CMO.getImm();
-
-  if (!((Natural >= 0 && Constant >= 0) || (Natural <= 0 && Constant <= 0))) {
-    Msg = StringRef("natural unit and constant unit must have same signs");
-    return false;
-  }
-
-  uint32_t AbsNatural = abs(Natural);
-  uint32_t AbsConstant = abs(Constant);
-
-  unsigned NaturalLen = 0;
-  while (AbsNatural) {
-    ++NaturalLen;
-    AbsNatural >>= 1;
-  }
-  if (NaturalLen % 4)
-    NaturalLen = (NaturalLen / 4 + 1) * 4;
-
-  unsigned ConstantLen = 0;
-  while (AbsConstant) {
-    ++ConstantLen;
-    AbsConstant >>= 1;
-  }
-  if (ConstantLen % 4)
-    ConstantLen = (ConstantLen / 4 + 1) * 4;
-
-  unsigned UsedBits = 4;
-
-  if (!(UsedBits + NaturalLen + ConstantLen <= 32)) {
-    Msg = StringRef("unit length is too long");
-    return false;
-  }
-
-  return true;
-}
-
-bool EBCAsmParser::CheckIndex64(const MCOperand &NMO, const MCOperand &CMO,
+template<uint8_t N>
+bool EBCAsmParser::checkIndex(const MCOperand &NMO, const MCOperand &CMO,
                                                               StringRef &Msg) {
   int64_t Natural = NMO.getImm();
   int64_t Constant = CMO.getImm();
@@ -383,20 +304,18 @@ bool EBCAsmParser::CheckIndex64(const MCOperand &NMO, const MCOperand &CMO,
     ++NaturalLen;
     AbsNatural >>= 1;
   }
-  if (NaturalLen % 8)
-    NaturalLen = (NaturalLen / 8 + 1) * 8;
+  NaturalLen = alignTo(NaturalLen, N / 8);
 
   unsigned ConstantLen = 0;
   while (AbsConstant) {
     ++ConstantLen;
     AbsConstant >>= 1;
   }
-  if (ConstantLen % 8)
-    ConstantLen = (ConstantLen / 8 + 1) * 8;
+  ConstantLen = alignTo(ConstantLen, N / 8);
 
   unsigned UsedBits = 4;
 
-  if (!(UsedBits + NaturalLen + ConstantLen <= 64)) {
+  if (!(UsedBits + NaturalLen + ConstantLen <= N)) {
     Msg = StringRef("unit length is too long");
     return false;
   }
@@ -404,7 +323,7 @@ bool EBCAsmParser::CheckIndex64(const MCOperand &NMO, const MCOperand &CMO,
   return true;
 }
 
-bool EBCAsmParser::CheckIndex(const MCInst &MI,
+bool EBCAsmParser::validateIndex(const MCInst &MI,
                               uint64_t &ErrorInfo, StringRef &Msg) {
   const MCInstrDesc &Desc = MII.get(MI.getOpcode());
 
@@ -418,7 +337,7 @@ bool EBCAsmParser::CheckIndex(const MCInst &MI,
         const MCOperandInfo &COI = Desc.OpInfo[I + 1];
         assert(CMO.isImm() && "Invalid operand!");
         assert(COI.OperandType == EBC::OPERAND_IDXC16 && "Invalid operand!");
-        if (!CheckIndex16(NMO, CMO, Msg)) {
+        if (!checkIndex<16>(NMO, CMO, Msg)) {
           ErrorInfo = I;
           return false;
         }
@@ -429,7 +348,7 @@ bool EBCAsmParser::CheckIndex(const MCInst &MI,
         const MCOperandInfo &COI = Desc.OpInfo[I + 1];
         assert(CMO.isImm() && "Invalid operand!");
         assert(COI.OperandType == EBC::OPERAND_IDXC32 && "Invalid operand!");
-        if (!CheckIndex32(NMO, CMO, Msg)) {
+        if (!checkIndex<32>(NMO, CMO, Msg)) {
           ErrorInfo = I;
           return false;
         }
@@ -440,7 +359,7 @@ bool EBCAsmParser::CheckIndex(const MCInst &MI,
         const MCOperandInfo &COI = Desc.OpInfo[I + 1];
         assert(CMO.isImm() && "Invalid operand!");
         assert(COI.OperandType == EBC::OPERAND_IDXC64 && "Invalid operand!");
-        if (!CheckIndex64(NMO, CMO, Msg)) {
+        if (!checkIndex<64>(NMO, CMO, Msg)) {
           ErrorInfo = I;
           return false;
         }
@@ -467,7 +386,7 @@ bool EBCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   default:
     break;
   case Match_Success:
-    if (!CheckIndex(Inst, ErrorInfo, Msg)) {
+    if (!validateIndex(Inst, ErrorInfo, Msg)) {
       ErrorLoc = ((EBCOperand &)*Operands[ErrorInfo]).getStartLoc();
       return Error(ErrorLoc, Msg);
     }
