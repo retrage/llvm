@@ -982,6 +982,9 @@ foreach idxlen = [0b01, 0b10, 0b11] in {
 
 class PatGprGpr<SDPatternOperator OpNode, EBCInst Inst>
     : Pat<(OpNode GPR:$op1, GPR:$op2), (Inst GPR:$op1, GPR:$op2)>;
+class PatGprGprImm<SDPatternOperator OpNode, EBCInst Inst>
+    : Pat<(OpNode GPR:$op1, (add GPR:$op2, imm16:$imm)),
+          (Inst GPR:$op1, GPR:$op2, imm16:$imm)>;
 
 /// Simple arithmetic operations
 
@@ -990,12 +993,28 @@ def : PatGprGpr<sub, SUB64Op1DOp2D>;
 def : PatGprGpr<mul, MUL64Op1DOp2D>;
 def : PatGprGpr<sdiv, DIV64Op1DOp2D>;
 def : PatGprGpr<udiv, DIVU64Op1DOp2D>;
+def : PatGprGpr<srem, MOD64Op1DOp2D>;
+def : PatGprGpr<urem, MODU64Op1DOp2D>;
 def : PatGprGpr<shl, SHL64Op1DOp2D>;
 def : PatGprGpr<srl, SHR64Op1DOp2D>;
 def : PatGprGpr<sra, ASHR64Op1DOp2D>;
 def : PatGprGpr<and, AND64Op1DOp2D>;
 def : PatGprGpr<or, OR64Op1DOp2D>;
 def : PatGprGpr<xor, XOR64Op1DOp2D>;
+
+def : PatGprGprImm<add, ADD64Op1DOp2DImm>;
+def : PatGprGprImm<sub, SUB64Op1DOp2DImm>;
+def : PatGprGprImm<mul, MUL64Op1DOp2DImm>;
+def : PatGprGprImm<sdiv, DIV64Op1DOp2DImm>;
+def : PatGprGprImm<udiv, DIVU64Op1DOp2DImm>;
+def : PatGprGprImm<srem, MOD64Op1DOp2DImm>;
+def : PatGprGprImm<urem, MODU64Op1DOp2DImm>;
+def : PatGprGprImm<shl, SHL64Op1DOp2DImm>;
+def : PatGprGprImm<srl, SHR64Op1DOp2DImm>;
+def : PatGprGprImm<sra, ASHR64Op1DOp2DImm>;
+def : PatGprGprImm<and, AND64Op1DOp2DImm>;
+def : PatGprGprImm<or, OR64Op1DOp2DImm>;
+def : PatGprGprImm<xor, XOR64Op1DOp2DImm>;
 
 /// Immediates
 
