@@ -37,8 +37,8 @@ def EBCcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_EBCCallSeqStart,
                               [SDNPHasChain, SDNPOutGlue]>;
 def EBCcallseq_end : SDNode<"ISD::CALLSEQ_END", SDT_EBCCallSeqEnd,
                             [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
-def RetFlag : SDNode<"EBCISD::RET_FLAG", SDTNone,
-                     [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+def EBCret_flag : SDNode<"EBCISD::RET_FLAG", SDTNone,
+                         [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
 def EBCbrcond : SDNode<"EBCISD::BRCOND", SDT_EBCBrcond,
                         [SDNPHasChain, SDNPInGlue]>;
@@ -656,20 +656,18 @@ multiclass EBCMOV<bits<6> opcode, bits<2> idxlen, bits<2> movlen> {
 // Instructions
 //===----------------------------------------------------------------------===//
 
-let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 let isTrap = 1 in
 def BREAK : EBCInst8<0b000000, (outs), (ins breakcode:$code),
                 "break", "$code", []>;
 
 let isBarrier = 1, isReturn = 1, isTerminator = 1 in
-def RET : EBCInst16<0b000100, (outs), (ins), "ret", "", [(RetFlag)]>;
+def RET : EBCInst16<0b000100, (outs), (ins), "ret", "", [(EBCret_flag)]>;
 
 def LOADSP : EBCInst2Op<0b101001, 0, 0, 0, 0, (outs FR:$op1), (ins GPR:$op2),
                 "loadsp", "$op1, $op2", []>;
 
 def STORESP : EBCInst2Op<0b101010, 0, 0, 0, 0, (outs GPR:$op1), (ins DR:$op2),
                 "storesp", "$op1, $op2", []>;
-}
 
 let isCall = 1 in {
 foreach hasImmIdx = [0b0, 0b1] in {
