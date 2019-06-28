@@ -147,7 +147,7 @@ SDValue EBCTargetLowering::lowerBR_CC(SDValue Op,
   SDValue Cmp = SDValue(DAG.getMachineNode(CmpOpcode, DL, MVT::Glue,
                                            LHS, RHS), 0);
 
-  unsigned JmpOpcode = IsCS ? EBC::JMP64CSAbsImm : EBC::JMP64CCAbsImm;
+  unsigned JmpOpcode = IsCS ? EBC::JMP64CSRelImm : EBC::JMP64CCRelImm;
 
   return SDValue(DAG.getMachineNode(JmpOpcode, DL, MVT::Other,
                                     Dest, Chain, Cmp), 0);
@@ -252,7 +252,7 @@ EBCTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   auto CC = static_cast<ISD::CondCode>(MI.getOperand(3).getImm());
   unsigned CmpOpcode = getCmpOpcodeForIntCondCode(CC);
   auto IsCS = static_cast<bool>(MI.getOperand(4).getImm());
-  unsigned JmpOpcode = IsCS ? EBC::JMP64CSAbsImm : EBC::JMP64CCAbsImm;
+  unsigned JmpOpcode = IsCS ? EBC::JMP64CSRelImm : EBC::JMP64CCRelImm;
 
   BuildMI(HeadMBB, DL, TII.get(CmpOpcode))
     .addReg(LHS)
