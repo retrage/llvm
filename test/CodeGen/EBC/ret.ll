@@ -3,8 +3,8 @@
 ; RUN:  | FileCheck %s -check-prefix=EBC
 
 define void @ret() nounwind {
-; EBC-LABEL:  ret:
-; EBC:        ; %bb.0:
-; EBC-NEXT:     ret
+; EBC-LABEL: ret:
+; EBC:       ; %bb.0:
+; EBC-NEXT:    ret
   ret void
 }
