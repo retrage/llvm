@@ -15,43 +15,43 @@ define void @foo(i64 %a, i64 *%b, i1 %c) {
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    cmp64eq r3, r2
-; EBC-NEXT:    jmp64csa LBB0_12
+; EBC-NEXT:    jmp64cs LBB0_12
 ; EBC-NEXT:  ; %bb.1: ; %test2
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    cmp64eq r3, r2
-; EBC-NEXT:    jmp64cca LBB0_12
+; EBC-NEXT:    jmp64cc LBB0_12
 ; EBC-NEXT:  ; %bb.2: ; %test3
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    cmp64lte r3, r2
-; EBC-NEXT:    jmp64cca LBB0_12
+; EBC-NEXT:    jmp64cc LBB0_12
 ; EBC-NEXT:  ; %bb.3: ; %test4
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    cmp64gte r3, r2
-; EBC-NEXT:    jmp64csa LBB0_12
+; EBC-NEXT:    jmp64cs LBB0_12
 ; EBC-NEXT:  ; %bb.4: ; %test5
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    cmp64gte r3, r2
-; EBC-NEXT:    jmp64cca LBB0_12
+; EBC-NEXT:    jmp64cc LBB0_12
 ; EBC-NEXT:  ; %bb.5: ; %test6
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    cmp64lte r3, r2
-; EBC-NEXT:    jmp64csa LBB0_12
+; EBC-NEXT:    jmp64cs LBB0_12
 ; EBC-NEXT:  ; %bb.6: ; %test7
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    cmp64ulte r3, r2
-; EBC-NEXT:    jmp64cca LBB0_12
+; EBC-NEXT:    jmp64cc LBB0_12
 ; EBC-NEXT:  ; %bb.7: ; %test8
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    cmp64ugte r3, r2
-; EBC-NEXT:    jmp64csa LBB0_12
+; EBC-NEXT:    jmp64cs LBB0_12
 ; EBC-NEXT:  ; %bb.8: ; %test9
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    cmp64ugte r3, r2
-; EBC-NEXT:    jmp64cca LBB0_12
+; EBC-NEXT:    jmp64cc LBB0_12
 ; EBC-NEXT:  ; %bb.9: ; %test10
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    cmp64ulte r3, r2
-; EBC-NEXT:    jmp64csa LBB0_12
+; EBC-NEXT:    jmp64cs LBB0_12
 ; EBC-NEXT:  ; %bb.10: ; %test11
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    movqq r2, @r7
@@ -59,7 +59,7 @@ define void @foo(i64 %a, i64 *%b, i1 %c) {
 ; EBC-NEXT:    and64 r1, r2
 ; EBC-NEXT:    moviww r2, 0
 ; EBC-NEXT:    cmp64eq r1, r2
-; EBC-NEXT:    jmp64cca LBB0_12
+; EBC-NEXT:    jmp64cc LBB0_12
 ; EBC-NEXT:  ; %bb.11: ; %test12
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:  LBB0_12: ; %end
