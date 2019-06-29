@@ -52,15 +52,24 @@ EBCTargetLowering::EBCTargetLowering(const TargetMachine &TM,
     setLoadExtAction(N, MVT::i64, MVT::i1, Promote);
 
   // TODO: add all necessary setOperationAction calls.
-  setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
-  setOperationAction(ISD::BlockAddress, MVT::i64, Custom);
-
   setOperationAction(ISD::BR_CC, MVT::i64, Custom);
   setOperationAction(ISD::BRCOND, MVT::Other, Expand);
-
   setOperationAction(ISD::SETCC, MVT::i64, Custom);
   setOperationAction(ISD::SELECT, MVT::i64, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
+
+  setOperationAction(ISD::MULHS, MVT::i64, Expand);
+  setOperationAction(ISD::MULHU, MVT::i64, Expand);
+
+  setOperationAction(ISD::ROTL, MVT::i64, Expand);
+  setOperationAction(ISD::ROTR, MVT::i64, Expand);
+  setOperationAction(ISD::BSWAP, MVT::i64, Expand);
+  setOperationAction(ISD::CTTZ, MVT::i64, Expand);
+  setOperationAction(ISD::CTLZ, MVT::i64, Expand);
+  setOperationAction(ISD::CTPOP, MVT::i64, Expand);
+
+  setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
+  setOperationAction(ISD::BlockAddress, MVT::i64, Custom);
 
   setBooleanContents(ZeroOrOneBooleanContent);
 
