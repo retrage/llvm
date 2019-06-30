@@ -16,7 +16,7 @@ define i64 @bare_select(i1 %a, i64 %b, i64 %c) {
 ; EBC-NEXT:    movqw r7, r0 (2,0)
 ; EBC-NEXT:    moviww r3, 0
 ; EBC-NEXT:    cmp64eq r2, r3
-; EBC-NEXT:    jmp64cca LBB0_2
+; EBC-NEXT:    jmp64cc LBB0_2
 ; EBC-NEXT:  ; %bb.1:
 ; EBC-NEXT:    movqq r7, r1
 ; EBC-NEXT:  LBB0_2:
