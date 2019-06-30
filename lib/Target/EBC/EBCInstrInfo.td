@@ -1042,7 +1042,7 @@ def : LdPat<zextloadi32, MOVdwOp1DOp2I>;
 /// Stores
 
 class StPat<PatFrag StoreOp, EBCInst MOVOp>
-    : Pat<(StoreOp GPR:$op1, GPR:$op2), (MOVOp GPR:$op1, GPR:$op2)>;
+    : Pat<(StoreOp GPR:$op2, GPR:$op1), (MOVOp GPR:$op1, GPR:$op2)>;
 
 def : StPat<truncstorei8, MOVbwOp1IOp2D>;
 def : StPat<truncstorei16, MOVwwOp1IOp2D>;

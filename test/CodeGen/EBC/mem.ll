@@ -94,8 +94,8 @@ define void @truncstorei8(i8 *%a, i8 %b) nounwind {
 ; EBC-NEXT:    moviww r2, 5
 ; EBC-NEXT:    movqq r3, r1
 ; EBC-NEXT:    add64 r3, r2
-; EBC-NEXT:    movbw @r7, r3
-; EBC-NEXT:    movbw @r7, r1
+; EBC-NEXT:    movbw @r3, r7
+; EBC-NEXT:    movbw @r1, r7
 ; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
@@ -120,8 +120,8 @@ define void @truncstorei16(i16 *%a, i16 %b) nounwind {
 ; EBC-NEXT:    moviww r2, 12
 ; EBC-NEXT:    movqq r3, r1
 ; EBC-NEXT:    add64 r3, r2
-; EBC-NEXT:    movww @r7, r3
-; EBC-NEXT:    movww @r7, r1
+; EBC-NEXT:    movww @r3, r7
+; EBC-NEXT:    movww @r1, r7
 ; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
@@ -146,8 +146,8 @@ define void @truncstorei32(i32 *%a, i32 %b) nounwind {
 ; EBC-NEXT:    moviww r2, 28
 ; EBC-NEXT:    movqq r3, r1
 ; EBC-NEXT:    add64 r3, r2
-; EBC-NEXT:    movdw @r7, r3
-; EBC-NEXT:    movdw @r7, r1
+; EBC-NEXT:    movdw @r3, r7
+; EBC-NEXT:    movdw @r1, r7
 ; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
@@ -163,13 +163,13 @@ define void @store(i64 *%a, i64 %b) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (2,0)
 ; EBC-NEXT:    movqq r7, @r7
-; EBC-NEXT:    movqw r1, r0 (2,0)
+; EBC-NEXT:    movqw r1, r0 (1,0)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    movqq @r1, r7
 ; EBC-NEXT:    moviww r2, 64
-; EBC-NEXT:    add64 r7, r2
+; EBC-NEXT:    add64 r1, r2
 ; EBC-NEXT:    movqq @r1, r7
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
@@ -193,11 +193,11 @@ define i64 @load_global(i64 %a) nounwind {
 ; EBC-NEXT:    movqq r1, @r7
 ; EBC-NEXT:    movrelq r2, G
 ; EBC-NEXT:    movqq r7, @r2
-; EBC-NEXT:    movqq @r1, r2
+; EBC-NEXT:    movqq @r2, r1
 ; EBC-NEXT:    moviww r3, 72
 ; EBC-NEXT:    add64 r2, r3
 ; EBC-NEXT:    movqq r3, @r2
-; EBC-NEXT:    movqq @r1, r2
+; EBC-NEXT:    movqq @r2, r1
 ; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1

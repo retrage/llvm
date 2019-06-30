@@ -8,10 +8,10 @@ define void @test_blockaddress() nounwind {
 ; EBC-LABEL: test_blockaddress:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movrelq r7, addr
-; EBC-NEXT:    movrelq r1, Ltmp0
+; EBC-NEXT:    movrelq r7, Ltmp0
+; EBC-NEXT:    movrelq r1, addr
 ; EBC-NEXT:    movqq @r1, r7
-; EBC-NEXT:    movqq r7, @r7
+; EBC-NEXT:    movqq r7, @r1
 ; EBC-NEXT:  Ltmp0: ; Block address taken
 ; EBC-NEXT:  ; %bb.1: ; %block
 ; EBC-NEXT:    pop64 r1
