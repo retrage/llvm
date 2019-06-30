@@ -432,9 +432,8 @@ SDValue EBCTargetLowering::LowerCall(CallLoweringInfo &CLI,
   SmallVector<SDValue, 8> MemOpChains;
   SDValue StackPtr;
   for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
-    unsigned Loc = E - I - 1;
-    CCValAssign &VA = ArgLocs[Loc];
-    SDValue ArgValue = OutVals[Loc];
+    CCValAssign &VA = ArgLocs[I];
+    SDValue ArgValue = OutVals[I];
     EVT RegVT = VA.getLocVT();
 
     switch (VA.getLocInfo()) {
