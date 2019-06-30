@@ -56,9 +56,28 @@ BitVector EBCRegisterInfo::getReservedRegs(const MachineFunction &MF) const  {
 void EBCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                           int SPAdj, unsigned FIOperandNum,
                                           RegScavenger *RS) const {
-  report_fatal_error("Subroutines not supported yet");
+  assert(SPAdj == 0 && "Unexpected non-zero SPAdj value");
+
+  MachineInstr &MI = *II;
+  MachineFunction &MF = *MI.getParent()->getParent();
+  DebugLoc DL = MI.getDebugLoc();
+
+  int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
+  unsigned FrameReg;
+  int Offset =
+    getFrameLowering(MF)->getFrameIndexReference(MF, FrameIndex, FrameReg) +
+    MI.getOperand(FIOperandNum + 2).getImm();
+
+  if (isInt<16>(Offset)) {
+    MI.getOperand(FIOperandNum)
+        .ChangeToRegister(FrameReg, false, false, false);
+    MI.getOperand(FIOperandNum + 2).ChangeToImmediate(Offset);
+  } else {
+    report_fatal_error(
+        "Frame offsets outside of the signed 16-bit range not supported");
+  }
 }
 
 unsigned EBCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  return EBC::NoRegister;
+  return EBC::r0;
 }

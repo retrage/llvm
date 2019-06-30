@@ -7,9 +7,9 @@ define i64 @icmp_eq(i64 %a, i64 %b) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 1
 ; EBC-NEXT:    cmp64eq r2, r1
@@ -30,9 +30,9 @@ define i64 @icmp_ne(i64 %a, i64 %b) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 1
 ; EBC-NEXT:    cmp64eq r2, r1
@@ -53,9 +53,9 @@ define i64 @icmp_ugt(i64 %a, i64 %b) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 1
 ; EBC-NEXT:    cmp64ulte r2, r1
@@ -76,9 +76,9 @@ define i64 @icmp_uge(i64 %a, i64 %b) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 1
 ; EBC-NEXT:    cmp64ugte r2, r1
@@ -99,9 +99,9 @@ define i64 @icmp_ult(i64 %a, i64 %b) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 1
 ; EBC-NEXT:    cmp64ugte r2, r1
@@ -122,9 +122,9 @@ define i64 @icmp_ule(i64 %a, i64 %b) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 1
 ; EBC-NEXT:    cmp64ulte r2, r1
@@ -145,9 +145,9 @@ define i64 @icmp_sgt(i64 %a, i64 %b) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 1
 ; EBC-NEXT:    cmp64lte r2, r1
@@ -168,9 +168,9 @@ define i64 @icmp_sge(i64 %a, i64 %b) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 1
 ; EBC-NEXT:    cmp64gte r2, r1
@@ -191,9 +191,9 @@ define i64 @icmp_slt(i64 %a, i64 %b) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 1
 ; EBC-NEXT:    cmp64gte r2, r1
@@ -214,9 +214,9 @@ define i64 @icmp_sle(i64 %a, i64 %b) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 1
 ; EBC-NEXT:    cmp64lte r2, r1

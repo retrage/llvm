@@ -6,7 +6,7 @@ define i64 @sextloadi8(i8 *%a) nounwind {
 ; EBC-LABEL: sextloadi8:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    movbw r1, @r7
 ; EBC-NEXT:    moviww r1, 1
@@ -26,7 +26,7 @@ define i64 @sextloadi16(i16 *%a) nounwind {
 ; EBC-LABEL: sextloadi16:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    movww r1, @r7
 ; EBC-NEXT:    moviww r1, 4
@@ -46,7 +46,7 @@ define i64 @sextloadi32(i32 *%a) nounwind {
 ; EBC-LABEL: sextloadi32:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    movdw r1, @r7
 ; EBC-NEXT:    moviww r1, 12
@@ -66,7 +66,7 @@ define i64 @load(i64 *%a) nounwind {
 ; EBC-LABEL: load:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    movqq r1, @r7
 ; EBC-NEXT:    moviww r1, 32
@@ -86,10 +86,10 @@ define void @truncstorei8(i8 *%a, i8 %b) nounwind {
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,40)
 ; EBC-NEXT:    movbw r1, @r7
 ; EBC-NEXT:    extndb64 r7, r1
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    moviww r2, 5
 ; EBC-NEXT:    movqq r3, r1
@@ -112,10 +112,10 @@ define void @truncstorei16(i16 *%a, i16 %b) nounwind {
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,40)
 ; EBC-NEXT:    movww r1, @r7
 ; EBC-NEXT:    extndw64 r7, r1
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    moviww r2, 12
 ; EBC-NEXT:    movqq r3, r1
@@ -138,10 +138,10 @@ define void @truncstorei32(i32 *%a, i32 %b) nounwind {
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,40)
 ; EBC-NEXT:    movdw r1, @r7
 ; EBC-NEXT:    extndd64 r7, r1
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    moviww r2, 28
 ; EBC-NEXT:    movqq r3, r1
@@ -163,9 +163,9 @@ define void @store(i64 *%a, i64 %b) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r7, @r7
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    movqq @r1, r7
 ; EBC-NEXT:    moviww r2, 64
@@ -189,7 +189,7 @@ define i64 @load_global(i64 %a) nounwind {
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r7
 ; EBC-NEXT:    movrelq r2, G
 ; EBC-NEXT:    movqq r7, @r2

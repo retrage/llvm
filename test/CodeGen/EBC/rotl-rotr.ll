@@ -8,11 +8,11 @@ define i64 @rotl(i64 %x, i64 %y) {
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,40)
 ; EBC-NEXT:    movqq r1, @r7
 ; EBC-NEXT:    moviww r2, 64
 ; EBC-NEXT:    sub64 r2, r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    movqq r7, r3
 ; EBC-NEXT:    shl64 r7, r1
@@ -35,11 +35,11 @@ define i64 @rotr(i64 %x, i64 %y) {
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,40)
 ; EBC-NEXT:    movqq r1, @r7
 ; EBC-NEXT:    moviww r2, 64
 ; EBC-NEXT:    sub64 r2, r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    movqq r7, r3
 ; EBC-NEXT:    shr64 r7, r1

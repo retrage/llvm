@@ -8,9 +8,9 @@ define i64 @add(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: add:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    add64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -23,9 +23,9 @@ define i64 @sub(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: sub:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    sub64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -38,9 +38,9 @@ define i64 @mul(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: mul:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    mul64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -53,9 +53,9 @@ define i64 @sdiv(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: sdiv:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    div64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -68,9 +68,9 @@ define i64 @udiv(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: udiv:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    divu64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -83,9 +83,9 @@ define i64 @srem(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: srem:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    div64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -98,9 +98,9 @@ define i64 @urem(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: urem:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    divu64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -113,9 +113,9 @@ define i64 @shl(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: shl:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    shl64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -128,9 +128,9 @@ define i64 @lshr(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: lshr:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    shr64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -143,9 +143,9 @@ define i64 @ashr(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: ashr:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    ashr64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -158,9 +158,9 @@ define i64 @and(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: and:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    and64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -173,9 +173,9 @@ define i64 @or(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: or:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    or64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -188,9 +188,9 @@ define i64 @xor(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: xor:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    or64 r7, r1
 ; EBC-NEXT:    pop64 r1
@@ -203,9 +203,9 @@ define i64 @add_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: add_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    add64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1
@@ -219,9 +219,9 @@ define i64 @sub_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: sub_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    sub64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1
@@ -235,9 +235,9 @@ define i64 @mul_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: mul_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    mul64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1
@@ -251,9 +251,9 @@ define i64 @sdiv_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: sdiv_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    div64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1
@@ -267,9 +267,9 @@ define i64 @udiv_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: udiv_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    divu64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1
@@ -283,9 +283,9 @@ define i64 @srem_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: srem_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    mod64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1
@@ -299,9 +299,9 @@ define i64 @urem_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: urem_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    modu64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1
@@ -315,9 +315,9 @@ define i64 @shl_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: shl_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    shl64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1
@@ -331,9 +331,9 @@ define i64 @lshr_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: lshr_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    shr64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1
@@ -347,9 +347,9 @@ define i64 @ashr_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: ashr_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    ashr64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1
@@ -363,9 +363,9 @@ define i64 @and_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: and_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    and64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1
@@ -379,9 +379,9 @@ define i64 @or_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: or_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    or64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1
@@ -395,9 +395,9 @@ define i64 @xor_imm(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: xor_imm:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r1, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    xor64 r7, r1 1024
 ; EBC-NEXT:    pop64 r1

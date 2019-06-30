@@ -17,7 +17,7 @@ define i16 @test_bswap_i16(i16 %a) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,24)
 ; EBC-NEXT:    movww r7, @r1
 ; EBC-NEXT:    extndw64 r1, r7
 ; EBC-NEXT:    moviww r2, 56
@@ -43,7 +43,7 @@ define i32 @test_bswap_i32(i32 %a) nounwind {
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,32)
 ; EBC-NEXT:    movdw r7, @r1
 ; EBC-NEXT:    extndd64 r1, r7
 ; EBC-NEXT:    moviww r7, 8
@@ -85,7 +85,7 @@ define i64 @test_bswap_i64(i64 %a) nounwind {
 ; EBC-NEXT:    push64 r4
 ; EBC-NEXT:    push64 r5
 ; EBC-NEXT:    push64 r6
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,72)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 24
 ; EBC-NEXT:    push64 r7
@@ -148,7 +148,7 @@ define i8 @test_cttz_i8(i8 %a) nounwind {
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
 ; EBC-NEXT:    moviww r7, 8
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    moviww r2, 255
 ; EBC-NEXT:    movqq r3, r1
@@ -200,7 +200,7 @@ define i16 @test_cttz_i16(i16 %a) nounwind {
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
 ; EBC-NEXT:    moviww r7, 16
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    movidd r2, 65535
 ; EBC-NEXT:    movqq r3, r1
@@ -252,7 +252,7 @@ define i32 @test_cttz_i32(i32 %a) nounwind {
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
 ; EBC-NEXT:    moviww r7, 32
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    moviqq r2, 4294967295
 ; EBC-NEXT:    movqq r3, r1
@@ -303,7 +303,7 @@ define i64 @test_cttz_i64(i64 %a) nounwind {
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    moviww r7, 64
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    moviww r2, 0
 ; EBC-NEXT:    cmp64eq r1, r2
@@ -349,7 +349,7 @@ define i8 @test_cttz_i8_zero_undef(i8 %a) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,24)
 ; EBC-NEXT:    movbw r7, @r1
 ; EBC-NEXT:    extndb64 r1, r7
 ; EBC-NEXT:    moviww r2, -1
@@ -391,7 +391,7 @@ define i16 @test_cttz_i16_zero_undef(i16 %a) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,24)
 ; EBC-NEXT:    movww r7, @r1
 ; EBC-NEXT:    extndw64 r1, r7
 ; EBC-NEXT:    moviww r2, -1
@@ -433,7 +433,7 @@ define i32 @test_cttz_i32_zero_undef(i32 %a) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,24)
 ; EBC-NEXT:    movdw r7, @r1
 ; EBC-NEXT:    extndd64 r1, r7
 ; EBC-NEXT:    moviww r2, -1
@@ -475,7 +475,7 @@ define i64 @test_cttz_i64_zero_undef(i64 %a) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r1, @r7
 ; EBC-NEXT:    moviww r2, -1
 ; EBC-NEXT:    movqq r7, r1
@@ -520,7 +520,7 @@ define i64 @test_ctlz_i64(i64 %a) nounwind {
 ; EBC-NEXT:    push64 r4
 ; EBC-NEXT:    push64 r5
 ; EBC-NEXT:    moviww r7, 64
-; EBC-NEXT:    movqw r1, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,48)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    moviww r2, 0
 ; EBC-NEXT:    cmp64eq r1, r2
@@ -589,7 +589,7 @@ define i64 @test_ctpop_i64(i64 %a) nounwind {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    moviww r1, 1
 ; EBC-NEXT:    movqq r2, r7

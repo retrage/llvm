@@ -5,7 +5,7 @@
 define i64 @indirectbr(i8* %target) nounwind {
 ; EBC-LABEL: indirectbr:
 ; EBC:       ; %bb.0:
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,8)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    jmp32a @r7
 ; EBC-NEXT:  ; %bb.1: ; %test_label
@@ -22,7 +22,7 @@ define i64 @indirectbr_with_offset(i8* %a) nounwind {
 ; EBC-LABEL: indirectbr_with_offset:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    moviww r1, 1380
 ; EBC-NEXT:    add64 r7, r1

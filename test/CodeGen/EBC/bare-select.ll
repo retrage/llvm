@@ -8,12 +8,12 @@ define i64 @bare_select(i1 %a, i64 %b, i64 %c) {
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 1
 ; EBC-NEXT:    and64 r2, r7
-; EBC-NEXT:    movqw r1, r0 (3,0)
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r1, r0 (0,48)
+; EBC-NEXT:    movqw r7, r0 (0,40)
 ; EBC-NEXT:    moviww r3, 0
 ; EBC-NEXT:    cmp64eq r2, r3
 ; EBC-NEXT:    jmp64cc LBB0_2

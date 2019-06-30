@@ -5,7 +5,7 @@
 define i64 @square(i64 %a) nounwind {
 ; EBC-LABEL: square:
 ; EBC:       ; %bb.0:
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,8)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    mul64 r7, r7
 ; EBC-NEXT:    ret
@@ -17,7 +17,7 @@ define i64 @mul_constant(i64 %a) nounwind {
 ; EBC-LABEL: mul_constant:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    moviww r1, 5
 ; EBC-NEXT:    mul64 r7, r1
@@ -31,7 +31,7 @@ define i64 @mul_pow2(i64 %a) nounwind {
 ; EBC-LABEL: mul_pow2:
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    moviww r1, 3
 ; EBC-NEXT:    shl64 r7, r1

@@ -7,9 +7,9 @@ define i64 @foo(i64 %a, i64 *%b) {
 ; EBC:       ; %bb.0:
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
-; EBC-NEXT:    movqw r1, r0 (2,0)
+; EBC-NEXT:    movqw r1, r0 (0,32)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    movqq r2, @r1
 ; EBC-NEXT:    cmp64eq r7, r2

@@ -24,7 +24,7 @@ public:
   explicit EBCFrameLowering(const EBCSubtarget &STI)
       : TargetFrameLowering(StackGrowsDown,
                             /*StackAlignment=*/16,
-                            /*LocalAreaOffset=*/0) {}
+                            /*LocalAreaOffset=*/-8) {}
 
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;

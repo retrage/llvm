@@ -8,10 +8,10 @@ define void @foo(i64 %a, i64 *%b, i1 %c) {
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
-; EBC-NEXT:    movqw r1, r0 (3,0)
-; EBC-NEXT:    movqw r7, r0 (1,0)
+; EBC-NEXT:    movqw r1, r0 (0,48)
+; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r2, @r7
-; EBC-NEXT:    movqw r7, r0 (2,0)
+; EBC-NEXT:    movqw r7, r0 (0,40)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    cmp64eq r3, r2
