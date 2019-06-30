@@ -426,35 +426,54 @@ SDValue EBCTargetLowering::LowerCall(CallLoweringInfo &CLI,
   Chain = DAG.getCALLSEQ_START(Chain, NumBytes, 0, CLI.DL);
 
   // Copy argument values to their designated locations.
-  SmallVector<SDValue, 16> MemOpChains;
+  SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPass;
+  SmallVector<SDValue, 8> MemOpChains;
   SDValue StackPtr;
   for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
-    CCValAssign &VA = ArgLocs[I];
-    SDValue ArgValue = OutVals[I];
+    unsigned Loc = E - I - 1;
+    CCValAssign &VA = ArgLocs[Loc];
+    SDValue ArgValue = OutVals[Loc];
+    EVT RegVT = VA.getLocVT();
 
-    // Promote the value if needed.
-    // For now, only handle fully promoted arguments.
     switch (VA.getLocInfo()) {
     default:
       llvm_unreachable("Unknown loc info!");
     case CCValAssign::Full:
       break;
+    case CCValAssign::SExt:
+      ArgValue = DAG.getNode(ISD::SIGN_EXTEND, DL, RegVT, ArgValue);
+      break;
+    case CCValAssign::ZExt:
+      ArgValue = DAG.getNode(ISD::ZERO_EXTEND, DL, RegVT, ArgValue);
+      break;
+    case CCValAssign::AExt:
+      ArgValue = DAG.getNode(ISD::ANY_EXTEND, DL, RegVT, ArgValue);
+      break;
+    case CCValAssign::BCvt:
+      ArgValue = DAG.getNode(ISD::BITCAST, DL, RegVT, ArgValue);
+      break;
     }
 
-    if (VA.isMemLoc()) {
+    if (VA.isRegLoc()) {
+      // Queue up the argument copies and emit them at the end.
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), ArgValue));
+    } else {
+      assert(VA.isMemLoc() && "Argument not register or memory");
+
       // Work out the address of the stack slot.
-      if (!StackPtr.getNode())
+      if (!StackPtr.getNode()) {
         StackPtr = DAG.getCopyFromReg(Chain, DL, EBC::r0, PtrVT);
+        // Avoid return address.
+        StackPtr = DAG.getNode(ISD::SUB, DL, PtrVT, StackPtr,
+                               DAG.getIntPtrConstant(8, DL));
+      }
       SDValue Address =
-          DAG.getNode(ISD::ADD, DL, PtrVT, StackPtr,
-                      DAG.getIntPtrConstant(VA.getLocMemOffset(), DL));
+        DAG.getNode(ISD::SUB, DL, PtrVT, StackPtr,
+                    DAG.getIntPtrConstant(VA.getLocMemOffset(), DL));
 
       // Emit the store.
       MemOpChains.push_back(
           DAG.getStore(Chain, DL, ArgValue, Address, MachinePointerInfo()));
-    } else {
-      assert(VA.isRegLoc() && "Argument not register or memory");
-      report_fatal_error("Passing arguments via the register not supported");
     }
   }
 
@@ -463,6 +482,12 @@ SDValue EBCTargetLowering::LowerCall(CallLoweringInfo &CLI,
     Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOpChains);
 
   SDValue Glue;
+
+  // Build a sequence of copy-to-reg nodes, chained and glued together.
+  for (auto &Reg : RegsToPass) {
+    Chain = DAG.getCopyToReg(Chain, DL, Reg.first, Reg.second, Glue);
+    Glue = Chain.getValue(1);
+  }
 
   if (GlobalAddressSDNode *S = dyn_cast<GlobalAddressSDNode>(Callee)) {
     Callee = DAG.getTargetGlobalAddress(S->getGlobal(), DL, PtrVT, 0, 0);
@@ -474,6 +499,11 @@ SDValue EBCTargetLowering::LowerCall(CallLoweringInfo &CLI,
   SmallVector<SDValue, 8> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
+
+  // Add argument registers to the end of the list so that they are
+  // known live into the call.
+  for (auto &Reg : RegsToPass)
+    Ops.push_back(DAG.getRegister(Reg.first, Reg.second.getValueType()));
 
   const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
   const uint32_t *Mask = TRI->getCallPreservedMask(MF, CallConv);
@@ -495,10 +525,7 @@ SDValue EBCTargetLowering::LowerCall(CallLoweringInfo &CLI,
                              DAG.getConstant(NumBytes, DL, PtrVT, true),
                              DAG.getConstant(0, DL, PtrVT, true),
                              Glue, DL);
-
-  if (!Ins.empty()) {
-    Glue = Chain.getValue(1);
-  }
+  Glue = Chain.getValue(1);
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
