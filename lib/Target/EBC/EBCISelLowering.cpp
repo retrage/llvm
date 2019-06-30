@@ -58,6 +58,8 @@ EBCTargetLowering::EBCTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::SELECT, MVT::i64, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
 
+  setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
   setOperationAction(ISD::MULHS, MVT::i64, Expand);
   setOperationAction(ISD::MULHU, MVT::i64, Expand);
 
