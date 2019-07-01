@@ -21,8 +21,9 @@ ret:
 define i64 @indirectbr_with_offset(i8* %a) nounwind {
 ; EBC-LABEL: indirectbr_with_offset:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (0,16)
+; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    moviww r1, 1380
 ; EBC-NEXT:    add64 r7, r1
@@ -30,6 +31,7 @@ define i64 @indirectbr_with_offset(i8* %a) nounwind {
 ; EBC-NEXT:  ; %bb.1: ; %test_label
 ; EBC-NEXT:    moviww r7, 0
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %target = getelementptr inbounds i8, i8* %a, i64 1380
   indirectbr i8* %target, [label %test_label]

@@ -7,6 +7,7 @@
 define void @test_blockaddress() nounwind {
 ; EBC-LABEL: test_blockaddress:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    movrelq r7, Ltmp0
 ; EBC-NEXT:    movrelq r1, addr
@@ -15,6 +16,7 @@ define void @test_blockaddress() nounwind {
 ; EBC-NEXT:  Ltmp0: ; Block address taken
 ; EBC-NEXT:  ; %bb.1: ; %block
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   store volatile i8* blockaddress(@test_blockaddress, %block), i8** @addr
   %val = load volatile i8*, i8** @addr

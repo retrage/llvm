@@ -5,13 +5,14 @@
 define void @foo(i64 %a, i64 *%b, i1 %c) {
 ; EBC-LABEL: foo:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-32)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
-; EBC-NEXT:    movqw r1, r0 (0,48)
-; EBC-NEXT:    movqw r7, r0 (0,32)
-; EBC-NEXT:    movqq r2, @r7
+; EBC-NEXT:    movqw r1, r0 (0,56)
 ; EBC-NEXT:    movqw r7, r0 (0,40)
+; EBC-NEXT:    movqq r2, @r7
+; EBC-NEXT:    movqw r7, r0 (0,48)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    movqq r3, @r7
 ; EBC-NEXT:    cmp64eq r3, r2
@@ -66,6 +67,7 @@ define void @foo(i64 %a, i64 *%b, i1 %c) {
 ; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,32)
 ; EBC-NEXT:    ret
   %val1 = load volatile i64, i64* %b
   %tst1 = icmp eq i64 %val1, %a

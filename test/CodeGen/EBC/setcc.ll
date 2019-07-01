@@ -5,6 +5,7 @@
 define i64 @icmp_eq(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: icmp_eq:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,32)
@@ -19,6 +20,7 @@ define i64 @icmp_eq(i64 %a, i64 %b) nounwind {
 ; EBC-NEXT:  LBB0_2:
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = icmp eq i64 %a, %b
   %2 = zext i1 %1 to i64
@@ -28,6 +30,7 @@ define i64 @icmp_eq(i64 %a, i64 %b) nounwind {
 define i64 @icmp_ne(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: icmp_ne:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,32)
@@ -42,6 +45,7 @@ define i64 @icmp_ne(i64 %a, i64 %b) nounwind {
 ; EBC-NEXT:  LBB1_2:
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = icmp ne i64 %a, %b
   %2 = zext i1 %1 to i64
@@ -51,6 +55,7 @@ define i64 @icmp_ne(i64 %a, i64 %b) nounwind {
 define i64 @icmp_ugt(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: icmp_ugt:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,32)
@@ -65,6 +70,7 @@ define i64 @icmp_ugt(i64 %a, i64 %b) nounwind {
 ; EBC-NEXT:  LBB2_2:
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = icmp ugt i64 %a, %b
   %2 = zext i1 %1 to i64
@@ -74,6 +80,7 @@ define i64 @icmp_ugt(i64 %a, i64 %b) nounwind {
 define i64 @icmp_uge(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: icmp_uge:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,32)
@@ -88,6 +95,7 @@ define i64 @icmp_uge(i64 %a, i64 %b) nounwind {
 ; EBC-NEXT:  LBB3_2:
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = icmp uge i64 %a, %b
   %2 = zext i1 %1 to i64
@@ -97,6 +105,7 @@ define i64 @icmp_uge(i64 %a, i64 %b) nounwind {
 define i64 @icmp_ult(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: icmp_ult:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,32)
@@ -111,6 +120,7 @@ define i64 @icmp_ult(i64 %a, i64 %b) nounwind {
 ; EBC-NEXT:  LBB4_2:
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = icmp ult i64 %a, %b
   %2 = zext i1 %1 to i64
@@ -120,6 +130,7 @@ define i64 @icmp_ult(i64 %a, i64 %b) nounwind {
 define i64 @icmp_ule(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: icmp_ule:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,32)
@@ -134,6 +145,7 @@ define i64 @icmp_ule(i64 %a, i64 %b) nounwind {
 ; EBC-NEXT:  LBB5_2:
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = icmp ule i64 %a, %b
   %2 = zext i1 %1 to i64
@@ -143,6 +155,7 @@ define i64 @icmp_ule(i64 %a, i64 %b) nounwind {
 define i64 @icmp_sgt(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: icmp_sgt:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,32)
@@ -157,6 +170,7 @@ define i64 @icmp_sgt(i64 %a, i64 %b) nounwind {
 ; EBC-NEXT:  LBB6_2:
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = icmp sgt i64 %a, %b
   %2 = zext i1 %1 to i64
@@ -166,6 +180,7 @@ define i64 @icmp_sgt(i64 %a, i64 %b) nounwind {
 define i64 @icmp_sge(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: icmp_sge:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,32)
@@ -180,6 +195,7 @@ define i64 @icmp_sge(i64 %a, i64 %b) nounwind {
 ; EBC-NEXT:  LBB7_2:
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = icmp sge i64 %a, %b
   %2 = zext i1 %1 to i64
@@ -189,6 +205,7 @@ define i64 @icmp_sge(i64 %a, i64 %b) nounwind {
 define i64 @icmp_slt(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: icmp_slt:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,32)
@@ -203,6 +220,7 @@ define i64 @icmp_slt(i64 %a, i64 %b) nounwind {
 ; EBC-NEXT:  LBB8_2:
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = icmp slt i64 %a, %b
   %2 = zext i1 %1 to i64
@@ -212,6 +230,7 @@ define i64 @icmp_slt(i64 %a, i64 %b) nounwind {
 define i64 @icmp_sle(i64 %a, i64 %b) nounwind {
 ; EBC-LABEL: icmp_sle:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,32)
@@ -226,6 +245,7 @@ define i64 @icmp_sle(i64 %a, i64 %b) nounwind {
 ; EBC-NEXT:  LBB9_2:
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = icmp sle i64 %a, %b
   %2 = zext i1 %1 to i64

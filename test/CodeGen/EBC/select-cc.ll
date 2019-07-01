@@ -5,6 +5,7 @@
 define i64 @foo(i64 %a, i64 *%b) {
 ; EBC-LABEL: foo:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,24)
@@ -73,6 +74,7 @@ define i64 @foo(i64 %a, i64 *%b) {
 ; EBC-NEXT:  LBB0_20:
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %val1 = load volatile i64, i64* %b
   %tst1 = icmp eq i64 %a, %val1

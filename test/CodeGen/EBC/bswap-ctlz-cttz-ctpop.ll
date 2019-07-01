@@ -15,6 +15,7 @@ declare i64 @llvm.ctpop.i64(i64)
 define i16 @test_bswap_i16(i16 %a) nounwind {
 ; EBC-LABEL: test_bswap_i16:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r1, r0 (0,24)
@@ -32,6 +33,7 @@ define i16 @test_bswap_i16(i16 %a) nounwind {
 ; EBC-NEXT:    shr64 r7, r1
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %tmp = call i16 @llvm.bswap.i16(i16 %a)
   ret i16 %tmp
@@ -40,10 +42,11 @@ define i16 @test_bswap_i16(i16 %a) nounwind {
 define i32 @test_bswap_i32(i32 %a) nounwind {
 ; EBC-LABEL: test_bswap_i32:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-32)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
-; EBC-NEXT:    movqw r1, r0 (0,32)
+; EBC-NEXT:    movqw r1, r0 (0,40)
 ; EBC-NEXT:    movdw r7, @r1
 ; EBC-NEXT:    extndd64 r1, r7
 ; EBC-NEXT:    moviww r7, 8
@@ -71,6 +74,7 @@ define i32 @test_bswap_i32(i32 %a) nounwind {
 ; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,32)
 ; EBC-NEXT:    ret
   %tmp = call i32 @llvm.bswap.i32(i32 %a)
   ret i32 %tmp
@@ -79,6 +83,7 @@ define i32 @test_bswap_i32(i32 %a) nounwind {
 define i64 @test_bswap_i64(i64 %a) nounwind {
 ; EBC-LABEL: test_bswap_i64:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-64)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
@@ -136,6 +141,7 @@ define i64 @test_bswap_i64(i64 %a) nounwind {
 ; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,64)
 ; EBC-NEXT:    ret
   %tmp = call i64 @llvm.bswap.i64(i64 %a)
   ret i64 %tmp
@@ -144,11 +150,12 @@ define i64 @test_bswap_i64(i64 %a) nounwind {
 define i8 @test_cttz_i8(i8 %a) nounwind {
 ; EBC-LABEL: test_cttz_i8:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-32)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
 ; EBC-NEXT:    moviww r7, 8
-; EBC-NEXT:    movqw r1, r0 (0,32)
+; EBC-NEXT:    movqw r1, r0 (0,40)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    moviww r2, 255
 ; EBC-NEXT:    movqq r3, r1
@@ -188,6 +195,7 @@ define i8 @test_cttz_i8(i8 %a) nounwind {
 ; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,32)
 ; EBC-NEXT:    ret
   %tmp = call i8 @llvm.cttz.i8(i8 %a, i1 false)
   ret i8 %tmp
@@ -196,11 +204,12 @@ define i8 @test_cttz_i8(i8 %a) nounwind {
 define i16 @test_cttz_i16(i16 %a) nounwind {
 ; EBC-LABEL: test_cttz_i16:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-32)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
 ; EBC-NEXT:    moviww r7, 16
-; EBC-NEXT:    movqw r1, r0 (0,32)
+; EBC-NEXT:    movqw r1, r0 (0,40)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    movidd r2, 65535
 ; EBC-NEXT:    movqq r3, r1
@@ -240,6 +249,7 @@ define i16 @test_cttz_i16(i16 %a) nounwind {
 ; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,32)
 ; EBC-NEXT:    ret
   %tmp = call i16 @llvm.cttz.i16(i16 %a, i1 false)
   ret i16 %tmp
@@ -248,11 +258,12 @@ define i16 @test_cttz_i16(i16 %a) nounwind {
 define i32 @test_cttz_i32(i32 %a) nounwind {
 ; EBC-LABEL: test_cttz_i32:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-32)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
 ; EBC-NEXT:    moviww r7, 32
-; EBC-NEXT:    movqw r1, r0 (0,32)
+; EBC-NEXT:    movqw r1, r0 (0,40)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    moviqq r2, 4294967295
 ; EBC-NEXT:    movqq r3, r1
@@ -292,6 +303,7 @@ define i32 @test_cttz_i32(i32 %a) nounwind {
 ; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,32)
 ; EBC-NEXT:    ret
   %tmp = call i32 @llvm.cttz.i32(i32 %a, i1 false)
   ret i32 %tmp
@@ -300,6 +312,7 @@ define i32 @test_cttz_i32(i32 %a) nounwind {
 define i64 @test_cttz_i64(i64 %a) nounwind {
 ; EBC-LABEL: test_cttz_i64:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    moviww r7, 64
@@ -339,6 +352,7 @@ define i64 @test_cttz_i64(i64 %a) nounwind {
 ; EBC-NEXT:  LBB6_2: ; %cond.end
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %tmp = call i64 @llvm.cttz.i64(i64 %a, i1 false)
   ret i64 %tmp
@@ -347,6 +361,7 @@ define i64 @test_cttz_i64(i64 %a) nounwind {
 define i8 @test_cttz_i8_zero_undef(i8 %a) nounwind {
 ; EBC-LABEL: test_cttz_i8_zero_undef:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r1, r0 (0,24)
@@ -381,6 +396,7 @@ define i8 @test_cttz_i8_zero_undef(i8 %a) nounwind {
 ; EBC-NEXT:    shr64 r7, r1
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %tmp = call i8 @llvm.cttz.i8(i8 %a, i1 true)
   ret i8 %tmp
@@ -389,6 +405,7 @@ define i8 @test_cttz_i8_zero_undef(i8 %a) nounwind {
 define i16 @test_cttz_i16_zero_undef(i16 %a) nounwind {
 ; EBC-LABEL: test_cttz_i16_zero_undef:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r1, r0 (0,24)
@@ -423,6 +440,7 @@ define i16 @test_cttz_i16_zero_undef(i16 %a) nounwind {
 ; EBC-NEXT:    shr64 r7, r1
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %tmp = call i16 @llvm.cttz.i16(i16 %a, i1 true)
   ret i16 %tmp
@@ -431,6 +449,7 @@ define i16 @test_cttz_i16_zero_undef(i16 %a) nounwind {
 define i32 @test_cttz_i32_zero_undef(i32 %a) nounwind {
 ; EBC-LABEL: test_cttz_i32_zero_undef:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r1, r0 (0,24)
@@ -465,6 +484,7 @@ define i32 @test_cttz_i32_zero_undef(i32 %a) nounwind {
 ; EBC-NEXT:    shr64 r7, r1
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %tmp = call i32 @llvm.cttz.i32(i32 %a, i1 true)
   ret i32 %tmp
@@ -473,6 +493,7 @@ define i32 @test_cttz_i32_zero_undef(i32 %a) nounwind {
 define i64 @test_cttz_i64_zero_undef(i64 %a) nounwind {
 ; EBC-LABEL: test_cttz_i64_zero_undef:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,24)
@@ -506,6 +527,7 @@ define i64 @test_cttz_i64_zero_undef(i64 %a) nounwind {
 ; EBC-NEXT:    shr64 r7, r1
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %tmp = call i64 @llvm.cttz.i64(i64 %a, i1 true)
   ret i64 %tmp
@@ -514,13 +536,14 @@ define i64 @test_cttz_i64_zero_undef(i64 %a) nounwind {
 define i64 @test_ctlz_i64(i64 %a) nounwind {
 ; EBC-LABEL: test_ctlz_i64:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-48)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
 ; EBC-NEXT:    push64 r4
 ; EBC-NEXT:    push64 r5
 ; EBC-NEXT:    moviww r7, 64
-; EBC-NEXT:    movqw r1, r0 (0,48)
+; EBC-NEXT:    movqw r1, r0 (0,56)
 ; EBC-NEXT:    movqq r1, @r1
 ; EBC-NEXT:    moviww r2, 0
 ; EBC-NEXT:    cmp64eq r1, r2
@@ -579,6 +602,7 @@ define i64 @test_ctlz_i64(i64 %a) nounwind {
 ; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,48)
 ; EBC-NEXT:    ret
   %tmp = call i64 @llvm.ctlz.i64(i64 %a, i1 false)
   ret i64 %tmp
@@ -587,6 +611,7 @@ define i64 @test_ctlz_i64(i64 %a) nounwind {
 define i64 @test_ctpop_i64(i64 %a) nounwind {
 ; EBC-LABEL: test_ctpop_i64:
 ; EBC:       ; %bb.0:
+; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,24)
@@ -616,6 +641,7 @@ define i64 @test_ctpop_i64(i64 %a) nounwind {
 ; EBC-NEXT:    shr64 r7, r1
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %tmp = call i64 @llvm.ctpop.i64(i64 %a)
   ret i64 %tmp

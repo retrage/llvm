@@ -24,7 +24,8 @@ public:
   explicit EBCFrameLowering(const EBCSubtarget &STI)
       : TargetFrameLowering(StackGrowsDown,
                             /*StackAlignment=*/16,
-                            /*LocalAreaOffset=*/-8) {}
+                            /*LocalAreaOffset=*/-8),
+        STI(STI) {}
 
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
@@ -36,6 +37,15 @@ public:
                                 MachineBasicBlock::iterator MI) const override {
     return MBB.erase(MI);
   }
+
+protected:
+  const EBCSubtarget &STI;
+
+private:
+  void determineFrameLayout(MachineFunction &MF) const;
+  void adjustReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+                 const DebugLoc &DL, unsigned DestReg, unsigned SrcReg,
+                 int64_t Val, MachineInstr::MIFlag Flag) const;
 };
 }
 #endif
