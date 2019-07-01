@@ -5,14 +5,12 @@
 define i64 @udiv_constant(i64 %a) nounwind {
 ; EBC-LABEL: udiv_constant:
 ; EBC:       ; %bb.0:
-; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (0,24)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    moviww r1, 5
 ; EBC-NEXT:    divu64 r7, r1
 ; EBC-NEXT:    pop64 r1
-; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = udiv i64 %a, 5
   ret i64 %1
@@ -21,14 +19,12 @@ define i64 @udiv_constant(i64 %a) nounwind {
 define i64 @udiv_pow2(i64 %a) nounwind {
 ; EBC-LABEL: udiv_pow2:
 ; EBC:       ; %bb.0:
-; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (0,24)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    moviww r1, 3
 ; EBC-NEXT:    shr64 r7, r1
 ; EBC-NEXT:    pop64 r1
-; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = udiv i64 %a, 8
   ret i64 %1
@@ -37,14 +33,12 @@ define i64 @udiv_pow2(i64 %a) nounwind {
 define i64 @sdiv_constant(i64 %a) nounwind {
 ; EBC-LABEL: sdiv_constant:
 ; EBC:       ; %bb.0:
-; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (0,24)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    moviww r1, 5
 ; EBC-NEXT:    div64 r7, r1
 ; EBC-NEXT:    pop64 r1
-; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = sdiv i64 %a, 5
   ret i64 %1
@@ -53,7 +47,6 @@ define i64 @sdiv_constant(i64 %a) nounwind {
 define i64 @sdiv_pow2(i64 %a) nounwind {
 ; EBC-LABEL: sdiv_pow2:
 ; EBC:       ; %bb.0:
-; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    movqw r7, r0 (0,24)
@@ -68,7 +61,6 @@ define i64 @sdiv_pow2(i64 %a) nounwind {
 ; EBC-NEXT:    ashr64 r7, r1
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
-; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = sdiv i64 %a, 8
   ret i64 %1

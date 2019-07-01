@@ -77,6 +77,28 @@ void EBCFrameLowering::adjustReg(MachineBasicBlock &MBB,
       .setMIFlag(Flag);
 }
 
+unsigned EBCFrameLowering::getCalleeSavedFrameSize(MachineFunction &MF) const {
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  const EBCRegisterInfo *RI = STI.getRegisterInfo();
+
+  unsigned CalleeFrameSize = 0;
+  const std::vector<CalleeSavedInfo> &CSI = MFI.getCalleeSavedInfo();
+  for (unsigned I = 0, E = CSI.size(); I != E; ++I) {
+    unsigned Reg = CSI[I].getReg();
+    CalleeFrameSize += RI->getRegSizeInBits(Reg, MRI) / 8;
+  }
+
+  // Get the alignment.
+  uint64_t StackAlign = RI->needsStackRealignment(MF) ? MFI.getMaxAlignment()
+                                                      : getStackAlignment();
+
+  // Make sure the frame is aligned.
+  CalleeFrameSize = alignTo(CalleeFrameSize, StackAlign);
+
+  return CalleeFrameSize;
+}
+
 // Returns the register used to hold the frame pointer.
 static unsigned getFPReg() { return EBC::r1; }
 
@@ -100,10 +122,11 @@ void EBCFrameLowering::emitPrologue(MachineFunction &MF,
 
   // Determine the correct frame layout
   determineFrameLayout(MF);
+  EBCFI->setCalleeSavedFrameSize(getCalleeSavedFrameSize(MF));
 
   // FIXME (note copied from Lanai): This appears to be overallocating. Needs
   // investigation. Get the number of bytes to allocate from the FrameInfo.
-  uint64_t StackSize = MFI.getStackSize();
+  uint64_t StackSize = MFI.getStackSize() - EBCFI->getCalleeSavedFrameSize();
 
   // Early exit if there is no need to allocate on the stack
   if (StackSize == 0 && !MFI.adjustsStack())
@@ -139,7 +162,7 @@ void EBCFrameLowering::emitEpilogue(MachineFunction &MF,
   // Skip to before the restores of callee-saved registers
   auto LastFrameDestroy = std::prev(MBBI, MFI.getCalleeSavedInfo().size());
 
-  uint64_t StackSize = MFI.getStackSize();
+  uint64_t StackSize = MFI.getStackSize() - EBCFI->getCalleeSavedFrameSize();
 
   // Restore the stack pointer using the value of the frame pointer. Only
   // necessary if the stack pointer was modified, meaning the stack size is

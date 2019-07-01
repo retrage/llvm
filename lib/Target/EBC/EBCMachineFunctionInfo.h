@@ -26,6 +26,9 @@ private:
   int VarArgsFrameIndex = 0;
   /// Size of the save area used for varargs
   unsigned VarArgsSaveSize = 0;
+  /// Size of the callee-saved register portion of the
+  /// stack frame in bytes.
+  unsigned CalleeSavedFrameSize = 0;
 
 public:
   EBCMachineFunctionInfo(MachineFunction &MF) : MF(MF) {}
@@ -35,6 +38,9 @@ public:
 
   unsigned getVarArgsSaveSize() const { return VarArgsSaveSize; }
   void setVarArgsSaveSize(unsigned Size) { VarArgsSaveSize = Size; }
+
+  unsigned getCalleeSavedFrameSize() const { return CalleeSavedFrameSize; }
+  void setCalleeSavedFrameSize(unsigned Bytes) { CalleeSavedFrameSize = Bytes; }
 };
 
 } // end namespace llvm

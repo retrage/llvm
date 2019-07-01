@@ -23,7 +23,7 @@ class EBCFrameLowering : public TargetFrameLowering {
 public:
   explicit EBCFrameLowering(const EBCSubtarget &STI)
       : TargetFrameLowering(StackGrowsDown,
-                            /*StackAlignment=*/16,
+                            /*StackAlignment=*/8,
                             /*LocalAreaOffset=*/-8),
         STI(STI) {}
 
@@ -46,6 +46,7 @@ private:
   void adjustReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                  const DebugLoc &DL, unsigned DestReg, unsigned SrcReg,
                  int64_t Val, MachineInstr::MIFlag Flag) const;
+  unsigned getCalleeSavedFrameSize(MachineFunction &MF) const;
 };
 }
 #endif

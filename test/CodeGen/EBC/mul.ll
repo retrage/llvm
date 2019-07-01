@@ -16,14 +16,12 @@ define i64 @square(i64 %a) nounwind {
 define i64 @mul_constant(i64 %a) nounwind {
 ; EBC-LABEL: mul_constant:
 ; EBC:       ; %bb.0:
-; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (0,24)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    moviww r1, 5
 ; EBC-NEXT:    mul64 r7, r1
 ; EBC-NEXT:    pop64 r1
-; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = mul i64 %a, 5
   ret i64 %1
@@ -32,14 +30,12 @@ define i64 @mul_constant(i64 %a) nounwind {
 define i64 @mul_pow2(i64 %a) nounwind {
 ; EBC-LABEL: mul_pow2:
 ; EBC:       ; %bb.0:
-; EBC-NEXT:    movqw r0, r0 (0,-16)
 ; EBC-NEXT:    push64 r1
-; EBC-NEXT:    movqw r7, r0 (0,24)
+; EBC-NEXT:    movqw r7, r0 (0,16)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    moviww r1, 3
 ; EBC-NEXT:    shl64 r7, r1
 ; EBC-NEXT:    pop64 r1
-; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
   %1 = mul i64 %a, 8
   ret i64 %1
