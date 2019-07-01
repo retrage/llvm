@@ -52,11 +52,16 @@ EBCTargetLowering::EBCTargetLowering(const TargetMachine &TM,
     setLoadExtAction(N, MVT::i64, MVT::i1, Promote);
 
   // TODO: add all necessary setOperationAction calls.
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
+
   setOperationAction(ISD::BR_CC, MVT::i64, Custom);
   setOperationAction(ISD::BRCOND, MVT::Other, Expand);
   setOperationAction(ISD::SETCC, MVT::i64, Custom);
   setOperationAction(ISD::SELECT, MVT::i64, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
+
+  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
+  setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
 
   setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
   setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
