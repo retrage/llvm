@@ -100,7 +100,7 @@ unsigned EBCFrameLowering::getCalleeSavedFrameSize(MachineFunction &MF) const {
 }
 
 // Returns the register used to hold the frame pointer.
-static unsigned getFPReg() { return EBC::r1; }
+static unsigned getFPReg() { return EBC::r6; }
 
 // Returns the register used to hold the stack pointer.
 static unsigned getSPReg() { return EBC::r0; }

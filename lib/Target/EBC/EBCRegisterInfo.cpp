@@ -47,6 +47,7 @@ BitVector EBCRegisterInfo::getReservedRegs(const MachineFunction &MF) const  {
 
   // Use markSuperRegs to ensure any register aliases are also reserved
   markSuperRegs(Reserved, EBC::r0);
+  markSuperRegs(Reserved, EBC::r6);
   markSuperRegs(Reserved, EBC::ip);
   markSuperRegs(Reserved, EBC::flags);
   assert(checkAllSuperRegsMarked(Reserved));
@@ -79,5 +80,6 @@ void EBCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 }
 
 unsigned EBCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  return EBC::r0;
+  const TargetFrameLowering *TFI = getFrameLowering(MF);
+  return TFI->hasFP(MF) ? EBC::r6 : EBC::r0;
 }

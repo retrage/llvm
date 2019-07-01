@@ -79,14 +79,13 @@ define i32 @test_bswap_i32(i32 %a) nounwind {
 define i64 @test_bswap_i64(i64 %a) nounwind {
 ; EBC-LABEL: test_bswap_i64:
 ; EBC:       ; %bb.0:
-; EBC-NEXT:    movqw r0, r0 (0,-16)
+; EBC-NEXT:    movqw r0, r0 (0,-32)
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    push64 r2
 ; EBC-NEXT:    push64 r3
 ; EBC-NEXT:    push64 r4
 ; EBC-NEXT:    push64 r5
-; EBC-NEXT:    push64 r6
-; EBC-NEXT:    movqw r7, r0 (0,72)
+; EBC-NEXT:    movqw r7, r0 (0,80)
 ; EBC-NEXT:    movqq r2, @r7
 ; EBC-NEXT:    moviww r7, 24
 ; EBC-NEXT:    push64 r7
@@ -99,17 +98,19 @@ define i64 @test_bswap_i64(i64 %a) nounwind {
 ; EBC-NEXT:    shr64 r1, r7
 ; EBC-NEXT:    moviqq r3, 4278190080
 ; EBC-NEXT:    and64 r1, r3
-; EBC-NEXT:    movqq r3, r1
+; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    moviww r1, 40
 ; EBC-NEXT:    push64 r1
 ; EBC-NEXT:    movqq r5, r2
 ; EBC-NEXT:    shr64 r5, r1
-; EBC-NEXT:    movidd r6, 65280
-; EBC-NEXT:    and64 r5, r6
-; EBC-NEXT:    moviww r6, 56
+; EBC-NEXT:    movidd r3, 65280
+; EBC-NEXT:    and64 r5, r3
+; EBC-NEXT:    moviww r3, 56
+; EBC-NEXT:    push64 r3
 ; EBC-NEXT:    movqq r1, r2
-; EBC-NEXT:    shr64 r1, r6
+; EBC-NEXT:    shr64 r1, r3
 ; EBC-NEXT:    or64 r5, r1
+; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    or64 r3, r4
 ; EBC-NEXT:    movqq r1, r2
 ; EBC-NEXT:    shl64 r1, r7
@@ -123,7 +124,8 @@ define i64 @test_bswap_i64(i64 %a) nounwind {
 ; EBC-NEXT:    or64 r3, r5
 ; EBC-NEXT:    or64 r4, r1
 ; EBC-NEXT:    movqq r7, r2
-; EBC-NEXT:    shl64 r7, r6
+; EBC-NEXT:    pop64 r1
+; EBC-NEXT:    shl64 r7, r1
 ; EBC-NEXT:    pop64 r1
 ; EBC-NEXT:    shl64 r2, r1
 ; EBC-NEXT:    moviqq r1, 71776119061217280
@@ -131,13 +133,12 @@ define i64 @test_bswap_i64(i64 %a) nounwind {
 ; EBC-NEXT:    or64 r7, r2
 ; EBC-NEXT:    or64 r7, r4
 ; EBC-NEXT:    or64 r7, r3
-; EBC-NEXT:    pop64 r6
 ; EBC-NEXT:    pop64 r5
 ; EBC-NEXT:    pop64 r4
 ; EBC-NEXT:    pop64 r3
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
-; EBC-NEXT:    movqw r0, r0 (0,16)
+; EBC-NEXT:    movqw r0, r0 (0,32)
 ; EBC-NEXT:    ret
   %tmp = call i64 @llvm.bswap.i64(i64 %a)
   ret i64 %tmp

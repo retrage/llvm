@@ -23,4 +23,4 @@ def CC_EBC : CallingConv<[
   CCAssignToStack<8, 8>
 ]>;
 
-def CSR : CalleeSavedRegs<(add (sequence "r%u", 1, 6))>;
+def CSR : CalleeSavedRegs<(add (sequence "r%u", 1, 5))>;
