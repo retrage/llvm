@@ -468,7 +468,8 @@ SDValue EBCTargetLowering::LowerCall(CallLoweringInfo &CLI,
   SDValue Glue;
 
   if (GlobalAddressSDNode *S = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    Callee = DAG.getTargetGlobalAddress(S->getGlobal(), DL, PtrVT, 0, 0);
+    Callee = DAG.getTargetGlobalAddress(S->getGlobal(), DL, PtrVT,
+                                        S->getOffset(), 0);
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), PtrVT, 0);
   }

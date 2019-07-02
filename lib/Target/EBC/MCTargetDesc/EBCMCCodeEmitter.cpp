@@ -116,6 +116,7 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
       case EBC::OPERAND_IMM64:
       case EBC::OPERAND_IMM8_JMP:
       case EBC::OPERAND_IMM64_JMP:
+      case EBC::OPERAND_CALLTARGET:
         break;
       case EBC::OPERAND_IDXN16: {
           // Assume next operand is OPERAND_IDXC16
@@ -197,6 +198,7 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
         break;
       case EBC::OPERAND_IMM64:
       case EBC::OPERAND_IMM64_JMP:
+      case EBC::OPERAND_CALLTARGET:
         support::endian::write<uint64_t>(OS, MO.getImm(), support::little);
         break;
       case EBC::OPERAND_IDXN16:

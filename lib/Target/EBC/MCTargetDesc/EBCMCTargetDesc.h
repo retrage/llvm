@@ -72,6 +72,8 @@ enum OperandType {
   OPERAND_IMM8_JMP,
   /// 64-bit immediates for JMP64
   OPERAND_IMM64_JMP,
+  /// 64-bit calltarget for CALL64
+  OPERAND_CALLTARGET,
 };
 }
 

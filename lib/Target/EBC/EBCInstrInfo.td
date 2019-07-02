@@ -138,6 +138,9 @@ def imm64_jmp : Operand<OtherVT> {
   }];
 }
 
+let OperandType = "OPERAND_CALLTARGET" in
+def calltarget : Operand<i64>;
+
 } // OperandNamespace = "EBC"
 
 //===----------------------------------------------------------------------===//
@@ -695,7 +698,7 @@ foreach isNative = [0b0, 0b1] in {
     # !if(isRel, "Rel", "Abs")
     # "Imm"
       : EBCCALL64<0b000011, isNative, isRel,
-                  (outs), (ins), (ins imm64_jmp:$imm), "$imm">;
+                  (outs), (ins), (ins calltarget:$imm), "$imm">;
 }
 } // isCall = 1
 
@@ -1054,12 +1057,13 @@ def : StPat<store, MOVqqOp1IOp2D>;
 def PseudoBR : Pseudo<(outs), (ins imm64_jmp:$imm), [(br bb:$imm)]>,
                PseudoInstExpansion<(JMP64UncondAbsImm imm64_jmp:$imm)>;
 
-let isCall = 1 in {
-def PseudoCALL32 : Pseudo<(outs), (ins GPR:$op1), [(EBCcall GPR:$op1)]>,
-                   PseudoInstExpansion<(CALL32Op1DEBCAbs GPR:$op1)>;
-def PseudoCALL64 : Pseudo<(outs), (ins imm64_jmp:$imm), [(EBCcall bb:$imm)]>,
-                   PseudoInstExpansion<(CALL64EBCAbsImm imm64_jmp:$imm)>;
-} // isCall = 1
+/// Calls
+
+def : Pat<(EBCcall tglobaladdr:$imm), (CALL64EBCAbsImm tglobaladdr:$imm)>;
+def : Pat<(EBCcall texternalsym:$imm), (CALL64EBCAbsImm texternalsym:$imm)>;
+def : Pat<(EBCcall imm:$imm), (CALL64EBCAbsImm imm64:$imm)>;
+def : Pat<(EBCcall GPR:$op1), (CALL32Op1DEBCAbs GPR:$op1)>;
+def : Pat<(EBCcall (load GPR:$op1)), (CALL32Op1IEBCAbs GPR:$op1)>;
 
 let usesCustomInserter = 1 in
 def PseudoSELECT
