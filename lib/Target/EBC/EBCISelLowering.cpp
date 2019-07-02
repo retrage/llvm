@@ -582,3 +582,21 @@ const char *EBCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
   return nullptr;
 }
+
+std::pair<unsigned, const TargetRegisterClass *>
+EBCTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
+                                                StringRef Constraint,
+                                                MVT VT) const {
+  // First, see if this is a constraint that directly corresponds to a
+  // EBC register class.
+  if (Constraint.size() == 1) {
+    switch (Constraint[0]) {
+    case 'r':
+      return std::make_pair(0U, &EBC::GPRRegClass);
+    default:
+      break;
+    }
+  }
+
+  return TargetLowering::getRegForInlineAsmConstraint(TRI, Constraint, VT);
+}

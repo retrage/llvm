@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "EBC.h"
-#include "InstPrinter/EBCInstPrinter.h"
 #include "EBCTargetMachine.h"
+#include "InstPrinter/EBCInstPrinter.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -41,6 +41,13 @@ public:
 
   void EmitInstruction(const MachineInstr *MI) override;
 
+  bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                       unsigned AsmVariant, const char *ExtraCode,
+                       raw_ostream &OS) override;
+  bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+                             unsigned AsmVariant, const char *ExtraCode,
+                             raw_ostream &OS) override;
+
   bool emitPseudoExpansionLowering(MCStreamer &OutStreamer,
                                    const MachineInstr *MI);
 
@@ -63,6 +70,54 @@ void EBCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MCInst TmpInst;
   LowerEBCMachineInstrToMCInst(MI, TmpInst, *this);
   EmitToStreamer(*OutStreamer, TmpInst);
+}
+
+bool EBCAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+                                    unsigned AsmVariant,
+                                    const char *ExtraCode, raw_ostream &OS) {
+  if (AsmVariant != 0)
+    report_fatal_error("There are no defined alternate asm variants");
+
+  // First try the generic code, which knows about modifiers like 'c' and 'n'.
+  if (!AsmPrinter::PrintAsmOperand(MI, OpNo, AsmVariant, ExtraCode, OS))
+    return false;
+
+  if (!ExtraCode) {
+    const MachineOperand &MO = MI->getOperand(OpNo);
+    switch (MO.getType()) {
+    case MachineOperand::MO_Immediate:
+      OS << MO.getImm();
+      return false;
+    case MachineOperand::MO_Register:
+      OS << EBCInstPrinter::getRegisterName(MO.getReg());
+      return false;
+    default:
+      break;
+    }
+  }
+
+  return true;
+}
+
+bool EBCAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
+                                          unsigned OpNo, unsigned AsmVariant,
+                                          const char *ExtraCode,
+                                          raw_ostream &OS) {
+  if (AsmVariant != 0)
+    report_fatal_error("There are no defined alternate asm variants");
+
+  if (!ExtraCode) {
+    const MachineOperand &MO = MI->getOperand(OpNo);
+    // For now, we only support register memory operands in registers and
+    // assume there is no natural index
+    if (!MO.isReg())
+      return true;
+
+    OS << EBCInstPrinter::getRegisterName(MO.getReg());
+    return false;
+  }
+
+  return AsmPrinter::PrintAsmMemoryOperand(MI, OpNo, AsmVariant, ExtraCode, OS);
 }
 
 // Force static initialization.
