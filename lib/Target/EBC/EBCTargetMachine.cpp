@@ -29,7 +29,7 @@ extern "C" void LLVMInitializeEBCTarget() {
 
 static std::string computeDataLayout(const Triple &TT) {
   assert(TT.isArch64Bit() && "only 64-bit is supported");
-  return "e-m:e-p:64:64-i64:64-i128:128-n64-S128";
+  return "e-m:w-p:64:64-i32:32-i64:64-i128:128-n32:64-S128";
 }
 
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,
