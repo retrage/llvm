@@ -24,7 +24,7 @@ define void @simple_alloca(i64 %n) nounwind {
 ; EBC-NEXT:    movqq r2, r0
 ; EBC-NEXT:    add64 r2, r1
 ; EBC-NEXT:    movqq @r2, r7
-; EBC-NEXT:    call64a notdead
+; EBC-NEXT:    call64 notdead
 ; EBC-NEXT:    movqw r0, r6 (0,0)
 ; EBC-NEXT:    pop64 r2
 ; EBC-NEXT:    pop64 r1
@@ -56,7 +56,7 @@ define void @scoped_alloca(i64 %n) nounwind {
 ; EBC-NEXT:    movqq r2, r0
 ; EBC-NEXT:    add64 r2, r1
 ; EBC-NEXT:    movqq @r2, r7
-; EBC-NEXT:    call64a notdead
+; EBC-NEXT:    call64 notdead
 ; EBC-NEXT:    movqq r0, r3
 ; EBC-NEXT:    movqw r0, r6 (0,0)
 ; EBC-NEXT:    pop64 r3

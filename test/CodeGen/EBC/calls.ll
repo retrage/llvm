@@ -15,7 +15,7 @@ define i64 @test_call_external(i64 %a) nounwind {
 ; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    movqq @r1, r7
-; EBC-NEXT:    call64a external_function
+; EBC-NEXT:    call64 external_function
 ; EBC-NEXT:    pop64 r1
 ; EBC-NEXT:    movqw r0, r0 (0,8)
 ; EBC-NEXT:    ret
@@ -48,7 +48,7 @@ define i64 @test_call_defined(i64 %a) nounwind {
 ; EBC-NEXT:    movqw r7, r0 (0,24)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    movqq @r1, r7
-; EBC-NEXT:    call64a defined_function
+; EBC-NEXT:    call64 defined_function
 ; EBC-NEXT:    pop64 r1
 ; EBC-NEXT:    movqw r0, r0 (0,8)
 ; EBC-NEXT:    ret
@@ -111,7 +111,7 @@ define i64 @test_call_fastcc(i64 %a, i64 %b) nounwind {
 ; EBC-NEXT:    movqw r7, r0 (0,32)
 ; EBC-NEXT:    movqq r7, @r7
 ; EBC-NEXT:    movqq @r1, r7
-; EBC-NEXT:    call64a fastcc_function
+; EBC-NEXT:    call64 fastcc_function
 ; EBC-NEXT:    pop64 r1
 ; EBC-NEXT:    movqw r0, r0 (0,16)
 ; EBC-NEXT:    ret
