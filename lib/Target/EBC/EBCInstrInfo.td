@@ -71,19 +71,59 @@ def breakcode : Operand<i64> {
   let ParserMatchClass = BreakCodeAsmOperand<8>;
 }
 
+let OperandType = "OPERAND_IMM8" in
+def imm8 : Operand<i64>, ImmLeaf<i64, [{return isInt<8>(Imm);}]> {
+  let ParserMatchClass = ImmAsmOperand<8>;
+  let MCOperandPredicate = [{
+    int8_t Imm;
+    if (MCOp.evaluateAsConstantImm(Imm))
+      return isInt<8>(Imm);
+    return MCOp.isBareSymbolRef();
+  }];
+}
+
 let OperandType = "OPERAND_IMM16" in
 def imm16 : Operand<i64>, ImmLeaf<i64, [{return isInt<16>(Imm);}]> {
   let ParserMatchClass = ImmAsmOperand<16>;
+  let MCOperandPredicate = [{
+    int16_t Imm;
+    if (MCOp.evaluateAsConstantImm(Imm))
+      return isInt<16>(Imm);
+    return MCOp.isBareSymbolRef();
+  }];
 }
 
 let OperandType = "OPERAND_IMM32" in
 def imm32 : Operand<i64>, ImmLeaf<i64, [{return isInt<32>(Imm);}]> {
   let ParserMatchClass = ImmAsmOperand<32>;
+  let MCOperandPredicate = [{
+    int32_t Imm;
+    if (MCOp.evaluateAsConstantImm(Imm))
+      return isInt<32>(Imm);
+    return MCOp.isBareSymbolRef();
+  }];
 }
 
 let OperandType = "OPERAND_IMM64" in
 def imm64 : Operand<i64>, ImmLeaf<i64, [{return isInt<64>(Imm);}]> {
   let ParserMatchClass = ImmAsmOperand<64>;
+  let MCOperandPredicate = [{
+    int64_t Imm;
+    if (MCOp.evaluateAsConstantImm(Imm))
+      return isInt<64>(Imm);
+    return MCOp.isBareSymbolRef();
+  }];
+}
+
+let OperandType = "OPERAND_JMP64" in
+def jmp64 : Operand<OtherVT> {
+  let ParserMatchClass = ImmAsmOperand<64>;
+  let MCOperandPredicate = [{
+    int64_t Imm;
+    if (MCOp.evaluateAsConstantImm(Imm))
+      return isInt<64>(Imm);
+    return MCOp.isBareSymbolRef();
+  }];
 }
 
 let OperandType = "OPERAND_IDXN16" in
@@ -116,33 +156,20 @@ def idxc64 : Operand<i64> {
   let ParserMatchClass = IdxCAsmOperand<64>;
 }
 
-let OperandType = "OPERAND_IMM8_JMP" in
-def imm8_jmp : Operand<OtherVT> {
-  let ParserMatchClass = ImmAsmOperand<8>;
-  let MCOperandPredicate = [{
-    int8_t Imm;
-    if (MCOp.evaluateAsConstantImm(Imm))
-      return isInt<8>(Imm);
-    return MCOp.isBareSymbolRef();
-  }];
-}
-
-let OperandType = "OPERAND_IMM64_JMP" in
-def imm64_jmp : Operand<OtherVT> {
-  let ParserMatchClass = ImmAsmOperand<64>;
-  let MCOperandPredicate = [{
-    int64_t Imm;
-    if (MCOp.evaluateAsConstantImm(Imm))
-      return isInt<64>(Imm);
-    return MCOp.isBareSymbolRef();
-  }];
-}
-
 } // OperandNamespace = "EBC"
 
 //===----------------------------------------------------------------------===//
 // Instruction Class Templates
 //===----------------------------------------------------------------------===//
+
+// Note: TSFlags represent following attributes
+// TSFlags{7}: 1 if the operand 1 is indirect
+// TSFlags{6}: 1 if the instruction has immediate/index
+// TSFlags{5}: 1 if the instruction is relative
+// TSFlags{4}: 1 if the instruction is native
+// TSFlags{3-2}: 0b00: imm8, 0b01: imm16, 0b10: imm32, 0b11: imm64
+// TSFlags{1}: 1 if the fixup is pcrel
+// TSFlags{0}: 1 if the instruction has fixup
 
 class EBCCALL32<bits<6> opcode,
                 bit hasImmIdx, bit isNative,
@@ -167,11 +194,13 @@ class EBCCALL32<bits<6> opcode,
   let mayLoad = !if(Op1Indirect, 1, 0);
   let Inst{13} = isNative;
   let Inst{12} = isRel;
-  let TSFlags{5} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
-  let TSFlags{4} = !if(isRel, 1, 0);
-  let TSFlags{3} = !if(isNative, 1, 0);
-  let TSFlags{2} = 0;
-  let TSFlags{1-0} = 0b01;
+  let TSFlags{7} = Op1Indirect;
+  let TSFlags{6} = hasImmIdx;
+  let TSFlags{5} = isRel;
+  let TSFlags{4} = isNative;
+  let TSFlags{3-2} = 0b10;
+  let TSFlags{1} = 0;
+  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
 }
 
 class EBCCALL64<bits<6> opcode,
@@ -189,11 +218,13 @@ class EBCCALL64<bits<6> opcode,
   let Inst{6} = 1;
   let Inst{13} = isNative;
   let Inst{12} = isRel;
-  let TSFlags{5} = 1;
-  let TSFlags{4} = !if(isRel, 1, 0);
-  let TSFlags{3} = !if(isNative, 1, 0);
-  let TSFlags{2} = 1;
-  let TSFlags{1-0} = 0b01;
+  let TSFlags{7} = 0;
+  let TSFlags{6} = 0;
+  let TSFlags{5} = isRel;
+  let TSFlags{4} = isNative;
+  let TSFlags{3-2} = 0b11;
+  let TSFlags{1} = isRel;
+  let TSFlags{0} = 1;
 }
 
 class EBCJMP32<bits<6> opcode,
@@ -222,11 +253,13 @@ class EBCJMP32<bits<6> opcode,
   let Inst{15} = isCond;
   let Inst{14} = isCS;
   let Inst{12} = isRel;
-  let TSFlags{5} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
-  let TSFlags{4} = !if(isRel, 1, 0);
-  let TSFlags{3} = 0;
-  let TSFlags{2} = 0;
-  let TSFlags{1-0} = 0b10;
+  let TSFlags{7} = Op1Indirect;
+  let TSFlags{6} = hasImmIdx;
+  let TSFlags{5} = isRel;
+  let TSFlags{4} = 0;
+  let TSFlags{3-2} = 0b10;
+  let TSFlags{1} = isRel;
+  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
 }
 
 class EBCJMP64<bits<6> opcode,
@@ -247,11 +280,13 @@ class EBCJMP64<bits<6> opcode,
   let Inst{15} = isCond;
   let Inst{14} = isCS;
   let Inst{12} = isRel;
-  let TSFlags{5} = 1;
-  let TSFlags{4} = !if(isRel, 1, 0);
-  let TSFlags{3} = 0;
-  let TSFlags{2} = 1;
-  let TSFlags{1-0} = 0b10;
+  let TSFlags{7} = 0;
+  let TSFlags{6} = 0;
+  let TSFlags{5} = isRel;
+  let TSFlags{4} = 0;
+  let TSFlags{3-2} = 0b11;
+  let TSFlags{1} = isRel;
+  let TSFlags{0} = 1;
 }
 
 class EBCJMP8<bits<6> opcode, bit isCond, bit isCS,
@@ -265,11 +300,13 @@ class EBCJMP8<bits<6> opcode, bit isCond, bit isCS,
   let CodeSize = 2;
   let Inst{7} = isCond;
   let Inst{6} = isCS;
-  let TSFlags{5} = 0;
+  let TSFlags{7} = 0;
+  let TSFlags{6} = 0;
+  let TSFlags{5} = 1;
   let TSFlags{4} = 0;
-  let TSFlags{3} = 0;
-  let TSFlags{2} = 0;
-  let TSFlags{1-0} = 0b11;
+  let TSFlags{3-2} = 0b00;
+  let TSFlags{1} = 1;
+  let TSFlags{0} = 1;
 }
 
 class EBCPUSHPOP<bits<6> opcode, bit hasImmIdx, bit is64Bit, bit Op1Indirect,
@@ -289,6 +326,13 @@ class EBCPUSHPOP<bits<6> opcode, bit hasImmIdx, bit is64Bit, bit Op1Indirect,
                 !eq(!and(hasImmIdx, Op1Indirect), 1) : idxstr)> {
   let CodeSize = !if(hasImmIdx, 4, 2);
   let mayLoad = !if(!and(Op1Indirect, hasImmIdx), 1, 0);
+  let TSFlags{7} = Op1Indirect;
+  let TSFlags{6} = hasImmIdx;
+  let TSFlags{5} = 0;
+  let TSFlags{4} = 0;
+  let TSFlags{3-2} = 0b01;
+  let TSFlags{1} = 0;
+  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
 }
 
 class EBCPUSHnPOPn<bits<6> opcode, bit hasImmIdx, bit Op1Indirect,
@@ -307,6 +351,13 @@ class EBCPUSHnPOPn<bits<6> opcode, bit hasImmIdx, bit Op1Indirect,
                 !eq(!and(hasImmIdx, Op1Indirect), 1) : idxstr)> {
   let CodeSize = !if(hasImmIdx, 4, 2);
   let mayLoad = !if(!and(Op1Indirect, hasImmIdx), 1, 0);
+  let TSFlags{7} = Op1Indirect;
+  let TSFlags{6} = hasImmIdx;
+  let TSFlags{5} = 0;
+  let TSFlags{4} = 0;
+  let TSFlags{3-2} = 0b01;
+  let TSFlags{1} = 0;
+  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
 }
 
 class EBCALUBase<bits<6> opcode, bit hasImmIdx, bit is64Bit,
@@ -329,6 +380,13 @@ class EBCALUBase<bits<6> opcode, bit hasImmIdx, bit is64Bit,
   let CodeSize = !if(hasImmIdx, 4, 2);
   let mayLoad = !if(Op2Indirect, 1, 0);
   let mayStore = !if(Op1Indirect, 1, 0);
+  let TSFlags{7} = Op2Indirect;
+  let TSFlags{6} = hasImmIdx;
+  let TSFlags{5} = 0;
+  let TSFlags{4} = 0;
+  let TSFlags{3-2} = 0b01;
+  let TSFlags{1} = 0;
+  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op2Indirect, 0)), 1, 0);
 }
 
 class EBCCMPBase<bits<6> opcode, bit hasImmIdx, bit is64Bit, bit Op2Indirect,
@@ -347,6 +405,13 @@ class EBCCMPBase<bits<6> opcode, bit hasImmIdx, bit is64Bit, bit Op2Indirect,
           pattern> {
   let CodeSize = !if(hasImmIdx, 4, 2);
   let mayLoad = !if(Op2Indirect, 1, 0);
+  let TSFlags{7} = Op2Indirect;
+  let TSFlags{6} = hasImmIdx;
+  let TSFlags{5} = 0;
+  let TSFlags{4} = 0;
+  let TSFlags{3-2} = 0b01;
+  let TSFlags{1} = 0;
+  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op2Indirect, 0)), 1, 0);
 }
 
 class EBCCMPIBase<bits<6> opcode,
@@ -365,6 +430,13 @@ class EBCCMPIBase<bits<6> opcode,
   let Inst{12} = hasOp1Idx;
   let Inst{11} = Op1Indirect;
   let Inst{10-8} = op1;
+  let TSFlags{7} = 0;
+  let TSFlags{6} = 1;
+  let TSFlags{5} = 0;
+  let TSFlags{4} = 0;
+  let TSFlags{3-2} = !if(immlen, 0b01, 0b10);
+  let TSFlags{1} = 0;
+  let TSFlags{0} = 1;
 
   let CodeSize = !cond(!and(!eq(hasOp1Idx, 0), !eq(immlen, 0)) : 4,
                    !and(!eq(hasOp1Idx, 0), !eq(immlen, 1)) : 6,
@@ -440,6 +512,13 @@ class EBCMOVIBase<bits<6> opcode, bits<2> immlen, bits<2> movlen,
   let Inst{13-12} = movlen;
   let Inst{11} = Op1Indirect;
   let Inst{10-8} = op1;
+  let TSFlags{7} = 0;
+  let TSFlags{6} = 0;
+  let TSFlags{5} = 0;
+  let TSFlags{4} = 0;
+  let TSFlags{3-2} = immlen;
+  let TSFlags{1} = 0;
+  let TSFlags{0} = 1;
 
   let CodeSize = !add(2, !if(hasOp1Idx, 2, 0), !shl(1, immlen));
   let mayLoad = 0;
@@ -464,6 +543,13 @@ class EBCMOVRELBase<bits<6> opcode, bits<2> immlen,
   let Inst{14} = hasOp1Idx;
   let Inst{11} = Op1Indirect;
   let Inst{10-8} = op1;
+  let TSFlags{7} = 0;
+  let TSFlags{6} = 0;
+  let TSFlags{5} = 1;
+  let TSFlags{4} = 0;
+  let TSFlags{3-2} = immlen;
+  let TSFlags{1} = 1;
+  let TSFlags{0} = 1;
 
   let CodeSize = !add(2, !if(hasOp1Idx, 2, 0), !shl(1, immlen));
   let mayLoad = 0;
@@ -537,6 +623,13 @@ class EBCMOVsnBase<bits<6> opcode, bits<2> idxlen,
   let Inst{14-12} = op2;
   let Inst{11} = Op1Indirect;
   let Inst{10-8} = op1;
+  let TSFlags{7} = Op2Indirect;
+  let TSFlags{6} = hasOp2Idx;
+  let TSFlags{5} = 0;
+  let TSFlags{4} = 0;
+  let TSFlags{3-2} = idxlen;
+  let TSFlags{1} = 0;
+  let TSFlags{0} = !if(!and(hasOp2Idx, !eq(Op2Indirect, 0)), 1, 0);
 
   let CodeSize = !add(2, !if(hasOp1Idx, !shl(1, idxlen), 0), !if(hasOp2Idx, !shl(1, idxlen), 0));
   let mayLoad = !if(Op2Indirect, 1, 0);
@@ -695,7 +788,7 @@ foreach isNative = [0b0, 0b1] in {
     # !if(isRel, "Rel", "Abs")
     # "Imm"
       : EBCCALL64<0b000011, isNative, isRel,
-                  (outs), (ins imm64:$imm), (ins imm64_jmp:$imm), "$imm">;
+                  (outs), (ins imm64:$imm), (ins imm64:$imm), "$imm">;
 }
 } // isCall = 1
 
@@ -732,7 +825,7 @@ foreach isCond = [0b0, 0b1] in {
       # !if(isRel, "Rel", "Abs")
       # "Imm"
         : EBCJMP64<0b000001, isCond, isCS, isRel,
-                (outs), (ins), (ins imm64_jmp:$imm), "$imm",
+                (outs), (ins), (ins jmp64:$imm), "$imm",
                 !if(isCond,
                     [(EBCbrcond bb:$imm), (implicit flags)],
                     [(EBCbrcond bb:$imm)])>;
@@ -745,7 +838,7 @@ foreach isCond = [0b0, 0b1] in {
     # !cond(!eq(isCond, 0) : "Uncond",
             !and(isCond, !eq(isCS, 0)) : "CC",
             !and(isCond, !eq(isCS, 1)) : "CS")
-      : EBCJMP8<0b000010, isCond, isCS, (outs), (ins imm8_jmp:$imm), "$imm">;
+      : EBCJMP8<0b000010, isCond, isCS, (outs), (ins imm8:$imm), "$imm">;
 }
 } // hasSideEffects = 1, mayStore = 0, isBranch = 1
 
@@ -1051,8 +1144,22 @@ def : StPat<store, MOVqqOp1IOp2D>;
 
 /// Branches and jumps
 
-def PseudoBR : Pseudo<(outs), (ins imm64_jmp:$imm), [(br bb:$imm)]>,
-               PseudoInstExpansion<(JMP64UncondAbsImm imm64_jmp:$imm)>;
+def PseudoBR : Pseudo<(outs), (ins jmp64:$imm), [(br bb:$imm)]>,
+               PseudoInstExpansion<(JMP64UncondAbsImm jmp64:$imm)>;
+
+let isBarrier = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1 in
+def PseudoBRIND : Pseudo<(outs), (ins GPR:$op1), []>,
+                  PseudoInstExpansion<(JMP32UncondAbsOp1I GPR:$op1)>;
+
+let usesCustomInserter = 1 in
+def PseudoSELECT
+    : Pseudo<(outs GPR:$dst),
+             (ins GPR:$lhs, GPR:$rhs, imm64:$imm, imm64:$cs,
+              GPR:$src, GPR:$src2),
+             [(set GPR:$dst, (EBCselectCC GPR:$lhs, GPR:$rhs,
+               imm64:$imm, imm64:$cs, GPR:$src, GPR:$src2))]>;
+
+def : Pat<(brind GPR:$op1), (JMP32UncondAbsOp1I GPR:$op1)>;
 
 /// Calls
 
@@ -1061,19 +1168,6 @@ def : Pat<(EBCcall texternalsym:$imm), (CALL64EBCRelImm texternalsym:$imm)>;
 def : Pat<(EBCcall imm:$imm), (CALL64EBCAbsImm imm64:$imm)>;
 def : Pat<(EBCcall GPR:$op1), (CALL32Op1DEBCAbs GPR:$op1)>;
 def : Pat<(EBCcall (load GPR:$op1)), (CALL32Op1IEBCAbs GPR:$op1)>;
-
-let usesCustomInserter = 1 in
-def PseudoSELECT
-    : Pseudo<(outs GPR:$dst),
-             (ins GPR:$lhs, GPR:$rhs, imm64:$imm, imm64:$cs, GPR:$src, GPR:$src2),
-             [(set GPR:$dst, (EBCselectCC GPR:$lhs, GPR:$rhs,
-               imm64:$imm, imm64:$cs, GPR:$src, GPR:$src2))]>;
-
-let isBarrier = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1 in
-def PseudoBRIND : Pseudo<(outs), (ins GPR:$op1), []>,
-                  PseudoInstExpansion<(JMP32UncondAbsOp1I GPR:$op1)>;
-
-def : Pat<(brind GPR:$op1), (JMP32UncondAbsOp1I GPR:$op1)>;
 
 /// Other pseudo-instructions
 

@@ -54,12 +54,13 @@ public:
       // EBCFixupKinds.h
       //
       // name              offset bits   flags
-      { "fixup_ebc_jmp8",       0,   8,  MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ebc_jmp64rel",   0,  64,  MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ebc_call64rel",  0,  64,  MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ebc_movrelw",    0,  16,  MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ebc_movreld",    0,  32,  MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ebc_movrelq",    0,  64,  MCFixupKindInfo::FKF_IsPCRel }
+      { "fixup_ebc_imm16",      0,  16,  0 },
+      { "fixup_ebc_imm32",      0,  32,  0 },
+      { "fixup_ebc_imm64",      0,  64,  0 },
+      { "fixup_ebc_pcrel_imm8", 0,   8,  MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ebc_pcrel_imm16",0,  16,  MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ebc_pcrel_imm32",0,  32,  MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ebc_pcrel_imm64",0,  64,  MCFixupKindInfo::FKF_IsPCRel },
     };
 
       if (Kind < FirstTargetFixupKind)
@@ -89,18 +90,19 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   switch (Kind) {
   default:
     llvm_unreachable("Unknown fixup kind!");
-  case EBC::fixup_ebc_jmp8:
+  case EBC::fixup_ebc_pcrel_imm8:
   case FK_Data_1:
     return 1;
-  case EBC::fixup_ebc_movrelw:
+  case EBC::fixup_ebc_imm16:
+  case EBC::fixup_ebc_pcrel_imm16:
   case FK_Data_2:
     return 2;
-  case EBC::fixup_ebc_movreld:
+  case EBC::fixup_ebc_imm32:
+  case EBC::fixup_ebc_pcrel_imm32:
   case FK_Data_4:
     return 4;
-  case EBC::fixup_ebc_jmp64rel:
-  case EBC::fixup_ebc_call64rel:
-  case EBC::fixup_ebc_movrelq:
+  case EBC::fixup_ebc_imm64:
+  case EBC::fixup_ebc_pcrel_imm64:
   case FK_Data_8:
     return 8;
   }
@@ -117,45 +119,22 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
     case FK_Data_2:
     case FK_Data_4:
     case FK_Data_8:
+    case EBC::fixup_ebc_imm16:
+    case EBC::fixup_ebc_imm32:
+    case EBC::fixup_ebc_imm64:
       return Value;
-    case EBC::fixup_ebc_jmp8:
-      SignedValue -= 1;
+    case EBC::fixup_ebc_pcrel_imm8:
       if (SignedValue % 2)
         Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
       if ((SignedValue > INT8_MAX * 2) || (SignedValue < INT8_MIN * 2))
         Ctx.reportError(Fixup.getLoc(), "fixup must be in range [-256, 254]");
       return SignedValue / 2;
-    case EBC::fixup_ebc_jmp64rel:
-      SignedValue -= 8;
+    case EBC::fixup_ebc_pcrel_imm16:
+    case EBC::fixup_ebc_pcrel_imm32:
+    case EBC::fixup_ebc_pcrel_imm64:
+      SignedValue += 2;
       if (SignedValue % 2)
         Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
-      if ((SignedValue > INT64_MAX) || (SignedValue < INT64_MIN))
-        Ctx.reportError(Fixup.getLoc(), "fixup must be in range [INT64_MIN, INT64_MAX]");
-      return SignedValue;
-    case EBC::fixup_ebc_call64rel:
-      SignedValue -= 8;
-      // FIXME: UEFI specification does not imply the callee alignment,
-      // however, the size of all EBC instructions are multiple of 2,
-      // so the fixup must be 2-byte aligned.
-      if (SignedValue % 2)
-        Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
-      if ((SignedValue > INT64_MAX) || (SignedValue < INT64_MIN))
-        Ctx.reportError(Fixup.getLoc(), "fixup must be in range [INT64_MIN, INT64_MAX]");
-      return SignedValue;
-    case EBC::fixup_ebc_movrelw:
-      SignedValue -= 2;
-      if ((SignedValue > INT16_MAX) || (SignedValue < INT16_MIN))
-        Ctx.reportError(Fixup.getLoc(), "fixup must be in range [INT16_MIN, INT16_MAX]");
-      return SignedValue;
-    case EBC::fixup_ebc_movreld:
-      SignedValue -= 4;
-      if ((SignedValue > INT32_MAX) || (SignedValue < INT32_MIN))
-        Ctx.reportError(Fixup.getLoc(), "fixup must be in range [INT32_MIN, INT32_MAX]");
-      return SignedValue;
-    case EBC::fixup_ebc_movrelq:
-      SignedValue -= 8;
-      if ((SignedValue > INT64_MAX) || (SignedValue < INT64_MIN))
-        Ctx.reportError(Fixup.getLoc(), "fixup must be in range [INT64_MIN, INT64_MAX]");
       return SignedValue;
   }
 }

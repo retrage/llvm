@@ -17,12 +17,13 @@
 namespace llvm {
 namespace EBC {
 enum Fixups {
-  fixup_ebc_jmp8 = FirstTargetFixupKind,
-  fixup_ebc_jmp64rel,
-  fixup_ebc_call64rel,
-  fixup_ebc_movrelw,
-  fixup_ebc_movreld,
-  fixup_ebc_movrelq,
+  fixup_ebc_imm16 = FirstTargetFixupKind,
+  fixup_ebc_imm32,
+  fixup_ebc_imm64,
+  fixup_ebc_pcrel_imm8,
+  fixup_ebc_pcrel_imm16,
+  fixup_ebc_pcrel_imm32,
+  fixup_ebc_pcrel_imm64,
 
   // fixup_ebc_invalid - used as a sentinel and a marker, must be last fixup
   fixup_ebc_invalid,

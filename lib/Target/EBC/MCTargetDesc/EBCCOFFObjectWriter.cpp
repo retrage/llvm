@@ -50,12 +50,6 @@ unsigned EBCCOFFObjectWriter::getRelocType(
     const MCFixupKindInfo &Info = MAB.getFixupKindInfo(Fixup.getKind());
     report_fatal_error(Twine("unsupported relocation type: ") + Info.Name);
   }
-  case EBC::fixup_ebc_jmp8:
-    return COFF::IMAGE_REL_EBC_REL8;
-  case EBC::fixup_ebc_movrelw:
-    return COFF::IMAGE_REL_EBC_REL16;
-  case EBC::fixup_ebc_movreld:
-    return COFF::IMAGE_REL_EBC_REL32;
   case FK_Data_4:
     switch (Modifier) {
     default:
@@ -67,14 +61,24 @@ unsigned EBCCOFFObjectWriter::getRelocType(
     }
   case FK_Data_8:
     return COFF::IMAGE_REL_EBC_ADDR64;
-  case EBC::fixup_ebc_movrelq:
-  case EBC::fixup_ebc_jmp64rel:
-  case EBC::fixup_ebc_call64rel:
+  case EBC::fixup_ebc_pcrel_imm8:
+    return COFF::IMAGE_REL_EBC_REL8;
+  case EBC::fixup_ebc_pcrel_imm16:
+    return COFF::IMAGE_REL_EBC_REL16;
+  case EBC::fixup_ebc_pcrel_imm32:
+    return COFF::IMAGE_REL_EBC_REL32;
+  case EBC::fixup_ebc_pcrel_imm64:
     return COFF::IMAGE_REL_EBC_REL64;
   case FK_SecRel_2:
     return COFF::IMAGE_REL_EBC_SECTION;
   case FK_SecRel_4:
     return COFF::IMAGE_REL_EBC_SECREL;
+  case EBC::fixup_ebc_imm16:
+    return COFF::IMAGE_REL_EBC_IMM16;
+  case EBC::fixup_ebc_imm32:
+    return COFF::IMAGE_REL_EBC_IMM32;
+  case EBC::fixup_ebc_imm64:
+    return COFF::IMAGE_REL_EBC_IMM64;
   }
 }
 

@@ -111,12 +111,11 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
       const MCOperandInfo &Info = Desc.OpInfo[I];
       switch (Info.OperandType) {
       case EBC::OPERAND_BREAKCODE:
+      case EBC::OPERAND_IMM8:
       case EBC::OPERAND_IMM16:
       case EBC::OPERAND_IMM32:
       case EBC::OPERAND_IMM64:
-      case EBC::OPERAND_IMM8_JMP:
-      case EBC::OPERAND_IMM64_JMP:
-      case EBC::OPERAND_CALLTARGET:
+      case EBC::OPERAND_JMP64:
         break;
       case EBC::OPERAND_IDXN16: {
           // Assume next operand is OPERAND_IDXC16
@@ -161,18 +160,19 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
     case EBC::fixup_ebc_invalid:
     default:
       llvm_unreachable("Unhandled FixupKind!");
-    case EBC::fixup_ebc_jmp8:
+    case EBC::fixup_ebc_pcrel_imm8:
       support::endian::write<uint8_t>(OS, 0, support::little);
       break;
-    case EBC::fixup_ebc_movrelw:
+    case EBC::fixup_ebc_imm16:
+    case EBC::fixup_ebc_pcrel_imm16:
       support::endian::write<uint16_t>(OS, 0, support::little);
       break;
-    case EBC::fixup_ebc_movreld:
+    case EBC::fixup_ebc_imm32:
+    case EBC::fixup_ebc_pcrel_imm32:
       support::endian::write<uint32_t>(OS, 0, support::little);
       break;
-    case EBC::fixup_ebc_jmp64rel:
-    case EBC::fixup_ebc_call64rel:
-    case EBC::fixup_ebc_movrelq:
+    case EBC::fixup_ebc_imm64:
+    case EBC::fixup_ebc_pcrel_imm64:
       support::endian::write<uint64_t>(OS, 0, support::little);
       break;
     }
@@ -187,7 +187,7 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
       const MCOperandInfo &Info = Desc.OpInfo[I];
       switch (Info.OperandType) {
       case EBC::OPERAND_BREAKCODE:
-      case EBC::OPERAND_IMM8_JMP:
+      case EBC::OPERAND_IMM8:
         support::endian::write<uint8_t>(OS, MO.getImm(), support::little);
         break;
       case EBC::OPERAND_IMM16:
@@ -197,8 +197,7 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
         support::endian::write<uint32_t>(OS, MO.getImm(), support::little);
         break;
       case EBC::OPERAND_IMM64:
-      case EBC::OPERAND_IMM64_JMP:
-      case EBC::OPERAND_CALLTARGET:
+      case EBC::OPERAND_JMP64:
         support::endian::write<uint64_t>(OS, MO.getImm(), support::little);
         break;
       case EBC::OPERAND_IDXN16:
@@ -238,38 +237,38 @@ EBCMCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   unsigned Offset = 2;
   if (Kind == MCExpr::SymbolRef &&
       cast<MCSymbolRefExpr>(Expr)->getKind() == MCSymbolRefExpr::VK_None) {
-    switch (TSFlags & 0x03) {
-    case 0x00:
-      if (TSFlags & 0x100)
-        Offset += 2;
-      switch ((TSFlags & 0xc0) >> 6) {
-      case 0x01:
-        FixupKind = EBC::fixup_ebc_movrelw;
-        break;
-      case 0x02:
-        FixupKind = EBC::fixup_ebc_movreld;
-        break;
-      case 0x03:
-        FixupKind = EBC::fixup_ebc_movrelq;
-        break;
+    // Check if it has fixup and not native call
+    if (TSFlags & 0x01 && !(TSFlags & 0x10)) {
+      // Check if the fixup is pcrel
+      if (TSFlags & 0x02) {
+        switch ((TSFlags & 0x0c) >> 2) {
+        case 0x00:
+          FixupKind = EBC::fixup_ebc_pcrel_imm8;
+          Offset = 1;
+          break;
+        case 0x01:
+          FixupKind = EBC::fixup_ebc_pcrel_imm16;
+          break;
+        case 0x02:
+          FixupKind = EBC::fixup_ebc_pcrel_imm32;
+          break;
+        case 0x03:
+          FixupKind = EBC::fixup_ebc_pcrel_imm64;
+          break;
+        }
+      } else {
+        switch ((TSFlags & 0x0c) >> 2) {
+        case 0x01:
+          FixupKind = EBC::fixup_ebc_imm16;
+          break;
+        case 0x02:
+          FixupKind = EBC::fixup_ebc_imm32;
+          break;
+        case 0x03:
+          FixupKind = EBC::fixup_ebc_imm64;
+          break;
+        }
       }
-      break;
-    case 0x01:
-      if ((TSFlags & 0x20) && !(TSFlags & 0x08) && (TSFlags & 0x04)) {
-        if (TSFlags & 0x10)
-          FixupKind = EBC::fixup_ebc_call64rel;
-      }
-      break;
-    case 0x02:
-      if ((TSFlags & 0x20) && (TSFlags & 0x04)) {
-        if (TSFlags & 0x10)
-          FixupKind = EBC::fixup_ebc_jmp64rel;
-      }
-      break;
-    case 0x03:
-      FixupKind = EBC::fixup_ebc_jmp8;
-      Offset = 1;
-      break;
     }
   }
 

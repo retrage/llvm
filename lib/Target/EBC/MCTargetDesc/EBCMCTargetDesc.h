@@ -50,12 +50,16 @@ namespace EBC {
 enum OperandType {
   /// break code
   OPERAND_BREAKCODE,
+  /// 8-bit immediates
+  OPERAND_IMM8,
   /// 16-bit immediates
   OPERAND_IMM16,
   /// 32-bit immediates
   OPERAND_IMM32,
   /// 64-bit immediates
   OPERAND_IMM64,
+  /// 64-bit immediates for JMP64
+  OPERAND_JMP64,
   /// 16-bit index natural units
   OPERAND_IDXN16,
   /// 16-bit index constant units
@@ -68,12 +72,6 @@ enum OperandType {
   OPERAND_IDXN64,
   /// 64-bit index constant units
   OPERAND_IDXC64,
-  /// 8-bit immediates for JMP8
-  OPERAND_IMM8_JMP,
-  /// 64-bit immediates for JMP64
-  OPERAND_IMM64_JMP,
-  /// 64-bit calltarget for CALL64
-  OPERAND_CALLTARGET,
 };
 }
 
