@@ -192,8 +192,6 @@ int EBCFrameLowering::getFrameIndexReference(const MachineFunction &MF,
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   const TargetRegisterInfo *RI = MF.getSubtarget().getRegisterInfo();
 
-  unsigned CalleeFrameSize = getCalleeSavedFrameSize(MF);
-
   return MFI.getObjectOffset(FI) + MFI.getStackSize() - getOffsetOfLocalArea()
          + RI->getFrameRegister(MF) + MFI.getOffsetAdjustment();
 }
