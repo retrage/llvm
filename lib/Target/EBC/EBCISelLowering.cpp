@@ -299,9 +299,9 @@ SDValue EBCTargetLowering::lowerGlobalAddress(SDValue Op,
   const GlobalValue *GV = N->getGlobal();
   int64_t Offset = N->getOffset();
 
-  // TODO: this should be improved by using natural indexing.
   SDValue GA = DAG.getTargetGlobalAddress(GV, DL, Ty);
-  SDValue MN = SDValue(DAG.getMachineNode(EBC::MOVRELqOp1D, DL, Ty, GA), 0);
+  // TODO: Replace with pseudo inst to select suitable inst later.
+  SDValue MN = SDValue(DAG.getMachineNode(EBC::MOVIqqOp1D, DL, Ty, GA), 0);
   if (Offset != 0)
     return DAG.getNode(ISD::ADD, DL, Ty, MN,
                        DAG.getConstant(Offset, DL, MVT::i64));
@@ -318,7 +318,8 @@ SDValue EBCTargetLowering::lowerBlockAddress(SDValue Op,
   int64_t Offset = N->getOffset();
 
   SDValue BA = DAG.getTargetBlockAddress(B, Ty, Offset);
-  SDValue MN = SDValue(DAG.getMachineNode(EBC::MOVRELqOp1D, DL, Ty, BA), 0);
+  // TODO: Replace with pseudo inst to select suitable inst later.
+  SDValue MN = SDValue(DAG.getMachineNode(EBC::MOVIqqOp1D, DL, Ty, BA), 0);
 
   return MN;
 }
