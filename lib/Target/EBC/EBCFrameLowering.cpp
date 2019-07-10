@@ -84,9 +84,10 @@ void EBCFrameLowering::adjustReg(MachineBasicBlock &MBB,
       .setMIFlag(Flag);
 }
 
-unsigned EBCFrameLowering::getCalleeSavedFrameSize(MachineFunction &MF) const {
-  MachineFrameInfo &MFI = MF.getFrameInfo();
-  MachineRegisterInfo &MRI = MF.getRegInfo();
+unsigned
+EBCFrameLowering::getCalleeSavedFrameSize(const MachineFunction &MF) const {
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  const MachineRegisterInfo &MRI = MF.getRegInfo();
   const EBCRegisterInfo *RI = STI.getRegisterInfo();
 
   unsigned CalleeFrameSize = 0;
@@ -183,4 +184,16 @@ void EBCFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Deallocate stack
   adjustReg(MBB, MBBI, DL, SPReg, SPReg, StackSize, MachineInstr::FrameDestroy);
+}
+
+int EBCFrameLowering::getFrameIndexReference(const MachineFunction &MF,
+                                             int FI,
+                                             unsigned &FrameReg) const {
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  const TargetRegisterInfo *RI = MF.getSubtarget().getRegisterInfo();
+
+  unsigned CalleeFrameSize = getCalleeSavedFrameSize(MF);
+
+  return MFI.getObjectOffset(FI) + MFI.getStackSize() - getOffsetOfLocalArea()
+         + RI->getFrameRegister(MF) + MFI.getOffsetAdjustment();
 }
