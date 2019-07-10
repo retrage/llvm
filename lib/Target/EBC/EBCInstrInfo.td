@@ -454,11 +454,11 @@ class EBCMOVBase<bits<6> opcode, bits<2> idxlen, bits<2> movlen,
           !cond(!and(!eq(hasOp1Idx, 0), !eq(hasOp2Idx, 0))
                 : !con(op1ins, op2ins),
                 !and(hasOp1Idx, !eq(hasOp2Idx, 0))
-                : !con(op1ins, op2ins, op1idxins),
+                : !con(op1ins, op1idxins, op2ins),
                 !and(!eq(hasOp1Idx, 0), hasOp2Idx)
                 : !con(op1ins, op2ins, op2idxins),
                 !and(hasOp1Idx, hasOp2Idx)
-                : !con(op1ins, op2ins, op1idxins, op2idxins)),
+                : !con(op1ins, op1idxins, op2ins, op2idxins)),
           "mov"
         # !cond(!eq(movlen, 0b00) : "b", !eq(movlen, 0b01) : "w",
                 !eq(movlen, 0b10) : "d", !eq(movlen, 0b11) : "q")

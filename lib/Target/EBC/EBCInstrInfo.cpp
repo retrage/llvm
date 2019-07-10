@@ -11,15 +11,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "EBCInstrInfo.h"
 #include "EBC.h"
+#include "EBCInstrInfo.h"
 #include "EBCSubtarget.h"
 #include "EBCTargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
@@ -48,14 +50,19 @@ void EBCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        const TargetRegisterClass *RC,
                                        const TargetRegisterInfo *TRI) const {
   DebugLoc DL;
-  if (MBBI != MBB.end())
+  if (MBBI != MBB.end()) {
     DL = MBBI->getDebugLoc();
+  }
 
-  if (RC == &EBC::GPRRegClass)
-    BuildMI(MBB, MBBI, DL, get(EBC::PUSH64Op1D))
+  if (RC == &EBC::GPRRegClass) {
+    BuildMI(MBB, MBBI, DL, get(EBC::MOVqwOp1IIdxOp2D))
+        .addFrameIndex(FI)
+        .addImm(0)
+        .addImm(0)
         .addReg(SrcReg, getKillRegState(IsKill));
-  else
+  } else {
     llvm_unreachable("Can't store this register to stack slot");
+  }
 }
 
 void EBCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -64,11 +71,16 @@ void EBCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         const TargetRegisterClass *RC,
                                         const TargetRegisterInfo *TRI) const {
   DebugLoc DL;
-  if (MBBI != MBB.end())
+  if (MBBI != MBB.end()) {
     DL = MBBI->getDebugLoc();
+  }
 
-  if (RC == &EBC::GPRRegClass)
-    BuildMI(MBB, MBBI, DL, get(EBC::POP64Op1D), DstReg);
-  else
+  if (RC == &EBC::GPRRegClass) {
+    BuildMI(MBB, MBBI, DL, get(EBC::MOVqwOp1DOp2IIdx), DstReg)
+        .addFrameIndex(FI)
+        .addImm(0)
+        .addImm(0);
+  } else {
     llvm_unreachable("Can't load this register from stack slot");
+  }
 }

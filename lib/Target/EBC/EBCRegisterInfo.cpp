@@ -66,13 +66,12 @@ void EBCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
   unsigned FrameReg;
   int Offset =
-    getFrameLowering(MF)->getFrameIndexReference(MF, FrameIndex, FrameReg) +
-    MI.getOperand(FIOperandNum + 2).getImm();
+    getFrameLowering(MF)->getFrameIndexReference(MF, FrameIndex, FrameReg);
 
   if (isInt<16>(Offset)) {
     MI.getOperand(FIOperandNum)
         .ChangeToRegister(FrameReg, false, false, false);
-    MI.getOperand(FIOperandNum + 2).ChangeToImmediate(Offset);
+    MI.getOperand(FIOperandNum + 2).setImm(Offset);
   } else {
     report_fatal_error(
         "Frame offsets outside of the signed 16-bit range not supported");

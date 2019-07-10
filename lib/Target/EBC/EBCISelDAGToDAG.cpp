@@ -61,8 +61,8 @@ void EBCDAGToDAGISel::Select(SDNode *Node) {
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(Node)->getIndex();
     SDValue Op2 = CurDAG->getTargetFrameIndex(FI, VT);
-    SDValue Op2IdxN = CurDAG->getTargetConstant(0, DL, MVT::i16);
-    SDValue Op2IdxC = CurDAG->getTargetConstant(0, DL, MVT::i16);
+    SDValue Op2IdxN = CurDAG->getConstant(0, DL, MVT::i16);
+    SDValue Op2IdxC = CurDAG->getConstant(0, DL, MVT::i16);
     ArrayRef<SDValue> Ops = {Op2, Op2IdxN, Op2IdxC};
     ReplaceNode(Node,
         CurDAG->getMachineNode(EBC::MOVqwOp1DOp2DIdx, DL, VT, Ops));

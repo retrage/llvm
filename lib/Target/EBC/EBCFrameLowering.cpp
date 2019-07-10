@@ -134,7 +134,7 @@ void EBCFrameLowering::emitPrologue(MachineFunction &MF,
 
   // FIXME (note copied from Lanai): This appears to be overallocating. Needs
   // investigation. Get the number of bytes to allocate from the FrameInfo.
-  uint64_t StackSize = MFI.getStackSize() - EBCFI->getCalleeSavedFrameSize();
+  uint64_t StackSize = MFI.getStackSize();
 
   // Early exit if there is no need to allocate on the stack
   if (StackSize == 0 && !MFI.adjustsStack())
@@ -142,13 +142,6 @@ void EBCFrameLowering::emitPrologue(MachineFunction &MF,
 
   // Allocate space on the stack if necessary.
   adjustReg(MBB, MBBI, DL, SPReg, SPReg, -StackSize, MachineInstr::FrameSetup);
-
-  // The frame pointer is callee-saved, and code has been generated for us to
-  // save it to the stack. We need to skip over the storing of callee-saved
-  // registers as the frame pointer must be modified after it has been saved
-  // to the stack, not before.
-  const std::vector<CalleeSavedInfo> &CSI = MFI.getCalleeSavedInfo();
-  std::advance(MBBI, CSI.size());
 
   // Generate new FP.
   if (hasFP(MF))
@@ -170,7 +163,7 @@ void EBCFrameLowering::emitEpilogue(MachineFunction &MF,
   // Skip to before the restores of callee-saved registers
   auto LastFrameDestroy = std::prev(MBBI, MFI.getCalleeSavedInfo().size());
 
-  uint64_t StackSize = MFI.getStackSize() - EBCFI->getCalleeSavedFrameSize();
+  uint64_t StackSize = MFI.getStackSize();
 
   // Restore the stack pointer using the value of the frame pointer. Only
   // necessary if the stack pointer was modified, meaning the stack size is
@@ -195,5 +188,5 @@ int EBCFrameLowering::getFrameIndexReference(const MachineFunction &MF,
   FrameReg = RI->getFrameRegister(MF);
 
   return MFI.getObjectOffset(FI) + MFI.getStackSize() - getOffsetOfLocalArea()
-         + getCalleeSavedFrameSize(MF) + MFI.getOffsetAdjustment();
+         + MFI.getOffsetAdjustment();
 }
