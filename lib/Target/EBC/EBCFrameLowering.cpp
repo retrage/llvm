@@ -59,6 +59,13 @@ void EBCFrameLowering::adjustReg(MachineBasicBlock &MBB,
   if (DestReg == SrcReg && Val == 0)
     return;
 
+  if (Val == 0) {
+    BuildMI(MBB, MBBI, DL, TII->get(EBC::MOVqqOp1DOp2D), DestReg)
+        .addReg(SrcReg)
+        .setMIFlag(Flag);
+    return;
+  }
+
   unsigned Opc;
   if (isInt<16>(Val)) {
     Opc = EBC::MOVqwOp1DOp2DIdx;
