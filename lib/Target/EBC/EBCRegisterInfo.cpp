@@ -68,12 +68,8 @@ void EBCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int Offset =
     getFrameLowering(MF)->getFrameIndexReference(MF, FrameIndex, FrameReg)
     + MI.getOperand(FIOperandNum + 2).getImm();
-  // FIXME: for allocated stack frame
-  if (MI.getOperand(FIOperandNum + 2).getImm() == 8)
-    Offset = -Offset;
 
   if (isInt<16>(Offset)) {
-    // Change operands to R6 (0,Offset)
     MI.getOperand(FIOperandNum)
         .ChangeToRegister(FrameReg, false, false, false);
     MI.getOperand(FIOperandNum + 2).setImm(Offset);

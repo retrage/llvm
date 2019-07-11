@@ -58,7 +58,7 @@ void EBCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MBBI, DL, get(EBC::MOVqwOp1IIdxOp2D))
         .addFrameIndex(FI)
         .addImm(0)
-        .addImm(8) // FIXME: It must be determined by eliminateFrameIndex
+        .addImm(0)
         .addReg(SrcReg, getKillRegState(IsKill));
   } else {
     llvm_unreachable("Can't store this register to stack slot");
@@ -79,7 +79,7 @@ void EBCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MBBI, DL, get(EBC::MOVqwOp1DOp2IIdx), DstReg)
         .addFrameIndex(FI)
         .addImm(0)
-        .addImm(8); // FIXME: It must be determined by eliminateFrameIndex
+        .addImm(0);
   } else {
     llvm_unreachable("Can't load this register from stack slot");
   }

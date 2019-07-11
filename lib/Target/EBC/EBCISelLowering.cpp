@@ -449,9 +449,6 @@ SDValue EBCTargetLowering::LowerCall(CallLoweringInfo &CLI,
     // Work out the address of the stack slot.
     if (!StackPtr.getNode()) {
       StackPtr = DAG.getCopyFromReg(Chain, DL, EBC::r0, PtrVT);
-      // Avoid return address.
-      StackPtr = DAG.getNode(ISD::SUB, DL, PtrVT, StackPtr,
-                             DAG.getIntPtrConstant(8, DL));
     }
     SDValue Address =
       DAG.getNode(ISD::SUB, DL, PtrVT, StackPtr,

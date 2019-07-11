@@ -178,3 +178,41 @@ void EBCFrameLowering::emitEpilogue(MachineFunction &MF,
   // Deallocate stack
   adjustReg(MBB, MBBI, DL, SPReg, SPReg, StackSize, MachineInstr::FrameDestroy);
 }
+
+int EBCFrameLowering::getFrameIndexReference(const MachineFunction &MF,
+                                             int FI,
+                                             unsigned &FrameReg) const {
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  const TargetRegisterInfo *RI = MF.getSubtarget().getRegisterInfo();
+
+  FrameReg = RI->getFrameRegister(MF);
+
+  int FIR = MFI.getObjectOffset(FI) - getOffsetOfLocalArea()
+            + MFI.getOffsetAdjustment();
+
+  if (FI < 0)
+    FIR += MFI.getStackSize();
+
+  return FIR;
+}
+
+MachineBasicBlock::iterator EBCFrameLowering::
+eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator MBBI) const {
+  DebugLoc DL = MBBI->getDebugLoc();
+  unsigned SPReg = getSPReg();
+
+  if (!hasReservedCallFrame(MF)) {
+    int64_t NumBytes = MBBI->getOperand(0).getImm();
+    if (MBBI->getOpcode() == EBC::ADJCALLSTACKDOWN) {
+      adjustReg(MBB, MBBI, DL, SPReg, SPReg, -NumBytes,
+                MachineInstr::NoFlags);
+    } else {
+      assert(MBBI->getOpcode() == EBC::ADJCALLSTACKUP && "unexpected opcode");
+      adjustReg(MBB, MBBI, DL, SPReg, SPReg, NumBytes,
+                MachineInstr::NoFlags);
+    }
+  }
+
+  return MBB.erase(MBBI);
+}

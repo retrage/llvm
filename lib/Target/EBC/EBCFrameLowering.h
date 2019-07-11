@@ -24,20 +24,20 @@ public:
   explicit EBCFrameLowering(const EBCSubtarget &STI)
       : TargetFrameLowering(StackGrowsDown,
                             /*StackAlignment=*/8,
-                            /*LocalAreaOffset=*/-8),
+                            /*LocalAreaOffset=*/0),
         STI(STI) {}
 
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
+  int getFrameIndexReference(const MachineFunction &MF, int FI,
+                             unsigned &FrameReg) const override;
+
   bool hasFP(const MachineFunction &MF) const override;
 
   MachineBasicBlock::iterator
   eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
-                                MachineBasicBlock::iterator MI) const override {
-    return MBB.erase(MI);
-  }
-
+                                MachineBasicBlock::iterator MBBI) const override;
 protected:
   const EBCSubtarget &STI;
 
