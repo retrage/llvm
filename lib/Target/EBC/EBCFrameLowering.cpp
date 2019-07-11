@@ -178,15 +178,3 @@ void EBCFrameLowering::emitEpilogue(MachineFunction &MF,
   // Deallocate stack
   adjustReg(MBB, MBBI, DL, SPReg, SPReg, StackSize, MachineInstr::FrameDestroy);
 }
-
-int EBCFrameLowering::getFrameIndexReference(const MachineFunction &MF,
-                                             int FI,
-                                             unsigned &FrameReg) const {
-  const MachineFrameInfo &MFI = MF.getFrameInfo();
-  const TargetRegisterInfo *RI = MF.getSubtarget().getRegisterInfo();
-
-  FrameReg = RI->getFrameRegister(MF);
-
-  return MFI.getObjectOffset(FI) + MFI.getStackSize() - getOffsetOfLocalArea()
-         + MFI.getOffsetAdjustment();
-}
