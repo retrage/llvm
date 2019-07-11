@@ -62,6 +62,22 @@ class EBCAsmParser : public MCTargetAsmParser {
 
   bool parseOperand(OperandVector &Operands);
 
+  void setFeatureBits(uint64_t Feature, StringRef FeatureString) {
+    if (!(getSTI().getFeatureBits()[Feature])) {
+      MCSubtargetInfo &STI = copySTI();
+      setAvailableFeatures(
+          ComputeAvailableFeatures(STI.ToggleFeature(FeatureString)));
+    }
+  }
+
+  void clearFeatureBits(uint64_t Feature, StringRef FeatureString) {
+    if (getSTI().getFeatureBits()[Feature]) {
+      MCSubtargetInfo &STI = copySTI();
+      setAvailableFeatures(
+          ComputeAvailableFeatures(STI.ToggleFeature(FeatureString)));
+    }
+  }
+
 public:
   enum EBCMatchResultTy {
     Match_Dummy = FIRST_TARGET_MATCH_RESULT_TY,
@@ -563,6 +579,8 @@ bool EBCAsmParser::parseOperand(OperandVector &Operands){
     case AsmToken::LParen:
       if (parseIndex(Operands) == MatchOperand_Success)
         return false;
+      else
+        return parseImmediate(Operands) != MatchOperand_Success;
     case AsmToken::Minus:
     case AsmToken::Plus:
     case AsmToken::Integer:
