@@ -149,7 +149,7 @@ void EBCFrameLowering::emitPrologue(MachineFunction &MF,
   // Generate new FP.
   if (hasFP(MF))
     adjustReg(MBB, MBBI, DL, FPReg, SPReg,
-              StackSize - EBCFI->getVarArgsSaveSize(),
+              StackSize - 8 - EBCFI->getVarArgsSaveSize(),
               MachineInstr::FrameSetup);
 }
 
