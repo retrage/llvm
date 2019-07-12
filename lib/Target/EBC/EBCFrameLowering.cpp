@@ -213,11 +213,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     int64_t NumBytes = MBBI->getOperand(0).getImm();
     if (MBBI->getOpcode() == EBC::ADJCALLSTACKDOWN) {
       adjustReg(MBB, MBBI, DL, SPReg, SPReg, -NumBytes,
-                MachineInstr::NoFlags);
+                MachineInstr::FrameSetup);
     } else {
       assert(MBBI->getOpcode() == EBC::ADJCALLSTACKUP && "unexpected opcode");
       adjustReg(MBB, MBBI, DL, SPReg, SPReg, NumBytes,
-                MachineInstr::NoFlags);
+                MachineInstr::FrameDestroy);
     }
   }
 
