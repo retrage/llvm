@@ -133,6 +133,10 @@ void EBCFrameLowering::emitPrologue(MachineFunction &MF,
   determineFrameLayout(MF);
   EBCFI->setCalleeSavedFrameSize(getCalleeSavedFrameSize(MF));
 
+  // Push old FP.
+  BuildMI(MBB, MBBI, DL, TII->get(EBC::PUSH64Op1D))
+      .addReg(FPReg);
+
   // FIXME (note copied from Lanai): This appears to be overallocating. Needs
   // investigation. Get the number of bytes to allocate from the FrameInfo.
   uint64_t StackSize = MFI.getStackSize();
