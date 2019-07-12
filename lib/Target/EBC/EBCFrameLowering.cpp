@@ -141,12 +141,10 @@ void EBCFrameLowering::emitPrologue(MachineFunction &MF,
   // investigation. Get the number of bytes to allocate from the FrameInfo.
   uint64_t StackSize = MFI.getStackSize();
 
-  // Early exit if there is no need to allocate on the stack
-  if (StackSize == 0 && !MFI.adjustsStack())
-    return;
-
   // Allocate space on the stack if necessary.
-  adjustReg(MBB, MBBI, DL, SPReg, SPReg, -StackSize, MachineInstr::FrameSetup);
+  if (StackSize != 0)
+    adjustReg(MBB, MBBI, DL, SPReg, SPReg,
+              -StackSize, MachineInstr::FrameSetup);
 
   // Generate new FP.
   if (hasFP(MF))
