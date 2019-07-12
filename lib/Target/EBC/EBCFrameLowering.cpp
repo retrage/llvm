@@ -120,6 +120,7 @@ void EBCFrameLowering::emitPrologue(MachineFunction &MF,
   MachineFrameInfo &MFI = MF.getFrameInfo();
   auto *EBCFI = MF.getInfo<EBCMachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
+  const EBCInstrInfo *TII = STI.getInstrInfo();
 
   unsigned FPReg = getFPReg();
   unsigned SPReg = getSPReg();
@@ -156,6 +157,7 @@ void EBCFrameLowering::emitEpilogue(MachineFunction &MF,
   const EBCRegisterInfo *RI = STI.getRegisterInfo();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   auto *EBCFI = MF.getInfo<EBCMachineFunctionInfo>();
+  const EBCInstrInfo *TII = STI.getInstrInfo();
   DebugLoc DL = MBBI->getDebugLoc();
   unsigned FPReg = getFPReg();
   unsigned SPReg = getSPReg();
@@ -177,6 +179,9 @@ void EBCFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Deallocate stack
   adjustReg(MBB, MBBI, DL, SPReg, SPReg, StackSize, MachineInstr::FrameDestroy);
+
+  // Pop old FP.
+  BuildMI(MBB, MBBI, DL, TII->get(EBC::POP64Op1D), FPReg);
 }
 
 int EBCFrameLowering::getFrameIndexReference(const MachineFunction &MF,
