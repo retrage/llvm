@@ -195,7 +195,7 @@ int EBCFrameLowering::getFrameIndexReference(const MachineFunction &MF,
   FrameReg = RI->getFrameRegister(MF);
 
   // TODO: Explain stack layout.
-  int Offset = (FI < 0) ? 24 : 8;
+  int Offset = (FI < 0) ? 32 : 8;
 
   int FIR = MFI.getObjectOffset(FI) - getOffsetOfLocalArea()
             + Offset + MFI.getOffsetAdjustment();
