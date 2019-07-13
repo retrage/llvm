@@ -417,6 +417,7 @@ enum RelocationTypeEBC : unsigned {
   IMAGE_REL_EBC_IMM64 = 0x000A,
   IMAGE_REL_EBC_IMM32 = 0x000B,
   IMAGE_REL_EBC_IMM16 = 0x000C,
+  IMAGE_REL_EBC_CALL32 = 0x000D,
 };
 
 enum COMDATType : unsigned {

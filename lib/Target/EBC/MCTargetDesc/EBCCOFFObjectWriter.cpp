@@ -79,6 +79,8 @@ unsigned EBCCOFFObjectWriter::getRelocType(
     return COFF::IMAGE_REL_EBC_IMM32;
   case EBC::fixup_ebc_imm64:
     return COFF::IMAGE_REL_EBC_IMM64;
+  case EBC::fixup_ebc_pcrel_call32:
+    return COFF::IMAGE_REL_EBC_CALL32;
   }
 }
 

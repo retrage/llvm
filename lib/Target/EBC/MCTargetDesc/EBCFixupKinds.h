@@ -24,6 +24,7 @@ enum Fixups {
   fixup_ebc_pcrel_imm16,
   fixup_ebc_pcrel_imm32,
   fixup_ebc_pcrel_imm64,
+  fixup_ebc_pcrel_call32,
 
   // fixup_ebc_invalid - used as a sentinel and a marker, must be last fixup
   fixup_ebc_invalid,

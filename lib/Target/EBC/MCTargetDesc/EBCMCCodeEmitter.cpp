@@ -169,6 +169,7 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
       break;
     case EBC::fixup_ebc_imm32:
     case EBC::fixup_ebc_pcrel_imm32:
+    case EBC::fixup_ebc_pcrel_call32:
       support::endian::write<uint32_t>(OS, 0, support::little);
       break;
     case EBC::fixup_ebc_imm64:
@@ -250,7 +251,10 @@ EBCMCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
           FixupKind = EBC::fixup_ebc_pcrel_imm16;
           break;
         case 0x02:
-          FixupKind = EBC::fixup_ebc_pcrel_imm32;
+          if (TSFlags & 0x100)
+            FixupKind = EBC::fixup_ebc_pcrel_call32;
+          else
+            FixupKind = EBC::fixup_ebc_pcrel_imm32;
           break;
         case 0x03:
           FixupKind = EBC::fixup_ebc_pcrel_imm64;

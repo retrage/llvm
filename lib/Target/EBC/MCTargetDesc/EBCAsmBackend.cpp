@@ -53,14 +53,15 @@ public:
       // This table *must* be in the order that the fixup_* kinds are defined in
       // EBCFixupKinds.h
       //
-      // name              offset bits   flags
-      { "fixup_ebc_imm16",      0,  16,  0 },
-      { "fixup_ebc_imm32",      0,  32,  0 },
-      { "fixup_ebc_imm64",      0,  64,  0 },
-      { "fixup_ebc_pcrel_imm8", 0,   8,  MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ebc_pcrel_imm16",0,  16,  MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ebc_pcrel_imm32",0,  32,  MCFixupKindInfo::FKF_IsPCRel },
-      { "fixup_ebc_pcrel_imm64",0,  64,  MCFixupKindInfo::FKF_IsPCRel },
+      // name                offset bits   flags
+      { "fixup_ebc_imm16",        0,  16,  0 },
+      { "fixup_ebc_imm32",        0,  32,  0 },
+      { "fixup_ebc_imm64",        0,  64,  0 },
+      { "fixup_ebc_pcrel_imm8",   0,   8,  MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ebc_pcrel_imm16",  0,  16,  MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ebc_pcrel_imm32",  0,  32,  MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ebc_pcrel_imm64",  0,  64,  MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ebc_pcrel_call32", 0,  32,  MCFixupKindInfo::FKF_IsPCRel },
     };
 
       if (Kind < FirstTargetFixupKind)
@@ -99,6 +100,7 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
     return 2;
   case EBC::fixup_ebc_imm32:
   case EBC::fixup_ebc_pcrel_imm32:
+  case EBC::fixup_ebc_pcrel_call32:
   case FK_Data_4:
     return 4;
   case EBC::fixup_ebc_imm64:
@@ -133,6 +135,11 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
     case EBC::fixup_ebc_pcrel_imm32:
     case EBC::fixup_ebc_pcrel_imm64:
       SignedValue += 2;
+      if (SignedValue % 2)
+        Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
+      return SignedValue;
+    case EBC::fixup_ebc_pcrel_call32:
+      SignedValue -= 4;
       if (SignedValue % 2)
         Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
       return SignedValue;
