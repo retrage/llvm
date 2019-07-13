@@ -199,31 +199,30 @@ class EBCCALL32<bits<6> opcode,
   let TSFlags{5} = isRel;
   let TSFlags{4} = isNative;
   let TSFlags{3-2} = 0b10;
-  let TSFlags{1} = 0;
+  let TSFlags{1} = isRel;
   let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
 }
 
 class EBCCALL64<bits<6> opcode,
-                bit isNative, bit isRel,
-                dag outs, dag absins, dag relins,
+                bit isNative,
+                dag outs, dag ins,
                 string immstr>
-      : EBCInst16<opcode, outs, !if(isRel, relins, absins),
+      : EBCInst16<opcode, outs, ins,
           "call64"
-        # !if(isNative, "ex", "")
-        # !if(isRel, "", "a"),
+        # !if(isNative, "ex", ""),
           immstr, []> {
   let CodeSize = 10;
   let mayLoad = 0;
   let Inst{7} = 1;
   let Inst{6} = 1;
   let Inst{13} = isNative;
-  let Inst{12} = isRel;
+  let Inst{12} = 0;
   let TSFlags{7} = 0;
   let TSFlags{6} = 0;
-  let TSFlags{5} = isRel;
+  let TSFlags{5} = 0;
   let TSFlags{4} = isNative;
   let TSFlags{3-2} = 0b11;
-  let TSFlags{1} = isRel;
+  let TSFlags{1} = 0;
   let TSFlags{0} = 1;
 }
 
@@ -782,13 +781,11 @@ foreach hasImmIdx = [0b0, 0b1] in {
   }
 }
 foreach isNative = [0b0, 0b1] in {
-  foreach isRel = [0b0, 0b1] in
   def "CALL64"
     # !if(isNative, "Native", "EBC")
-    # !if(isRel, "Rel", "Abs")
-    # "Imm"
-      : EBCCALL64<0b000011, isNative, isRel,
-                  (outs), (ins imm64:$imm), (ins imm64:$imm), "$imm">;
+    # "AbsImm"
+      : EBCCALL64<0b000011, isNative,
+                  (outs), (ins imm64:$imm), "$imm">;
 }
 } // isCall = 1
 
@@ -1163,8 +1160,10 @@ def : Pat<(brind GPR:$op1), (JMP32UncondAbsOp1I GPR:$op1)>;
 
 /// Calls
 
-def : Pat<(EBCcall tglobaladdr:$imm), (CALL64EBCRelImm tglobaladdr:$imm)>;
-def : Pat<(EBCcall texternalsym:$imm), (CALL64EBCRelImm texternalsym:$imm)>;
+def : Pat<(EBCcall tglobaladdr:$imm),
+          (CALL32Op1DEBCRelImm r0, tglobaladdr:$imm)>;
+def : Pat<(EBCcall texternalsym:$imm),
+          (CALL32Op1DEBCRelImm r0, texternalsym:$imm)>;
 def : Pat<(EBCcall imm:$imm), (CALL64EBCAbsImm imm64:$imm)>;
 def : Pat<(EBCcall GPR:$op1), (CALL32Op1DEBCAbs GPR:$op1)>;
 def : Pat<(EBCcall (load GPR:$op1)), (CALL32Op1IEBCAbs GPR:$op1)>;
