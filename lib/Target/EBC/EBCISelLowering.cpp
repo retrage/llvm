@@ -460,7 +460,7 @@ SDValue EBCTargetLowering::LowerCall(CallLoweringInfo &CLI,
       StackPtr = DAG.getCopyFromReg(Chain, DL, EBC::r0, PtrVT);
     }
     SDValue Address =
-      DAG.getNode(ISD::SUB, DL, PtrVT, StackPtr,
+      DAG.getNode(ISD::ADD, DL, PtrVT, StackPtr,
                   DAG.getIntPtrConstant(VA.getLocMemOffset(), DL));
 
     // Emit the store.
