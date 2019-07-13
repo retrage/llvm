@@ -21,13 +21,9 @@
 
 using namespace llvm;
 
+// TODO: Retrun true if frame pointer is needed.
 bool EBCFrameLowering::hasFP(const MachineFunction &MF) const {
-  const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
-
-  const MachineFrameInfo &MFI = MF.getFrameInfo();
-  return MF.getTarget().Options.DisableFramePointerElim(MF) ||
-         RegInfo->needsStackRealignment(MF) || MFI.hasVarSizedObjects() ||
-         MFI.isFrameAddressTaken();
+  return true;
 }
 
 // Determines the size of the frame and maximum call frame size.
