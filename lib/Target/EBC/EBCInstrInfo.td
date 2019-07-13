@@ -513,11 +513,11 @@ class EBCMOVIBase<bits<6> opcode, bits<2> immlen, bits<2> movlen,
   let Inst{11} = Op1Indirect;
   let Inst{10-8} = op1;
   let TSFlags{7} = 0;
-  let TSFlags{6} = 0;
-  let TSFlags{5} = 0;
+  let TSFlags{6} = 1;
+  let TSFlags{5} = 1;
   let TSFlags{4} = 0;
   let TSFlags{3-2} = immlen;
-  let TSFlags{1} = 0;
+  let TSFlags{1} = 1;
   let TSFlags{0} = 1;
 
   let CodeSize = !add(2, !if(hasOp1Idx, 2, 0), !shl(1, immlen));
