@@ -299,9 +299,14 @@ SDValue EBCTargetLowering::lowerGlobalAddress(SDValue Op,
   const GlobalValue *GV = N->getGlobal();
   int64_t Offset = N->getOffset();
 
+  SDValue IP = DAG.getRegister(EBC::ip, MVT::i64);
+  SDValue SP = SDValue(DAG.getMachineNode(EBC::STORESP, DL, Ty, IP), 0);
+
   SDValue GA = DAG.getTargetGlobalAddress(GV, DL, Ty);
   // TODO: Replace with pseudo inst to select suitable inst later.
   SDValue MN = SDValue(DAG.getMachineNode(EBC::MOVIqqOp1D, DL, Ty, GA), 0);
+  MN = DAG.getNode(ISD::ADD, DL, Ty, MN, SP);
+
   if (Offset != 0)
     return DAG.getNode(ISD::ADD, DL, Ty, MN,
                        DAG.getConstant(Offset, DL, MVT::i64));
@@ -317,9 +322,13 @@ SDValue EBCTargetLowering::lowerBlockAddress(SDValue Op,
   const BlockAddress *B = N->getBlockAddress();
   int64_t Offset = N->getOffset();
 
+  SDValue IP = DAG.getRegister(EBC::ip, MVT::i64);
+  SDValue SP = SDValue(DAG.getMachineNode(EBC::STORESP, DL, Ty, IP), 0);
+
   SDValue BA = DAG.getTargetBlockAddress(B, Ty, Offset);
   // TODO: Replace with pseudo inst to select suitable inst later.
   SDValue MN = SDValue(DAG.getMachineNode(EBC::MOVIqqOp1D, DL, Ty, BA), 0);
+  MN = DAG.getNode(ISD::ADD, DL, Ty, MN, SP);
 
   return MN;
 }
