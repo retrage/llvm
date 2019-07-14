@@ -163,16 +163,13 @@ void EBCMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
     case EBC::fixup_ebc_pcrel_imm8:
       support::endian::write<uint8_t>(OS, 0, support::little);
       break;
-    case EBC::fixup_ebc_imm16:
     case EBC::fixup_ebc_pcrel_imm16:
       support::endian::write<uint16_t>(OS, 0, support::little);
       break;
-    case EBC::fixup_ebc_imm32:
     case EBC::fixup_ebc_pcrel_imm32:
     case EBC::fixup_ebc_pcrel_call32:
       support::endian::write<uint32_t>(OS, 0, support::little);
       break;
-    case EBC::fixup_ebc_imm64:
     case EBC::fixup_ebc_pcrel_imm64:
       support::endian::write<uint64_t>(OS, 0, support::little);
       break;
@@ -238,40 +235,25 @@ EBCMCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   unsigned Offset = 2;
   if (Kind == MCExpr::SymbolRef &&
       cast<MCSymbolRefExpr>(Expr)->getKind() == MCSymbolRefExpr::VK_None) {
-    // Check if it has fixup and not native call
-    if (TSFlags & 0x01 && !(TSFlags & 0x10)) {
-      // Check if the fixup is pcrel
-      if (TSFlags & 0x02) {
-        switch ((TSFlags & 0x0c) >> 2) {
-        case 0x00:
-          FixupKind = EBC::fixup_ebc_pcrel_imm8;
-          Offset = 1;
-          break;
-        case 0x01:
-          FixupKind = EBC::fixup_ebc_pcrel_imm16;
-          break;
-        case 0x02:
-          if (TSFlags & 0x100)
-            FixupKind = EBC::fixup_ebc_pcrel_call32;
-          else
-            FixupKind = EBC::fixup_ebc_pcrel_imm32;
-          break;
-        case 0x03:
-          FixupKind = EBC::fixup_ebc_pcrel_imm64;
-          break;
-        }
-      } else {
-        switch ((TSFlags & 0x0c) >> 2) {
-        case 0x01:
-          FixupKind = EBC::fixup_ebc_imm16;
-          break;
-        case 0x02:
-          FixupKind = EBC::fixup_ebc_imm32;
-          break;
-        case 0x03:
-          FixupKind = EBC::fixup_ebc_imm64;
-          break;
-        }
+    // Check if it has pcrel fixup
+    if (TSFlags & 0x01) {
+      switch ((TSFlags & 0x06) >> 1) {
+      case 0x00:
+        FixupKind = EBC::fixup_ebc_pcrel_imm8;
+        Offset = 1;
+        break;
+      case 0x01:
+        FixupKind = EBC::fixup_ebc_pcrel_imm16;
+        break;
+      case 0x02:
+        if (TSFlags & 0x08)
+          FixupKind = EBC::fixup_ebc_pcrel_call32;
+        else
+          FixupKind = EBC::fixup_ebc_pcrel_imm32;
+        break;
+      case 0x03:
+        FixupKind = EBC::fixup_ebc_pcrel_imm64;
+        break;
       }
     }
   }

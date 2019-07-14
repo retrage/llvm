@@ -73,12 +73,6 @@ unsigned EBCCOFFObjectWriter::getRelocType(
     return COFF::IMAGE_REL_EBC_SECTION;
   case FK_SecRel_4:
     return COFF::IMAGE_REL_EBC_SECREL;
-  case EBC::fixup_ebc_imm16:
-    return COFF::IMAGE_REL_EBC_IMM16;
-  case EBC::fixup_ebc_imm32:
-    return COFF::IMAGE_REL_EBC_IMM32;
-  case EBC::fixup_ebc_imm64:
-    return COFF::IMAGE_REL_EBC_IMM64;
   case EBC::fixup_ebc_pcrel_call32:
     return COFF::IMAGE_REL_EBC_CALL32;
   }

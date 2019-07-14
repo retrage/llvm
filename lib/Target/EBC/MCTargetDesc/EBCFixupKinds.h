@@ -17,10 +17,7 @@
 namespace llvm {
 namespace EBC {
 enum Fixups {
-  fixup_ebc_imm16 = FirstTargetFixupKind,
-  fixup_ebc_imm32,
-  fixup_ebc_imm64,
-  fixup_ebc_pcrel_imm8,
+  fixup_ebc_pcrel_imm8 = FirstTargetFixupKind,
   fixup_ebc_pcrel_imm16,
   fixup_ebc_pcrel_imm32,
   fixup_ebc_pcrel_imm64,

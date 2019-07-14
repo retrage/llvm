@@ -163,14 +163,9 @@ def idxc64 : Operand<i64> {
 //===----------------------------------------------------------------------===//
 
 // Note: TSFlags represent following attributes
-// TSFlags{8}: 1 if the instruction is CALL32Op1DEBCRelImm
-// TSFlags{7}: 1 if the operand 1 is indirect
-// TSFlags{6}: 1 if the instruction has immediate/index
-// TSFlags{5}: 1 if the instruction is relative
-// TSFlags{4}: 1 if the instruction is native
-// TSFlags{3-2}: 0b00: imm8, 0b01: imm16, 0b10: imm32, 0b11: imm64
-// TSFlags{1}: 1 if the fixup is pcrel
-// TSFlags{0}: 1 if the instruction has fixup
+// TSFlags{3}: 1 if the instruction is CALL32Op1DEBCRelImm
+// TSFlags{2-1}: 0b00: imm8, 0b01: imm16, 0b10: imm32, 0b11: imm64
+// TSFlags{0}: 1 if the instruction has pcrel fixup
 
 class EBCCALL32<bits<6> opcode,
                 bit hasImmIdx, bit isNative,
@@ -195,14 +190,11 @@ class EBCCALL32<bits<6> opcode,
   let mayLoad = !if(Op1Indirect, 1, 0);
   let Inst{13} = isNative;
   let Inst{12} = isRel;
-  let TSFlags{8} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0), isRel), 1, 0);
-  let TSFlags{7} = Op1Indirect;
-  let TSFlags{6} = hasImmIdx;
-  let TSFlags{5} = isRel;
-  let TSFlags{4} = isNative;
-  let TSFlags{3-2} = 0b10;
-  let TSFlags{1} = isRel;
-  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
+  let TSFlags{3} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0),
+                            isRel, !eq(isNative, 0)), 1, 0);
+  let TSFlags{2-1} = 0b10;
+  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0),
+                            isRel, !eq(isNative, 0)), 1, 0);
 }
 
 class EBCCALL64<bits<6> opcode,
@@ -219,13 +211,7 @@ class EBCCALL64<bits<6> opcode,
   let Inst{6} = 1;
   let Inst{13} = isNative;
   let Inst{12} = 0;
-  let TSFlags{8} = 0;
-  let TSFlags{7} = 0;
-  let TSFlags{6} = 0;
-  let TSFlags{5} = 0;
-  let TSFlags{4} = isNative;
-  let TSFlags{3-2} = 0b11;
-  let TSFlags{1} = 0;
+  let TSFlags{2-1} = 0b11;
   let TSFlags{0} = 1;
 }
 
@@ -255,14 +241,8 @@ class EBCJMP32<bits<6> opcode,
   let Inst{15} = isCond;
   let Inst{14} = isCS;
   let Inst{12} = isRel;
-  let TSFlags{8} = 0;
-  let TSFlags{7} = Op1Indirect;
-  let TSFlags{6} = hasImmIdx;
-  let TSFlags{5} = isRel;
-  let TSFlags{4} = 0;
-  let TSFlags{3-2} = 0b10;
-  let TSFlags{1} = isRel;
-  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
+  let TSFlags{2-1} = 0b10;
+  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0), isRel), 1, 0);
 }
 
 class EBCJMP64<bits<6> opcode,
@@ -283,14 +263,8 @@ class EBCJMP64<bits<6> opcode,
   let Inst{15} = isCond;
   let Inst{14} = isCS;
   let Inst{12} = isRel;
-  let TSFlags{8} = 0;
-  let TSFlags{7} = 0;
-  let TSFlags{6} = 0;
-  let TSFlags{5} = isRel;
-  let TSFlags{4} = 0;
-  let TSFlags{3-2} = 0b11;
-  let TSFlags{1} = isRel;
-  let TSFlags{0} = 1;
+  let TSFlags{2-1} = 0b11;
+  let TSFlags{0} = isRel;
 }
 
 class EBCJMP8<bits<6> opcode, bit isCond, bit isCS,
@@ -304,13 +278,7 @@ class EBCJMP8<bits<6> opcode, bit isCond, bit isCS,
   let CodeSize = 2;
   let Inst{7} = isCond;
   let Inst{6} = isCS;
-  let TSFlags{8} = 0;
-  let TSFlags{7} = 0;
-  let TSFlags{6} = 0;
-  let TSFlags{5} = 1;
-  let TSFlags{4} = 0;
-  let TSFlags{3-2} = 0b00;
-  let TSFlags{1} = 1;
+  let TSFlags{2-1} = 0b00;
   let TSFlags{0} = 1;
 }
 
@@ -331,14 +299,6 @@ class EBCPUSHPOP<bits<6> opcode, bit hasImmIdx, bit is64Bit, bit Op1Indirect,
                 !eq(!and(hasImmIdx, Op1Indirect), 1) : idxstr)> {
   let CodeSize = !if(hasImmIdx, 4, 2);
   let mayLoad = !if(!and(Op1Indirect, hasImmIdx), 1, 0);
-  let TSFlags{8} = 0;
-  let TSFlags{7} = Op1Indirect;
-  let TSFlags{6} = hasImmIdx;
-  let TSFlags{5} = 0;
-  let TSFlags{4} = 0;
-  let TSFlags{3-2} = 0b01;
-  let TSFlags{1} = 0;
-  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
 }
 
 class EBCPUSHnPOPn<bits<6> opcode, bit hasImmIdx, bit Op1Indirect,
@@ -357,14 +317,6 @@ class EBCPUSHnPOPn<bits<6> opcode, bit hasImmIdx, bit Op1Indirect,
                 !eq(!and(hasImmIdx, Op1Indirect), 1) : idxstr)> {
   let CodeSize = !if(hasImmIdx, 4, 2);
   let mayLoad = !if(!and(Op1Indirect, hasImmIdx), 1, 0);
-  let TSFlags{8} = 0;
-  let TSFlags{7} = Op1Indirect;
-  let TSFlags{6} = hasImmIdx;
-  let TSFlags{5} = 0;
-  let TSFlags{4} = 0;
-  let TSFlags{3-2} = 0b01;
-  let TSFlags{1} = 0;
-  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op1Indirect, 0)), 1, 0);
 }
 
 class EBCALUBase<bits<6> opcode, bit hasImmIdx, bit is64Bit,
@@ -387,14 +339,6 @@ class EBCALUBase<bits<6> opcode, bit hasImmIdx, bit is64Bit,
   let CodeSize = !if(hasImmIdx, 4, 2);
   let mayLoad = !if(Op2Indirect, 1, 0);
   let mayStore = !if(Op1Indirect, 1, 0);
-  let TSFlags{8} = 0;
-  let TSFlags{7} = Op2Indirect;
-  let TSFlags{6} = hasImmIdx;
-  let TSFlags{5} = 0;
-  let TSFlags{4} = 0;
-  let TSFlags{3-2} = 0b01;
-  let TSFlags{1} = 0;
-  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op2Indirect, 0)), 1, 0);
 }
 
 class EBCCMPBase<bits<6> opcode, bit hasImmIdx, bit is64Bit, bit Op2Indirect,
@@ -413,14 +357,6 @@ class EBCCMPBase<bits<6> opcode, bit hasImmIdx, bit is64Bit, bit Op2Indirect,
           pattern> {
   let CodeSize = !if(hasImmIdx, 4, 2);
   let mayLoad = !if(Op2Indirect, 1, 0);
-  let TSFlags{8} = 0;
-  let TSFlags{7} = Op2Indirect;
-  let TSFlags{6} = hasImmIdx;
-  let TSFlags{5} = 0;
-  let TSFlags{4} = 0;
-  let TSFlags{3-2} = 0b01;
-  let TSFlags{1} = 0;
-  let TSFlags{0} = !if(!and(hasImmIdx, !eq(Op2Indirect, 0)), 1, 0);
 }
 
 class EBCCMPIBase<bits<6> opcode,
@@ -439,14 +375,6 @@ class EBCCMPIBase<bits<6> opcode,
   let Inst{12} = hasOp1Idx;
   let Inst{11} = Op1Indirect;
   let Inst{10-8} = op1;
-  let TSFlags{8} = 0;
-  let TSFlags{7} = 0;
-  let TSFlags{6} = 1;
-  let TSFlags{5} = 0;
-  let TSFlags{4} = 0;
-  let TSFlags{3-2} = !if(immlen, 0b01, 0b10);
-  let TSFlags{1} = 0;
-  let TSFlags{0} = 1;
 
   let CodeSize = !cond(!and(!eq(hasOp1Idx, 0), !eq(immlen, 0)) : 4,
                    !and(!eq(hasOp1Idx, 0), !eq(immlen, 1)) : 6,
@@ -522,13 +450,7 @@ class EBCMOVIBase<bits<6> opcode, bits<2> immlen, bits<2> movlen,
   let Inst{13-12} = movlen;
   let Inst{11} = Op1Indirect;
   let Inst{10-8} = op1;
-  let TSFlags{8} = 0;
-  let TSFlags{7} = 0;
-  let TSFlags{6} = 1;
-  let TSFlags{5} = 1;
-  let TSFlags{4} = 0;
-  let TSFlags{3-2} = immlen;
-  let TSFlags{1} = 1;
+  let TSFlags{2-1} = immlen;
   let TSFlags{0} = 1;
 
   let CodeSize = !add(2, !if(hasOp1Idx, 2, 0), !shl(1, immlen));
@@ -554,13 +476,7 @@ class EBCMOVRELBase<bits<6> opcode, bits<2> immlen,
   let Inst{14} = hasOp1Idx;
   let Inst{11} = Op1Indirect;
   let Inst{10-8} = op1;
-  let TSFlags{8} = 0;
-  let TSFlags{7} = 0;
-  let TSFlags{6} = 0;
-  let TSFlags{5} = 1;
-  let TSFlags{4} = 0;
-  let TSFlags{3-2} = immlen;
-  let TSFlags{1} = 1;
+  let TSFlags{2-1} = immlen;
   let TSFlags{0} = 1;
 
   let CodeSize = !add(2, !if(hasOp1Idx, 2, 0), !shl(1, immlen));
@@ -635,14 +551,6 @@ class EBCMOVsnBase<bits<6> opcode, bits<2> idxlen,
   let Inst{14-12} = op2;
   let Inst{11} = Op1Indirect;
   let Inst{10-8} = op1;
-  let TSFlags{8} = 0;
-  let TSFlags{7} = Op2Indirect;
-  let TSFlags{6} = hasOp2Idx;
-  let TSFlags{5} = 0;
-  let TSFlags{4} = 0;
-  let TSFlags{3-2} = idxlen;
-  let TSFlags{1} = 0;
-  let TSFlags{0} = !if(!and(hasOp2Idx, !eq(Op2Indirect, 0)), 1, 0);
 
   let CodeSize = !add(2, !if(hasOp1Idx, !shl(1, idxlen), 0), !if(hasOp2Idx, !shl(1, idxlen), 0));
   let mayLoad = !if(Op2Indirect, 1, 0);

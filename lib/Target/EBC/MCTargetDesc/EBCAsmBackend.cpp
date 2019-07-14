@@ -54,9 +54,6 @@ public:
       // EBCFixupKinds.h
       //
       // name                offset bits   flags
-      { "fixup_ebc_imm16",        0,  16,  0 },
-      { "fixup_ebc_imm32",        0,  32,  0 },
-      { "fixup_ebc_imm64",        0,  64,  0 },
       { "fixup_ebc_pcrel_imm8",   0,   8,  MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_ebc_pcrel_imm16",  0,  16,  MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_ebc_pcrel_imm32",  0,  32,  MCFixupKindInfo::FKF_IsPCRel },
@@ -121,9 +118,6 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
     case FK_Data_2:
     case FK_Data_4:
     case FK_Data_8:
-    case EBC::fixup_ebc_imm16:
-    case EBC::fixup_ebc_imm32:
-    case EBC::fixup_ebc_imm64:
       return Value;
     case EBC::fixup_ebc_pcrel_imm8:
       if (SignedValue % 2)
