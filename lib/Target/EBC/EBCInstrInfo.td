@@ -163,6 +163,7 @@ def idxc64 : Operand<i64> {
 //===----------------------------------------------------------------------===//
 
 // Note: TSFlags represent following attributes
+// TSFlags{4}: 1 if the instruction is JMP64RelImm
 // TSFlags{3}: 1 if the instruction is CALL32Op1DEBCRelImm
 // TSFlags{2-1}: 0b00: imm8, 0b01: imm16, 0b10: imm32, 0b11: imm64
 // TSFlags{0}: 1 if the instruction has pcrel fixup
@@ -263,6 +264,8 @@ class EBCJMP64<bits<6> opcode,
   let Inst{15} = isCond;
   let Inst{14} = isCS;
   let Inst{12} = isRel;
+  let TSFlags{4} = isRel;
+  let TSFlags{3} = 0;
   let TSFlags{2-1} = 0b11;
   let TSFlags{0} = isRel;
 }

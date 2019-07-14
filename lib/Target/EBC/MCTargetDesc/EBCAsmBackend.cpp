@@ -59,6 +59,7 @@ public:
       { "fixup_ebc_pcrel_imm32",  0,  32,  MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_ebc_pcrel_imm64",  0,  64,  MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_ebc_pcrel_call32", 0,  32,  MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ebc_pcrel_jmp64",  0,  64,  MCFixupKindInfo::FKF_IsPCRel },
     };
 
       if (Kind < FirstTargetFixupKind)
@@ -99,6 +100,7 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case FK_Data_4:
     return 4;
   case EBC::fixup_ebc_pcrel_imm64:
+  case EBC::fixup_ebc_pcrel_jmp64:
   case FK_Data_8:
     return 8;
   }
@@ -147,6 +149,10 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
     case EBC::fixup_ebc_pcrel_call32:
       SignedValue -= 4;
       checkFixupValue(Fixup, SignedValue, 2, INT32_MIN, INT32_MAX, Ctx);
+      return SignedValue;
+    case EBC::fixup_ebc_pcrel_jmp64:
+      SignedValue -= 8;
+      checkFixupValue(Fixup, SignedValue, 2, INT64_MIN, INT64_MAX, Ctx);
       return SignedValue;
   }
 }
