@@ -104,6 +104,19 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   }
 }
 
+static void checkFixupValue(const MCFixup &Fixup, int64_t SignedValue,
+                            unsigned Align, int64_t Lower, int64_t Upper,
+                            MCContext &Ctx) {
+  if (SignedValue % Align) {
+    Ctx.reportError(Fixup.getLoc(),
+                    "fixup must be " + Twine(Align) + "-byte aligned");
+  }
+  if (!((SignedValue >= Lower) && (SignedValue <= Upper))) {
+    Ctx.reportError(Fixup.getLoc(), "fixup must be in range ["
+                    + Twine(Lower) + ", " + Twine(Upper) + "]");
+  }
+}
+
 static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
                                  MCContext &Ctx) {
   unsigned Kind = Fixup.getKind();
@@ -117,22 +130,23 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
     case FK_Data_8:
       return Value;
     case EBC::fixup_ebc_pcrel_imm8:
-      if (SignedValue % 2)
-        Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
-      if ((SignedValue > INT8_MAX * 2) || (SignedValue < INT8_MIN * 2))
-        Ctx.reportError(Fixup.getLoc(), "fixup must be in range [-256, 254]");
+      checkFixupValue(Fixup, SignedValue, 2, INT8_MIN * 2, INT8_MAX * 2, Ctx);
       return SignedValue / 2;
     case EBC::fixup_ebc_pcrel_imm16:
+      SignedValue += 2;
+      checkFixupValue(Fixup, SignedValue, 2, INT16_MIN, INT16_MAX, Ctx);
+      return SignedValue;
     case EBC::fixup_ebc_pcrel_imm32:
+      SignedValue += 2;
+      checkFixupValue(Fixup, SignedValue, 2, INT32_MIN, INT32_MAX, Ctx);
+      return SignedValue;
     case EBC::fixup_ebc_pcrel_imm64:
       SignedValue += 2;
-      if (SignedValue % 2)
-        Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
+      checkFixupValue(Fixup, SignedValue, 2, INT64_MIN, INT64_MAX, Ctx);
       return SignedValue;
     case EBC::fixup_ebc_pcrel_call32:
       SignedValue -= 4;
-      if (SignedValue % 2)
-        Ctx.reportError(Fixup.getLoc(), "fixup must be 2-byte aligned");
+      checkFixupValue(Fixup, SignedValue, 2, INT32_MIN, INT32_MAX, Ctx);
       return SignedValue;
   }
 }
