@@ -91,16 +91,13 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case EBC::fixup_ebc_pcrel_imm8:
   case FK_Data_1:
     return 1;
-  case EBC::fixup_ebc_imm16:
   case EBC::fixup_ebc_pcrel_imm16:
   case FK_Data_2:
     return 2;
-  case EBC::fixup_ebc_imm32:
   case EBC::fixup_ebc_pcrel_imm32:
   case EBC::fixup_ebc_pcrel_call32:
   case FK_Data_4:
     return 4;
-  case EBC::fixup_ebc_imm64:
   case EBC::fixup_ebc_pcrel_imm64:
   case FK_Data_8:
     return 8;
