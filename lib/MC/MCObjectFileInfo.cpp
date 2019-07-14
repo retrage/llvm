@@ -788,7 +788,7 @@ void MCObjectFileInfo::InitMCObjectFileInfo(const Triple &TheTriple, bool PIC,
   case Triple::COFF:
     if (!TT.isOSWindows() && TT.getArch() != Triple::ebc)
       report_fatal_error(
-          "Cannot initialize MC for non-Windows or EBC COFF object files.");
+          "Cannot initialize MC for non-Windows COFF object files.");
 
     Env = IsCOFF;
     initCOFFMCObjectFileInfo(TT);
