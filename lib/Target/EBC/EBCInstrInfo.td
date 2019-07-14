@@ -1155,8 +1155,9 @@ def : StPat<store, MOVqqOp1IOp2D>;
 
 /// Branches and jumps
 
+let isBarrier = 1, isBranch = 1, isTerminator = 1 in
 def PseudoBR : Pseudo<(outs), (ins jmp64:$imm), [(br bb:$imm)]>,
-               PseudoInstExpansion<(JMP64UncondAbsImm jmp64:$imm)>;
+               PseudoInstExpansion<(JMP64UncondRelImm jmp64:$imm)>;
 
 let isBarrier = 1, isBranch = 1, isIndirectBranch = 1, isTerminator = 1 in
 def PseudoBRIND : Pseudo<(outs), (ins GPR:$op1), []>,
