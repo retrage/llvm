@@ -21,7 +21,6 @@ namespace llvm {
 /// and contains private EBC-specific information for each MachineFunction.
 class EBCMachineFunctionInfo : public MachineFunctionInfo {
 private:
-  MachineFunction &MF;
   /// FrameIndex for start of varargs area
   int VarArgsFrameIndex = 0;
   /// Size of the save area used for varargs
@@ -31,7 +30,7 @@ private:
   unsigned CalleeSavedFrameSize = 0;
 
 public:
-  EBCMachineFunctionInfo(MachineFunction &MF) : MF(MF) {}
+  EBCMachineFunctionInfo(MachineFunction &MF) {}
 
   int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
   void setVarArgsFrameIndex(int Index) { VarArgsFrameIndex = Index; }

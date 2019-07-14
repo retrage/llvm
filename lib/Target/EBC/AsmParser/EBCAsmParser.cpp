@@ -312,8 +312,8 @@ bool EBCAsmParser::checkIndex(const MCOperand &NMO, const MCOperand &CMO,
     return false;
   }
 
-  uint64_t AbsNatural = abs(Natural);
-  uint64_t AbsConstant = abs(Constant);
+  uint64_t AbsNatural = std::abs(Natural);
+  uint64_t AbsConstant = std::abs(Constant);
 
   unsigned NaturalLen = 0;
   while (AbsNatural) {
