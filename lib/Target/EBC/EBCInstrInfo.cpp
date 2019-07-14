@@ -37,10 +37,19 @@ void EBCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator MBBI,
                                const DebugLoc &DL, unsigned DstReg,
                                unsigned SrcReg, bool KillSrc) const {
-  assert(EBC::GPRRegClass.contains(DstReg, SrcReg) &&
-         "Impossible reg-to-reg copy");
+  unsigned Opcode;
+  if (EBC::GPRRegClass.contains(DstReg, SrcReg)) {
+    Opcode = EBC::MOVqqOp1DOp2D;
+  } else if (EBC::GPRRegClass.contains(DstReg)
+             && EBC::DRRegClass.contains(SrcReg)) {
+    Opcode = EBC::STORESP;
+  } else if (EBC::FRRegClass.contains(DstReg)
+             && EBC::GPRRegClass.contains(SrcReg)) {
+    Opcode = EBC::LOADSP;
+  } else
+    assert(false && "Impossible reg-to-reg copy");
 
-  BuildMI(MBB, MBBI, DL, get(EBC::MOVqqOp1DOp2D), DstReg)
+  BuildMI(MBB, MBBI, DL, get(Opcode), DstReg)
       .addReg(SrcReg, getKillRegState(KillSrc));
 }
 
